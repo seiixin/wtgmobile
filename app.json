@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "WalkToGrave",
+    "slug": "WalkToGrave",
+    "version": "1.0.0",
+    "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "22b64fc9-fd52-429e-b82e-471c74293f18"
+      }
+    }
+  }
+}

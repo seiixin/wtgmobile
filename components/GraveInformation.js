@@ -1,0 +1,537 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground } from 'react-native';
+import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const GraveInformation = () => {
+    const route = useRoute();
+    const navigation = useNavigation();
+    const { grave } = route.params; // Get passed data
+    const [isCandleLit, setIsCandleLit] = useState(false);
+    const [hasCandleBeenLit, setHasCandleBeenLit] = useState(false);
+    const [candleCount, setCandleCount] = useState(0);
+
+    const handleLightCandle = async () => {
+        try {
+            // Retrieve existing candle data from AsyncStorage
+            const existingCandleData = await AsyncStorage.getItem('candleData');
+            const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
+
+            // Check if the grave already has candle data
+            const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
+
+            // Get the current timestamp
+            const now = new Date().getTime();
+
+            // Check if the user can light a candle (1-day interval)
+            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
+                Alert.alert('Candle Already Lit', 'You can light another candle tomorrow.');
+                return;
+            }
+
+            // Update the candle data for the grave
+            const updatedCandleData = {
+                ...candleData,
+                [grave._id]: {
+                    lastLit: now,
+                    count: graveCandleData.count + 1, // Increment the candle count
+                },
+            };
+
+            // Save the updated candle data to AsyncStorage
+            await AsyncStorage.setItem('candleData', JSON.stringify(updatedCandleData));
+
+            // Update the local state
+            setHasCandleBeenLit(true);
+            setCandleCount(graveCandleData.count + 1); // Update the counter in the UI
+
+            // Show the memorial candle greeting
+            setIsCandleLit(true); // This will open the modal
+        } catch (error) {
+            console.error('Error lighting candle:', error);
+        }
+    };
+
+    const handleBookmark = async () => {
+        try {
+            const existingBookmarks = await AsyncStorage.getItem('bookmarks');
+            const bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
+
+            // Check if the grave is already bookmarked
+            if (bookmarks.some((item) => item._id === grave._id)) {
+                Alert.alert('Already Bookmarked', 'This grave is already in your bookmarks.');
+                return;
+            }
+
+            const updatedBookmarks = [...bookmarks, grave];
+            await AsyncStorage.setItem('bookmarks', JSON.stringify(updatedBookmarks));
+            Alert.alert('Bookmarked', 'This grave has been added to your bookmarks.');
+        } catch (error) {
+            console.error('Error bookmarking grave:', error);
+        }
+    };
+
+    useEffect(() => {
+        const loadCandleData = async () => {
+            try {
+                const existingCandleData = await AsyncStorage.getItem('candleData');
+                const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
+
+                // Get the candle data for the current grave
+                const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
+
+                // Update the local state
+                setHasCandleBeenLit(graveCandleData.lastLit && new Date().getTime() - graveCandleData.lastLit < 24 * 60 * 60 * 1000);
+                setCandleCount(graveCandleData.count);
+            } catch (error) {
+                console.error('Error loading candle data:', error);
+            }
+        };
+
+        loadCandleData();
+    }, [grave._id]);
+
+    return (
+        <View style={{ flex: 1 }}>
+            {/* Fixed Buttons */}
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}
+            >
+                <Ionicons name="arrow-back" size={26} color="white" />
+            </TouchableOpacity>
+            <View style={styles.topRightButtons}>
+                <TouchableOpacity style={styles.shareButton}>
+                    <Ionicons name="share-social-outline" size={26} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
+                    <Ionicons name="bookmark-outline" size={26} color="white" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Scrollable Content */}
+            <ScrollView contentContainerStyle={styles.container}>
+                {/* Header Image */}
+                <View style={styles.headerContainer}>
+                    <Image
+                        source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
+                        style={styles.headerImage}
+                    />
+                </View>
+
+                {/* Profile Section */}
+                <View style={styles.profileContainer}>
+                    <View style={styles.profileImageContainer}>
+                        <Image
+                            source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/90' }}
+                            style={styles.profileImage}
+                        />
+                    </View>
+                    <View style={styles.profileInfo}>
+                        <Text style={styles.name}>{grave.firstName} {grave.lastName}</Text>
+                        <Text style={styles.dates}>
+                            Born on {grave.dateOfBirth ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.dateOfBirth)) : 'N/A'}
+                        </Text>
+                        <Text style={styles.dates}>
+                            Buried on {grave.burial ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.burial)) : 'N/A'}
+                        </Text>
+                        <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
+                    </View>
+                    <ImageBackground
+                        source={hasCandleBeenLit
+                            ? require("../assets/CandleLighted.png")
+                            : require("../assets/CandleLight.png")}
+                        style={styles.profileBottomLeftImage}
+                    >
+                        <View style={styles.candleCountContainer}>
+                            <Text style={styles.candleCountText}>{candleCount}</Text>
+                        </View>
+                    </ImageBackground>
+                    <Image source={require("../assets/WtG.png")} style={styles.profileBottomRightImage} />
+                </View>
+
+                {/* Description */}
+                <Text style={styles.description}>
+                    {grave.description || 'No description available.'}
+                </Text>
+
+                {/* Action Buttons */}
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        onPress={handleLightCandle}
+                        style={[styles.lightCandleButton, hasCandleBeenLit && styles.noBackground]}
+                    >
+                        {hasCandleBeenLit ? (
+                            <LinearGradient
+                                colors={["#000000", "#c89116"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.lightCandleGradient}
+                            >
+                                <View style={styles.buttonContent}>
+                                    <Image source={require("../assets/Candle2.png")} style={styles.CandleImage} />
+                                    <Text style={styles.buttonText3}>  Candle was Lit</Text>
+                                </View>
+                            </LinearGradient>
+                        ) : (
+                            <View style={styles.buttonContent}>
+                                <Image source={require("../assets/Candle1.png")} style={styles.CandleImage} />
+                                <Text style={styles.buttonText}>  Light a candle</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.scanMemoryButton}>
+                        <LinearGradient
+                            colors={["#ffef5d", "#7ed957"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.scanMemoryGradient}
+                        >
+                            <View style={styles.buttonContent}>
+                                <Image source={require("../assets/scanning.png")} style={styles.ScanningImage} />
+                                <Text style={styles.buttonText2}> Scan memory</Text>
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Bottom Buttons */}
+                <View style={styles.bottomContainer}>
+                    <View style={styles.bottomButtons}>
+                        {/* Update Details Button */}
+                        <TouchableOpacity style={styles.bottomButton}>
+                            <Image source={require("../assets/update.png")} style={styles.updateImage} />
+                            <Text style={styles.bottomButtonText}>Update Details</Text>
+                        </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.divider} />
+
+                        {/* Prayers Button */}
+                        <TouchableOpacity
+                            style={styles.bottomButton}
+                            onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}
+                        >
+                            <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
+                            <Text style={styles.bottomButtonText}>Prayers</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Bottom Container with Touchable Area */}
+                    <TouchableOpacity style={styles.bottomContainer2} activeOpacity={0.8}>
+                        <View style={styles.navigateButtonContainer}>
+                            <Text style={styles.navigateButtonText}>
+                                <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+  container: { flexGrow: 1, backgroundColor: "#fff" },
+  headerContainer: { position: "relative" },
+  headerImage: { width: "100%", height: 385 },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 25,
+    backgroundColor: 'rgb(252, 189, 33)',
+    padding: 10,
+    borderRadius: 50,
+    zIndex: 10, // Ensure it stays on top
+},
+topRightButtons: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    flexDirection: 'row',
+    zIndex: 10, // Ensure it stays on top
+},
+shareButton: {
+    backgroundColor: 'rgba(54, 38, 38, 0.5)',
+    padding: 10,
+    borderRadius: 50,
+    marginRight: 10,
+},
+bookmarkButton: {
+    backgroundColor: 'rgba(54, 38, 38, 0.5)',
+    padding: 10,
+    borderRadius: 50,
+},
+  profileContainer: { flexDirection: "row", alignItems: "center", padding: 20, position: "relative" },
+
+  profileImageContainer: {
+  top: -65, // Negative value to overlap the image
+  width: 93, // Outer border size
+  height: 93,
+  borderRadius: 50,
+  borderWidth: 2, // Outer border thickness
+  borderColor: "#94b143", // Gold outer border
+  alignItems: "center",
+  justifyContent: "center",
+},
+profileImage: {
+  width: 90,
+  height: 90,
+  borderRadius: 45,
+  borderWidth: 2,
+  borderColor: "white", // Inner border (dark color)
+},
+
+  profileInfo: { flex: 1 },
+  profileBottomLeftImage: { position: "absolute", bottom: 10, left: 30, width: 70, height: 70, borderRadius: 10 },
+  profileBottomRightImage: { position: "absolute", bottom: 10, right: 20, width: 50, height: 50, borderRadius: 10 },
+  name: { fontSize: 22, fontWeight: "bold", marginBottom: 5 },
+  dates: { fontSize: 14, color: "gray" },
+  location: { fontSize: 11, color: "gray", marginTop: 5 },
+  description: { marginHorizontal: 20, marginVertical: 10, textAlign: "center", width: "90%", height: 200, lineHeight: 20 },
+
+
+
+  actionButtons: { flexDirection: "row", justifyContent: "space-evenly", marginTop: 10 },
+
+  lightCandleButton: { 
+  borderRadius: 10, 
+  overflow: "hidden",
+  backgroundColor: "orange",
+  width: 150,  // Adjust as needed
+  height: 50,  // Fixed height to avoid shifting
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+noBackground: {
+  backgroundColor: "transparent",
+},
+
+lightCandleGradient: { 
+  width: "100%",
+  height: "100%",
+  alignItems: "center", 
+  justifyContent: "center", 
+  borderRadius: 10,
+},
+
+buttonContent: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  paddingHorizontal: 10, // Keeps spacing consistent
+},
+
+
+  CandleImage: { 
+  width: 12, height: 26, resizeMode: "contain"
+},
+
+
+  ScanningImage: {
+  width: 20, height: 26, resizeMode: "contain"
+},
+
+scanMemoryButton: { 
+  borderRadius: 10, 
+  overflow: "hidden",
+  width: 150,  // Match Light Candle Button
+  height: 50,  // Fixed height
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+scanMemoryGradient: { 
+  width: "100%",
+  height: "100%",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 10, 
+},
+
+
+  buttonText: { color: "white", fontWeight: "bold", fontSize: 16},
+  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: 16},
+  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: 16},
+
+  bottomContainer: { 
+  justifyContent: "space-evenly", 
+  backgroundColor: "white", 
+  marginTop: 10,
+  paddingTop: 0, // Adds space above buttons
+  shadowColor: "#000", // Shadow color
+  shadowOpacity: 0.3, 
+  shadowRadius: 6,
+  elevation: 10, // For Android shadow
+},
+bottomContainer2: { 
+  marginBottom: -10, // Adds space below the button
+  paddingBottom: -10, // Adds space below the button
+},
+  bottomButtons: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+bottomButton: {
+  flexDirection: "column", // Stack icon & text vertically
+  alignItems: "center",
+  padding: 10,
+  paddingHorizontal: 20,
+  flex: 1, // Makes both buttons take equal width
+},
+
+bottomButtonText: {
+  marginTop: 5, // Adds space between icon & text
+  textAlign: "center",
+  color: "#4d4c4c",
+  fontSize: 12,
+},
+
+divider: {
+  width: 1.5, // Thin vertical line
+  height: "40%", // Adjust height as needed
+  backgroundColor: "gray", // Color of the divider
+},
+prayerImage: { 
+  width: 16, 
+  height: 20, 
+  resizeMode: "contain" // Ensures the image maintains aspect ratio
+},
+updateImage: { 
+  width: 18, 
+  height: 20, 
+  resizeMode: "contain"
+},
+
+
+navigateButtonContainer: { 
+  backgroundColor: "#2E8B57", 
+  padding: 15, 
+  alignItems: "center", 
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  width: "100%", 
+  height: 60,
+  alignSelf: "center"
+},
+
+navigateButtonText: { 
+  color: "white", 
+  fontWeight: "bold", 
+  fontSize: 16 
+},
+
+modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    width: "90%",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+  },
+  wtg2logo: {
+    width: 70,
+    height: 70,
+    top: -20, 
+  },
+  WtG2: {
+    width: 85,
+    height: 85,
+    marginBottom: 15,
+    resizeMode: "contain",
+  },
+  modalProfileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 100,
+    borderWidth: .1,
+    borderColor: "white",
+  },
+  imageBorderOuter: {
+    width: 108, // Outer border size
+    height: 108,
+    borderRadius: 100,
+    backgroundColor: "#94b143", // Outer border color
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageBorderInner: {
+    width: 105, // Inner border size
+    height: 105,
+    borderRadius: 100,
+    backgroundColor: "white", // Inner border color
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  memorialHeader: {
+    fontSize: 40,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "white",
+  },
+  memorialSubtext: {
+    fontSize: 20,
+    fontStyle: "italic",
+    marginBottom: 30,
+    textAlign: "center",
+    color: "white",
+  },
+  
+  candleCount: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 30,
+    color: "white",
+  },
+  boldText: {
+    fontWeight: "bold",
+
+  },
+  encourageText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+    marginBottom: 50,
+  },
+  socialIcons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 15,
+  },
+  icon: {
+    width: 55,
+    height: 55,
+  },
+  candleCountContainer: {
+    position: 'absolute',
+    top: 10, // Move it slightly inside the image
+    right: 40, // Move it slightly inside the image
+    backgroundColor: 'red', // Red background
+    borderRadius: 10, // Circular shape
+    width: 15, // Fixed width for the circle
+    height: 15, // Fixed height for the circle
+    alignItems: 'center',
+    justifyContent: 'center',
+},
+candleCountText: {
+    color: 'white', // White text
+    fontSize: 8, // Smaller font size
+    fontWeight: 'bold',
+},
+
+});
+
+export default GraveInformation;
