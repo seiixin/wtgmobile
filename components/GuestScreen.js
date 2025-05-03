@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ImageBackground, Modal } from "react-native";
-import RNModal from "react-native-modal";  // Renamed import
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import RNModal from "react-native-modal";
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';  // Import navigation
+import { createDrawerNavigator, DrawerContentScrollView, DrawerActions } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
 
 const services = [
   { id: 1, name: "Yearly Grave Cleaning", image: require("../assets/YearlyIMG.png") },
@@ -85,69 +86,107 @@ const MaintenanceDetails = [
   }
 ];
 
-const GuestScreen = () => {
+// Drawer Content Component
+const CustomDrawerContent = (props) => {
+  return (
+    <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
+      <View style={styles.menuSection}>
+        {/* FAQs */}
+        <TouchableOpacity
+          style={styles.drawerItem}
+          onPress={() => {
+            props.navigation.navigate('FAQsGuestScreen');
+            props.navigation.dispatch(DrawerActions.closeDrawer()); // Close the drawer
+          }}
+        >
+          <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
+          <Text style={styles.drawerTextBlue}>FAQs</Text>
+        </TouchableOpacity>
+
+        {/* Services & Maintenance */}
+        <TouchableOpacity
+          style={styles.drawerItem}
+          onPress={() => {
+            props.navigation.navigate('GuestScreen');
+            props.navigation.dispatch(DrawerActions.closeDrawer()); // Close the drawer
+          }}
+        >
+          <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
+          <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
+        </TouchableOpacity>
+      </View>
+    </DrawerContentScrollView>
+  );
+};
+
+// Main GuestScreen Component
+const GuestScreenContent = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
 
   const handleServicePress = (service) => {
-  const selectedDetail = MaintenanceDetails.find((detail) => detail.title === service.name);
-  if (selectedDetail) {
-    setSelectedService(selectedDetail);
-    setModalVisible(true);
-  }
-};
+    const selectedDetail = MaintenanceDetails.find((detail) => detail.title === service.name);
+    if (selectedDetail) {
+      setSelectedService(selectedDetail);
+      setModalVisible(true);
+    }
+  };
 
   return (
     <ImageBackground 
-  source={require('../assets/ServicesBG.png')} 
-  style={styles.background} 
-  resizeMode="cover"
->
-  
-    {/* Header */}
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>Cemetery Services & Maintenance</Text>
-      <Text style={styles.headerSubtitle}>
-        Provide dignified burial options for loved ones with various choices to suit different needs.
-      </Text>
-    </View>
+      source={require('../assets/ServicesBG.png')} 
+      style={styles.background} 
+      resizeMode="cover"
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        {/* Drawer Toggle Button */}
+        <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.drawerToggle}>
+          <View style={styles.line} />
+          <View style={styles.line} />
+          <View style={styles.line} />
+        </TouchableOpacity>
 
-    
-
-    {/* Maintenance Services */}
-    <Text style={styles.sectionTitle}>Maintenance and Construction Services</Text>
-    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-      {services.map((service) => (
-        <TouchableOpacity key={service.id} onPress={() => handleServicePress(service)} style={styles.serviceCard}>
-              <Image source={service.image} style={styles.serviceImage} />
-            </TouchableOpacity>
-      ))}
-    </ScrollView>
-   
-    {/* Burial Services */}
-    <Text style={styles.sectionTitle1}>Burial Services</Text>
-    <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollViewContent}>
-    {burialOptions.map((option) => (
-      <View key={option.id} style={[styles.burialCard, { backgroundColor: option.bgColor }]}>
-        <Image source={option.image} style={styles.burialImage} />
-        <View style={styles.burialInfo}>
-          <Text style={styles.burialTitle}>{option.name}</Text>
-          <Text style={styles.burialDescription}>{option.description}</Text>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-              style={styles.button} 
-              onPress={() => navigation.navigate(option.route)}   // Pass data
-            >
-            <Text style={styles.buttonText}>View details</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.headerTitle}>Cemetery Services & Maintenance</Text>
+        <Text style={styles.headerSubtitle}>
+          Provide dignified burial options for loved ones with various choices to suit different needs.
+        </Text>
       </View>
-    ))}
-  </ScrollView>
 
-  {/* Bottom Sheet Modal */}
+      {/* Maintenance Services */}
+      <Text style={styles.sectionTitle}>Maintenance and Construction Services</Text>
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+        {services.map((service) => (
+          <TouchableOpacity key={service.id} onPress={() => handleServicePress(service)} style={styles.serviceCard}>
+            <Image source={service.image} style={styles.serviceImage} />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Burial Services */}
+      <Text style={styles.sectionTitle1}>Burial Services</Text>
+      <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollViewContent}>
+        {burialOptions.map((option) => (
+          <View key={option.id} style={[styles.burialCard, { backgroundColor: option.bgColor }]}>
+            <Image source={option.image} style={styles.burialImage} />
+            <View style={styles.burialInfo}>
+              <Text style={styles.burialTitle}>{option.name}</Text>
+              <Text style={styles.burialDescription}>{option.description}</Text>
+            </View>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => navigation.navigate(option.route)}
+              >
+                <Text style={styles.buttonText}>View details</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Bottom Sheet Modal */}
       <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
         <View style={styles.modalContent}>
           {selectedService && (
@@ -158,32 +197,45 @@ const GuestScreen = () => {
               <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
               <Text style={styles.modalDescription}>{selectedService.description}</Text>
               <TouchableOpacity 
-                  onPress={() => {
-                    setModalVisible(false);  // Close the modal
-                    navigation.navigate("GuestLogin");  // Navigate to GuestLogin screen
-                  }} 
-                  style={styles.requestButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate("GuestLogin");
+                }} 
+                style={styles.requestButton}
+              >
+                <LinearGradient
+                  colors={["#ffef5d", "#7ed957"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.requestServiceGradient}
                 >
-                  <LinearGradient
-                    colors={["#ffef5d", "#7ed957"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.requestServiceGradient}
-                  >
-                    <Text style={styles.requestButtonText}>Request Service</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                  <Text style={styles.requestButtonText}>Request Service</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </>
           )}
         </View>
       </RNModal>
-</ImageBackground>
+    </ImageBackground>
+  );
+};
 
+// Drawer Navigator
+const Drawer = createDrawerNavigator();
+
+const GuestScreen = () => {
+  return (
+    <Drawer.Navigator 
+      drawerContent={(props) => <CustomDrawerContent {...props} />} 
+      screenOptions={{ headerShown: false }}
+    >
+      <Drawer.Screen name="GuestScreenContent" component={GuestScreenContent} />
+    </Drawer.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
-    background: {
+  background: {
     flex: 1,
     width: '100%',
     height: '100%',
@@ -210,6 +262,21 @@ const styles = StyleSheet.create({
     color: "#555",
     marginTop: 5,
   },
+  drawerToggle: {
+    position: "absolute",
+    top: 0,
+    left: 10,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  line: {
+    width: 20,
+    height: 2,
+    backgroundColor: "#2D6A4F",
+    marginVertical: 2,
+  },
   sectionTitle: {
     fontSize: 15,
     color: "#a6a6a6",
@@ -220,7 +287,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#a6a6a6",
     marginLeft: 20,
-
   },
   horizontalScroll: {
     paddingHorizontal: 10,
@@ -254,8 +320,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginHorizontal: 20,
     borderRadius: 10,
-    position: "relative",  // Needed for absolute positioning inside
-    minHeight: 100,        // Ensures enough space for proper alignment
+    position: "relative",
+    minHeight: 100,
   },
   burialImage: {
     width: 50,
@@ -279,7 +345,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#fff",  // Change this for different background
+    backgroundColor: "#fff",
     padding: 10,
     borderTopLeftRadius: 10,
   },
@@ -288,15 +354,15 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 5,
     position: "relative",
-    bottom: 0,  // Pushes button to the bottom
-    right: 0,   // Pushes button to the right
+    bottom: 0,
+    right: 0,
   },
   buttonText: {
     color: "#FFF",
     fontSize: 12,
     fontWeight: "bold",
   },
-   modal: {
+  modal: {
     justifyContent: "flex-end",
     margin: 0,
   },
@@ -308,17 +374,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   divider: {
-  width: "13%", // Thin vertical line
-  height: "0.8%", // Adjust height as needed
-  backgroundColor: "#d9d9d9", // Color of the divider
-  bottom: 5,
-  borderRadius: 10
-},
+    width: "13%",
+    height: "0.8%",
+    backgroundColor: "#d9d9d9",
+    bottom: 5,
+    borderRadius: 10,
+  },
   modalImage: {
     width: 70,
     height: 70,
     marginBottom: 10,
-    marginTop: 20
+    marginTop: 20,
   },
   modalTitle: {
     fontSize: 26,
@@ -326,12 +392,11 @@ const styles = StyleSheet.create({
     color: "#333333",
   },
   modalPricing: {
-  fontSize: 14,
-  fontWeight: "bold",
-  color: "#333333", // Highlight pricing
-  marginTop: 5,
-},
-
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333333",
+    marginTop: 5,
+  },
   modalDescription: {
     fontSize: 14,
     color: "#555",
@@ -339,12 +404,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   requestButton: {
-    
     borderRadius: 5,
     marginTop: 15,
     width: "80%",
     alignItems: "center",
-    marginVertical: 15
+    marginVertical: 15,
   },
   requestButtonText: {
     color: "#1a5242",
@@ -352,14 +416,46 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   requestServiceGradient: { 
-  width: "100%",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 10, 
-  paddingVertical: 10,
-},mainScrollViewContent: {
-    paddingBottom: 20, // Add padding to ensure the content isn't cut off at the bottom
-   },
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10, 
+    paddingVertical: 10,
+  },
+  mainScrollViewContent: {
+    paddingBottom: 20,
+  },
+  drawerContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  menuSection: {
+    marginVertical: 10,
+  },
+  drawerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  drawerTextBlue: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#1580c2',
+  },
+  drawerTextYellow: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#cb9717',
+  },
+  drawerIcon: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+    marginRight: 10,
+  },
 });
 
 export default GuestScreen;
