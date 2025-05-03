@@ -1,11 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native'; // Import the hook
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const Verification = ({ navigation }) => { 
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
+const Verification = () => {
   const [verificationCode, setVerificationCode] = useState('');
+  const [email, setEmail] = useState(''); // State to store the email
+  const navigation = useNavigation();
 
+  // Fetch user email from the database
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId"); // Retrieve userId from AsyncStorage
+        if (!userId) {
+          console.error("User ID not found");
+          return;
+        }
+
+        const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setEmail(data.email); // Set the email in state
+        } else {
+          console.error("Failed to fetch user email:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching user email:", error);
+      }
+    };
+
+    fetchUserEmail();
+  }, []);
 
   const handleInputChange = (text, index) => {
     let codeArray = verificationCode.split('');
@@ -14,12 +44,12 @@ const Verification = ({ navigation }) => {
   };
 
   const handleBackPress = () => {
-    navigation.goBack(); 
+    navigation.goBack();
   };
 
   return (
     <ImageBackground
-      source={require('../assets/VerificationBg.png')} 
+      source={require('../assets/VerificationBg.png')}
       style={styles.background}
     >
       {/* Back Button with Ionicon */}
@@ -30,10 +60,9 @@ const Verification = ({ navigation }) => {
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
         <Text style={styles.subtitle}>Please enter the verification code sent to your email.</Text>
-        <Text style={styles.email}>@gmail.com</Text>
-
+        <Text style={styles.email}>{email}</Text> 
         <View style={styles.inputContainer}>
-          {Array.from({ length: 4 }).map((_, index) => (
+          {Array.from({ length: 6 }).map((_, index) => (
             <TextInput
               key={index}
               style={styles.inputBox}
@@ -100,8 +129,8 @@ const styles = StyleSheet.create({
     marginVertical: 20, 
   },
   inputBox: {
-    width: 60,  
-    height: 60,    
+    width: 50,  
+    height: 50,    
     backgroundColor: '#f5f5f5',
     borderRadius: 10,  
     textAlign: 'center',

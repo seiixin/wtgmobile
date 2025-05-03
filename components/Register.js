@@ -5,10 +5,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Checkbox } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import DateTimePicker from '@react-native-community/datetimepicker';
+import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
 
 const Register = () => {
-
-  
   const [genderOpen, setGenderOpen] = useState(false);
   const genderItems = [
     { label: 'Male', value: 'Male' },
@@ -18,7 +17,6 @@ const Register = () => {
   const [nationalityOpen, setNationalityOpen] = useState(false);
   const nationalityItems = [
     { label: 'Filipino', value: 'Filipino' },
-    
   ];
 
   const [provinceOpen, setProvinceOpen] = useState(false);
@@ -58,7 +56,7 @@ const Register = () => {
     city: 'Las Pinas City',
     district: 'District 3',
     password: '',
-    confirmPassword: '', // New field for confirm password
+    confirmPassword: '',
   });
 
   const [checked, setChecked] = useState(false);
@@ -67,6 +65,7 @@ const Register = () => {
   const [datePickerVisible, setDatePickerVisible] = useState(false); // To toggle the date picker visibility
   const [selectedDate, setSelectedDate] = useState(new Date()); // Store the actual date object
   const [passwordMatch, setPasswordMatch] = useState(true); // Track password match
+  const [isModalVisible, setModalVisible] = useState(false); // State to control modal visibility
 
   const navigation = useNavigation();
 
@@ -83,7 +82,7 @@ const Register = () => {
   const confirmDate = () => {
     const formattedDate = formatDate(selectedDate); // Format the date
     setDateOfBirth(formattedDate); // Update the local display of the date
-    
+
     // Update the dob field in formData
     setFormData((prevData) => ({
       ...prevData,
@@ -106,7 +105,7 @@ const Register = () => {
 
   const handleInputChange = (field, value) => {
     setFormData((prevData) => ({ ...prevData, [field]: value }));
-    
+
     // Check if the passwords match whenever the user types in confirmPassword
     if (field === 'confirmPassword' || field === 'password') {
       setPasswordMatch(formData.password === value); // Update password match state
@@ -129,22 +128,22 @@ const Register = () => {
 
   const handleRegister = async () => {
     console.log("Form Data Submitted: ", formData);
-  
+
     if (!formData.name || !formData.email || !formData.password || !formData.gender || !formData.dob || !formData.confirmPassword) {
       alert('Please fill all required fields');
       return;
     }
-  
+
     if (!validateEmail(formData.email)) {
       alert('Please enter a valid email address');
       return;
     }
-  
+
     if (!validateMobile(formData.mobile)) {
       alert('Please enter a valid 11-digit mobile number');
       return;
     }
-  
+
     if (!checked) {
       alert('Please agree to the Terms & Conditions');
       return;
@@ -154,18 +153,18 @@ const Register = () => {
       alert('Passwords do not match');
       return;
     }
-  
+
     try {
       const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData), // Ensure dob is included here
+        body: JSON.stringify(formData),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         console.log('Response data:', data);
         alert('User Registered Successfully');
@@ -323,9 +322,9 @@ const Register = () => {
             onChangeText={(text) => handleInputChange('password', text)}
           />
           <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
-            <Ionicons 
+            <Ionicons
               name={isPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
-              size={24} 
+              size={24}
               color="gray"
             />
           </TouchableOpacity>
@@ -357,7 +356,10 @@ const Register = () => {
         </View>
 
         {/* Register Button */}
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+        <TouchableOpacity
+          style={styles.registerButton}
+          onPress={() => setModalVisible(true)} // Show confirmation modal
+        >
           <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
       </View>
@@ -393,6 +395,17 @@ const Register = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={isModalVisible}
+        message="Are you sure you want to submit the registration form?"
+        onConfirm={() => {
+          setModalVisible(false); // Close the modal
+          handleRegister(); // Proceed with registration
+        }}
+        onCancel={() => setModalVisible(false)} // Close the modal
+      />
     </ImageBackground>
   );
 };
@@ -429,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    height: 30, 
+    height: 40,
     width: "100%",
     borderColor: 'gray',
     borderWidth: 0.5,
@@ -438,9 +451,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     fontSize: 14,
     marginBottom: 10,
+    textAlignVertical: 'center'
   },
   inputDate: {
-    height: 50, 
+    height: 50,
     borderColor: 'gray',
     borderWidth: 0.5,
     borderRadius: 5,
@@ -459,7 +473,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 15,
-    width:"104%"
+    width: "104%"
   },
   inputContainer: {
     flex: 1,
@@ -544,9 +558,6 @@ const styles = StyleSheet.create({
     left: 10,
   },
   checkboxWrapper: {
-    borderWidth: 1,
-    borderColor: 'green',
-    borderRadius: 5,
     marginRight: 10,
     height: 35,
     width: 35,

@@ -18,32 +18,32 @@ const SignIn = () => {
       alert("Please enter both email and password");
       return;
     }
-
+  
     fetch(`${BASE_URL}/api/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     })
-    .then(response => response.json())
-    .then(data => {
-      if (data.user && data.user._id) {
-        AsyncStorage.setItem("userId", data.user._id)
-          .then(() => {
-            alert("Login Successful");
-            navigation.navigate("Verification");
-          })
-          .catch(error => {
-            alert("Error storing user data");
-            console.error(error);
-          });
-      } else {
-        alert(data.message || "Invalid credentials");
-      }
-    })
-    .catch(error => {
-      alert("Login failed. Please try again.");
-      console.error(error);
-    });
+      .then(response => response.json())
+      .then(data => {
+        if (data.user && data.user._id) {
+          AsyncStorage.setItem("userId", data.user._id)
+            .then(() => {
+              alert("Login successful. Please verify your account with the OTP sent to your email.");
+              navigation.navigate("Verification", { email: data.user.email }); // Pass email to Verification screen
+            })
+            .catch(error => {
+              alert("Error storing user data");
+              console.error(error);
+            });
+        } else {
+          alert(data.message || "Invalid credentials");
+        }
+      })
+      .catch(error => {
+        alert("Login failed. Please try again.");
+        console.error(error);
+      });
   };
 
   return (

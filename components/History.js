@@ -4,7 +4,6 @@ import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
