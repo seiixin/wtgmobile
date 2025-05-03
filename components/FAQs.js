@@ -6,7 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const screenWidth = Dimensions.get('window').width;
-const BASE_URL = "http://192.168.0.26:8000";
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
@@ -123,7 +123,18 @@ const FAQsScreen = () => {
     onPress={() => {
       if (item.title === "General Questions") {
         navigation.navigate("GeneralQuestions");
-      } else {
+      } else if (item.title === "Account & Profile") {
+        navigation.navigate("AccountAndProfiles");
+      } else if (item.title === "Grave Search & Navigation") {
+          navigation.navigate("GraveSearchAndNavigation");
+      } else if (item.title === "Virtual Tributes & Features") {
+          navigation.navigate("VirtualTributes");
+      } else if (item.title === "Cemetery Services & Management") {
+          navigation.navigate("CemeteryServicesAndManagement");
+      } else if (item.title === "Technical Support") {
+          navigation.navigate("TechnicalSupport");
+      }
+      else {
         navigation.navigate("FAQDetails", { category: item.title });
       }
     }}

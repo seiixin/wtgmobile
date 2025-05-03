@@ -45,7 +45,22 @@ import RequestedServices from './components/RequestedServices';
 import ServicesScreenWithDrawer from './components/Services';
 import FAQs from './components/FAQs';
 import GeneralQuestions from './components/GeneralQuestions';
+import AccountAndProfiles from './components/AccountAndProfiles';
+import GraveSearchAndNavigation from './components/GraveSearchAndNavigation';
+import VirtualTributes from './components/VirtualTributes';
+import CemeteryServicesAndManagement from './components/CemeteryServicesAndManagement';
+import TechnicalSupport from './components/TechnicalSupport';
 
+
+
+
+import FAQsGuestScreen from './components/FAQsGuestScreen';
+import GuestGeneralQuestions from './components/GuestGeneralQuestions';
+import GuestAccountandProfile from './components/GuestAccountandProfile';
+import GuestGraveSearch from './components/GuestGraveSearch';
+import GuestVirtualTributes from './components/GuestVirtualTributes';
+import GuestCemeteryServices from './components/GuestCemeteryServices';
+import GuestTechnicalSupport from './components/GuestTechnicaSuppport';
 
 // Create Navigators
 const Tab = createBottomTabNavigator();
@@ -91,8 +106,25 @@ const MainStack = () => (
     <Stack.Screen name="GuestLogin" component={GuestLogin} />
     <Stack.Screen name="RequestedServices" component={RequestedServices} />
     <Stack.Screen name="ServicesScreenWithDrawer" component={ServicesScreenWithDrawer} />
+
+    
     <Stack.Screen name="FAQs" component={FAQs} />
     <Stack.Screen name="GeneralQuestions" component={GeneralQuestions} />
+    <Stack.Screen name="AccountAndProfiles" component={AccountAndProfiles} />
+    <Stack.Screen name="GraveSearchAndNavigation" component={GraveSearchAndNavigation} />
+    <Stack.Screen name="VirtualTributes" component={VirtualTributes} />
+    <Stack.Screen name="CemeteryServicesAndManagement" component={CemeteryServicesAndManagement} />
+    <Stack.Screen name="TechnicalSupport" component={TechnicalSupport} />
+
+
+    <Stack.Screen name="FAQsGuestScreen" component={FAQsGuestScreen} />
+    <Stack.Screen name="GuestGeneralQuestions" component={GuestGeneralQuestions} />
+    <Stack.Screen name="GuestAccountandProfile" component={GuestAccountandProfile} />
+    <Stack.Screen name="GuestGraveSearch" component={GuestGraveSearch} />
+    <Stack.Screen name="GuestVirtualTributes" component={GuestVirtualTributes} />
+    <Stack.Screen name="GuestCemeteryServices" component={GuestCemeteryServices}/>
+    <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
+    
   </Stack.Navigator>
 );
 
