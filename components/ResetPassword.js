@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ImageBackground, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false); // State to control modal visibility
   const navigation = useNavigation();
   const route = useRoute();
-  const BASE_URL = "http://192.168.0.26:8000";
+  const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
   const { email } = route.params;
 
   const handleResetPassword = async () => {
@@ -83,11 +85,26 @@ const ResetPassword = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.ChangePassButton} onPress={handleResetPassword}>
+          {/* Change Password Button */}
+          <TouchableOpacity
+            style={styles.ChangePassButton}
+            onPress={() => setModalVisible(true)} // Show confirmation modal
+          >
             <Text style={styles.ChangePassText}>Change Password</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={isModalVisible}
+        message="Are you sure you want to reset your password?"
+        onConfirm={() => {
+          setModalVisible(false); // Close the modal
+          handleResetPassword(); // Proceed with password reset
+        }}
+        onCancel={() => setModalVisible(false)} // Close the modal
+      />
     </ImageBackground>
   );
 };

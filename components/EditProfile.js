@@ -73,27 +73,26 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
     });
   };
 
-  const renderInfoItem = (label, field) => {
-    const isFieldEmpty = !formData[field];  // Check if the field is empty
+  const renderInfoItem = (label, field, editable = true) => {
+    const isFieldEmpty = !formData[field]; // Check if the field is empty
     return (
       <View style={styles.infoItem}>
         <Text style={styles.label}>{label}</Text>
-        <TouchableOpacity style={styles.infoRow} onPress={() => {
-          setEditingField(field);
-          setNewValue(formData[field] || ""); // Set current value for editing
-          setModalVisible(true); // Show modal when editing
-        }}>
-          <Text style={styles.value}>{formData[field] || 'Add'}</Text>
-          {/* If mobile field is empty, show red "X" */}
-          {field === "mobile" && isFieldEmpty && (
-            <Ionicons name="close-circle" size={20} color="red" style={styles.icon} />
-          )}
-          {/* If mobile field is valid, show green check mark */}
-          {field === "mobile" && !isFieldEmpty && (
-            <Ionicons name="checkmark-circle" size={20} color="#00aa13" style={styles.icon} />
-          )}
-          {/* Show right arrow for all fields */}
-          <Ionicons name="chevron-forward" size={20} color="gray" style={styles.arrowIcon} />
+        <TouchableOpacity
+          style={styles.infoRow}
+          onPress={() => {
+            if (!editable) return; // Disable editing for non-editable fields
+            setEditingField(field);
+            setNewValue(formData[field] || ""); // Set current value for editing
+            setModalVisible(true); // Show modal when editing
+          }}
+          disabled={!editable} // Disable touch for non-editable fields
+        >
+          <Text style={[styles.value, !editable && styles.disabledText]}>
+            {formData[field] || "Add"}
+          </Text>
+          {/* Show right arrow only for editable fields */}
+          {editable && <Ionicons name="chevron-forward" size={20} color="gray" style={styles.arrowIcon} />}
         </TouchableOpacity>
       </View>
     );
@@ -203,8 +202,8 @@ const uploadImage = async (imageUri) => {
               {renderInfoItem('Name', 'name')}
               {renderInfoItem('Mobile Number', 'mobile')}
               {renderInfoItem('Email', 'email')}
-              {renderInfoItem('Nationality', 'nationality')}
-              {renderInfoItem('Gender', 'gender')}
+              {renderInfoItem('Nationality', 'nationality', false)} 
+              {renderInfoItem('Gender', 'gender', false)} 
             </View>
             <View style={styles.separator}></View>
 
@@ -292,16 +291,17 @@ const styles = StyleSheet.create({
   closeButton: { padding: 10, alignItems: 'center' },
   closeButtonText: { color: 'gray', fontSize: 16 },
   back:{alignSelf:'flex-start',
-    marginBottom:100, 
+    marginBottom:30, 
     bottom:100,
-    left:10
+    left:20
   },
   backImage: {
     width: 35, // Set the size of the back button
     height: 35,
   },
-
-
+  disabledText: {
+    color: "gray", // Gray out non-editable fields
+  },
 });
 
 export default EditProfile;

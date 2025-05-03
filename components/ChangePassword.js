@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackgr
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmationModal from '../components/modals/ConfirmationModal'; // Import the reusable modal
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -11,9 +12,10 @@ const ChangePassword = () => {
   const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isConfirmationVisible, setConfirmationVisible] = useState(false); // State for confirmation modal
 
   const navigation = useNavigation();
-const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+  const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -144,13 +146,25 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleChangePassword} style={styles.button}>
+        <TouchableOpacity onPress={() => setConfirmationVisible(true)} style={styles.button}>
           <Text style={styles.buttonText}>Change password</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={isConfirmationVisible}
+        message="Are you sure you want to change your password?"
+        onConfirm={() => {
+          setConfirmationVisible(false); // Close the modal
+          handleChangePassword(); // Proceed with password change
+        }}
+        onCancel={() => setConfirmationVisible(false)} // Close the modal
+      />
     </ImageBackground>
   );
 };
+
 
 const styles = StyleSheet.create({
   background: {

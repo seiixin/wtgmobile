@@ -6,6 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
+
+
+
 
 // Services data
 const services = [
@@ -92,6 +96,7 @@ const MaintenanceDetails = [
 const ServicesScreen = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
   const navigation = useNavigation();
 
   const handleServicePress = (service) => {
@@ -160,12 +165,15 @@ const ServicesScreen = () => {
               <Text style={styles.modalTitle}>{selectedService.title}</Text>
               <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
               <Text style={styles.modalDescription}>{selectedService.description}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.requestButton}>
+              <TouchableOpacity 
+                onPress={() => setConfirmationVisible(true)} 
+                style={styles.requestButton}
+              >
                 <LinearGradient
-                          colors={["#ffef5d", "#7ed957"]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.requestServiceGradient}
+                  colors={["#ffef5d", "#7ed957"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.requestServiceGradient}
                 >
                   <Text style={styles.requestButtonText}>Request Service</Text>
                 </LinearGradient>
@@ -174,6 +182,17 @@ const ServicesScreen = () => {
           )}
         </View>
       </RNModal>
+
+      <ConfirmationModal
+        visible={confirmationVisible}
+        message="Are you sure you want to request this service?"
+        onConfirm={() => {
+          setConfirmationVisible(false); // Close the modal
+          setModalVisible(false);
+          Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
+        }}
+        onCancel={() => setConfirmationVisible(false)} 
+      />
     </ImageBackground>
   );
 };
