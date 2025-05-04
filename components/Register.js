@@ -6,6 +6,7 @@ import { Checkbox } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const Register = () => {
   const [genderOpen, setGenderOpen] = useState(false);
@@ -117,50 +118,70 @@ const Register = () => {
     setFormData((prevData) => ({ ...prevData, [field]: value }));
   };
 
-  const validateMobile = (mobile) => {
-    const regex = /^[0-9]{11}$/;
-    return regex.test(mobile);
-  };
+  const validateMobile = (mobile) => /^[0-9]{11}$/.test(mobile);
 
-  const validateEmail = (email) => {
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
+  const validateEmail = (email) =>
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+
+  const validatePassword = (password) =>
+    password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[@$!%*?&#]/.test(password);
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const handleRegister = async () => {
     console.log("Form Data Submitted: ", formData);
 
-    if (!formData.name || !formData.email || !formData.password || !formData.gender || !formData.dob || !formData.confirmPassword) {
-      alert('Please fill all required fields');
+    // Validation Rules
+    if (!formData.name || formData.name.length < 5) {
+      alert("Name must be at least 5 characters long.");
       return;
     }
 
-    if (!validateEmail(formData.email)) {
-      alert('Please enter a valid email address');
+    if (!formData.email || !validateEmail(formData.email)) {
+      alert("Please enter a valid email address.");
       return;
     }
 
-    if (!validateMobile(formData.mobile)) {
-      alert('Please enter a valid 11-digit mobile number');
+    if (!formData.mobile || !validateMobile(formData.mobile)) {
+      alert("Please enter a valid 11-digit mobile number.");
+      return;
+    }
+
+    if (!formData.password || !validatePassword(formData.password)) {
+      alert("Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.");
+      return;
+    }
+
+    if (!formData.confirmPassword || formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
       return;
     }
 
     if (!checked) {
-      alert('Please agree to the Terms & Conditions');
-      return;
-    }
-
-    if (!passwordMatch) {
-      alert('Passwords do not match');
+      alert("Please agree to the Terms & Conditions.");
       return;
     }
 
     try {
+      // Check if the timer is still active
+      const savedTime = await AsyncStorage.getItem(`verificationTimer_${formData.email}`);
+      if (savedTime) {
+        const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
+        if (remainingTime > 0) {
+          alert(`Please wait for the countdown to finish before resending the OTP. Time left: ${formatTime(remainingTime)}`);
+          return;
+        }
+      }
+
       // Step 1: Send OTP to the user's email
       const response = await fetch(`${BASE_URL}/api/otp/send-otp`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email: formData.email }),
       });
@@ -168,17 +189,21 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('OTP sent successfully:', data);
+        console.log("OTP sent successfully:", data);
+
+        // Save the timer in AsyncStorage
+        const newTime = 60; // 1 minute
+        await AsyncStorage.setItem(`verificationTimer_${formData.email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
 
         // Step 2: Navigate to the VerificationRegister screen
-        navigation.navigate('VerificationRegister', { email: formData.email, formData });
+        navigation.navigate("VerificationRegister", { email: formData.email, formData });
       } else {
-        console.error('Error sending OTP:', data);
-        alert(data.message || 'Failed to send OTP');
+        console.error("Error sending OTP:", data);
+        alert(data.message || "Failed to send OTP");
       }
     } catch (error) {
-      console.error('Network error during OTP sending:', error);
-      alert('Error sending OTP');
+      console.error("Network error during OTP sending:", error);
+      alert("Error sending OTP");
     }
   };
 
@@ -238,6 +263,7 @@ const Register = () => {
           placeholderTextColor="#D3D3D3"
           value={formData.name}
           onChangeText={(text) => handleInputChange('name', text)}
+          maxLength={50} // Limit to 50 characters
         />
 
         {/* Gender, Date of Birth, and Nationality - Horizontally Aligned */}
@@ -294,6 +320,7 @@ const Register = () => {
               placeholderTextColor="#D3D3D3"
               value={formData.email}
               onChangeText={(text) => handleInputChange('email', text)}
+              maxLength={100} // Limit to 100 characters
             />
           </View>
           <View style={styles.inputContainer}>
@@ -305,7 +332,7 @@ const Register = () => {
               value={formData.mobile}
               onChangeText={(text) => handleInputChange('mobile', text)}
               keyboardType="numeric"
-              maxLength={11}
+              maxLength={11} // Limit to 11 digits
             />
           </View>
         </View>
@@ -365,6 +392,7 @@ const Register = () => {
             secureTextEntry={!isPasswordVisible} // Toggle visibility for Password
             value={formData.password}
             onChangeText={(text) => handleInputChange('password', text)}
+            maxLength={20} // Limit to 20 characters
           />
           <TouchableOpacity
             onPress={() => setIsPasswordVisible(!isPasswordVisible)} // Toggle Password visibility
@@ -388,6 +416,7 @@ const Register = () => {
             secureTextEntry={!isConfirmPasswordVisible} // Toggle visibility for Confirm Password
             value={formData.confirmPassword}
             onChangeText={(text) => handleInputChange('confirmPassword', text)}
+            maxLength={20} // Limit to 20 characters
           />
           <TouchableOpacity
             onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} // Toggle Confirm Password visibility

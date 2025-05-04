@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ImageBackground, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChangePassFinds = () => {
   const [email, setEmail] = useState('');
   const navigation = useNavigation();
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   const handleFindAccount = async () => {
     if (!email) {
       Alert.alert('Error', 'Please enter your registered email');
       return;
     }
+
     try {
-      // Step 1: Verify if the email exists
+      // Step 1: Check if the timer is still active
+      const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
+      if (savedTime) {
+        const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
+        if (remainingTime > 0) {
+          Alert.alert(`Please wait for the countdown to finish before resending the OTP. Time left: ${formatTime(remainingTime)}`);
+          return;
+        } else {
+          // Clear expired timer
+          await AsyncStorage.removeItem(`verificationTimer_${email}`);
+        }
+      }
+
+      // Step 2: Verify if the email exists
       const response = await fetch(`${BASE_URL}/api/users/find-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -24,7 +45,7 @@ const ChangePassFinds = () => {
       if (response.ok) {
         console.log('Email found:', data);
 
-        // Step 2: Send OTP to the user's email
+        // Step 3: Send OTP to the user's email
         const otpResponse = await fetch(`${BASE_URL}/api/otp/send-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -35,7 +56,12 @@ const ChangePassFinds = () => {
         if (otpResponse.ok) {
           console.log('OTP sent successfully:', otpData);
           Alert.alert('Success', 'OTP has been sent to your email');
-          // Navigate to VerificationForgotPass screen
+
+          // Step 4: Save the timer in AsyncStorage
+          const newTime = 60; // 1 minute
+          await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
+
+          // Step 5: Navigate to VerificationForgotPass screen
           navigation.navigate('VerificationForgotPass', { email });
         } else {
           console.error('Error sending OTP:', otpData);

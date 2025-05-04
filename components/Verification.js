@@ -10,7 +10,7 @@ const Verification = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
   const navigation = useNavigation();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
 
@@ -37,12 +37,32 @@ const Verification = () => {
     };
 
     fetchUserEmail();
+  }, []);
+
+  useEffect(() => {
+    const fetchTimer = async () => {
+      try {
+        const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
+        if (savedTime) {
+          const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
+          setTimeLeft(remainingTime > 0 ? remainingTime : 0);
+          if (remainingTime <= 0) {
+            await AsyncStorage.removeItem(`verificationTimer_${email}`); // Clear expired timer
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching timer:", error);
+      }
+    };
+
+    fetchTimer();
 
     // Countdown timer logic
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
+          AsyncStorage.removeItem(`verificationTimer_${email}`); // Clear timer when it expires
           return 0;
         }
         return prevTime - 1;
@@ -50,7 +70,7 @@ const Verification = () => {
     }, 1000);
 
     return () => clearInterval(timer); // Cleanup on component unmount
-  }, []);
+  }, [email]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -74,8 +94,7 @@ const Verification = () => {
 
   const handleResendCode = async () => {
     if (timeLeft > 0) {
-      // Show an alert if the countdown is still ongoing
-      alert(`Please wait for the countdown to finish before resending the code. Time left: ${formatTime(timeLeft)}`);
+      Alert.alert(`Please wait for the countdown to finish before resending the OTP. Time left: ${formatTime(timeLeft)}`);
       return;
     }
 
@@ -90,7 +109,9 @@ const Verification = () => {
 
       if (response.ok) {
         alert("OTP resent successfully!");
-        setTimeLeft(600); // Reset the timer to 10 minutes
+        const newTime = 60; // 1 minute
+        setTimeLeft(newTime);
+        await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
       } else {
         alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);
