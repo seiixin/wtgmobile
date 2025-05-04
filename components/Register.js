@@ -6,7 +6,7 @@ import { Checkbox } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
-
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const Register = () => {
   const [genderOpen, setGenderOpen] = useState(false);
   const genderItems = [
@@ -155,27 +155,71 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/users/register', {
+      // Step 1: Send OTP to the user's email
+      const response = await fetch(`${BASE_URL}/api/otp/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ email: formData.email }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        console.log('Response data:', data);
-        alert('User Registered Successfully');
-        navigation.navigate('SignIn');
+        console.log('OTP sent successfully:', data);
+
+        // Step 2: Navigate to the VerificationRegister screen
+        navigation.navigate('VerificationRegister', { email: formData.email, formData });
       } else {
-        console.error('Error Response:', data);
-        alert(data.message || 'Registration failed');
+        console.error('Error sending OTP:', data);
+        alert(data.message || 'Failed to send OTP');
       }
     } catch (error) {
-      console.error('Network error during registration:', error);
-      alert('Error registering user');
+      console.error('Network error during OTP sending:', error);
+      alert('Error sending OTP');
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      // Step 1: Verify the OTP
+      const response = await fetch(`${BASE_URL}/api/otp/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: verificationCode }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("OTP verified successfully:", data);
+
+        // Step 2: Complete the registration process
+        const registerResponse = await fetch(`${BASE_URL}/api/users/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(route.params.formData), // Use formData passed from Register.js
+        });
+
+        const registerData = await registerResponse.json();
+
+        if (registerResponse.ok) {
+          alert('Registration completed successfully!');
+          navigation.navigate("SignIn"); // Navigate to the SignIn screen
+        } else {
+          console.error('Error completing registration:', registerData);
+          alert(registerData.message || 'Registration failed');
+        }
+      } else {
+        alert("Invalid or expired OTP. Please try again.");
+        console.error("OTP verification error:", data.message);
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      alert("Error verifying OTP. Please try again.");
     }
   };
 
