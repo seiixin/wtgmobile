@@ -78,22 +78,29 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
     return (
       <View style={styles.infoItem}>
         <Text style={styles.label}>{label}</Text>
-        <TouchableOpacity
-          style={styles.infoRow}
-          onPress={() => {
-            if (!editable) return; // Disable editing for non-editable fields
-            setEditingField(field);
-            setNewValue(formData[field] || ""); // Set current value for editing
-            setModalVisible(true); // Show modal when editing
-          }}
-          disabled={!editable} // Disable touch for non-editable fields
-        >
-          <Text style={[styles.value, !editable && styles.disabledText]}>
-            {formData[field] || "Add"}
-          </Text>
-          {/* Show right arrow only for editable fields */}
-          {editable && <Ionicons name="chevron-forward" size={20} color="gray" style={styles.arrowIcon} />}
-        </TouchableOpacity>
+        <View style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => {
+              if (!editable) return; // Disable editing for non-editable fields
+              setEditingField(field);
+              setNewValue(formData[field] || ""); // Set current value for editing
+              setModalVisible(true); // Show modal when editing
+            }}
+            disabled={!editable} // Disable touch for non-editable fields
+          >
+            <Text style={[styles.value, !editable && styles.disabledText]}>
+              {formData[field] || "Add"}
+            </Text>
+             {/* Add green checkmark for verified email */}
+          {field === "email" && (
+            <Ionicons name="checkmark-circle" size={20} color="green" style={styles.verifiedIcon} />
+          )}
+            {/* Show right arrow only for editable fields */}
+            {editable && <Ionicons name="chevron-forward" size={20} color="gray" style={styles.arrowIcon} />}
+          </TouchableOpacity>
+         
+        </View>
       </View>
     );
   };
@@ -201,7 +208,7 @@ const uploadImage = async (imageUri) => {
               <Text style={styles.sectionHeader}>Personal Information</Text>
               {renderInfoItem('Name', 'name')}
               {renderInfoItem('Mobile Number', 'mobile')}
-              {renderInfoItem('Email', 'email')}
+              {renderInfoItem('Email', 'email', false)}
               {renderInfoItem('Nationality', 'nationality', false)} 
               {renderInfoItem('Gender', 'gender', false)} 
             </View>
@@ -301,6 +308,10 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: "gray", // Gray out non-editable fields
+  },
+  verifiedIcon: {
+    marginLeft: 5, // Add spacing for the verified icon
+    marginRight:-10,
   },
 });
 

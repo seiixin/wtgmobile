@@ -9,6 +9,7 @@ const VerificationRegister = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const navigation = useNavigation();
   const route = useRoute();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
@@ -17,7 +18,26 @@ const VerificationRegister = () => {
     if (route.params && route.params.email) {
       setEmail(route.params.email);
     }
+
+    // Countdown timer logic
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer); // Cleanup on component unmount
   }, [route.params]);
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const handleInputChange = (text, index) => {
     if (!/^\d*$/.test(text)) return; // Only allow numeric input
@@ -35,6 +55,12 @@ const VerificationRegister = () => {
   };
 
   const handleResendCode = async () => {
+    if (timeLeft > 0) {
+      // Show an alert if the countdown is still ongoing
+      alert(`Please wait for the countdown to finish before resending the code. Time left: ${formatTime(timeLeft)}`);
+      return;
+    }
+
     try {
       const response = await fetch(`${BASE_URL}/api/otp/send-otp`, {
         method: "POST",
@@ -46,6 +72,7 @@ const VerificationRegister = () => {
 
       if (response.ok) {
         alert("OTP resent successfully!");
+        setTimeLeft(600); // Reset the timer to 10 minutes
       } else {
         alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);
@@ -134,9 +161,18 @@ const VerificationRegister = () => {
           ))}
         </View>
 
+        {/* Countdown Timer */}
+        <Text style={styles.timer}>Time left: {formatTime(timeLeft)}</Text>
+
         <Text style={styles.click}>Don't receive OTP?</Text>
-        <TouchableOpacity style={styles.resendButton} onPress={handleResendCode}>
-          <Text style={styles.resendButtonText}>Resend Code</Text>
+        <TouchableOpacity
+          style={[styles.resendButton, timeLeft > 0 && styles.disabledButton]}
+          onPress={handleResendCode}
+          disabled={timeLeft > 0} // Disable button if countdown is ongoing
+        >
+          <Text style={[styles.resendButtonText, timeLeft > 0 && styles.disabledText]}>
+            Resend Code
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
@@ -185,6 +221,7 @@ const styles = StyleSheet.create({
     width: '85%',
     alignItems: 'center',
     marginVertical: 20,
+    marginBottom: 40,
   },
   title: {
     fontSize: 28,
@@ -289,6 +326,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  timer: { fontSize: 16, color: 'red', marginBottom: 10 },
+  disabledButton: { opacity: 0.5 },
+  disabledText: { color: 'gray' },
 });
 
 export default VerificationRegister;
