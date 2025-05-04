@@ -43,6 +43,8 @@ import GraveInformation from './components/GraveInformation';
 import GuestLogin from './components/GuestLogin';
 import RequestedServices from './components/RequestedServices';
 import ServicesScreenWithDrawer from './components/Services';
+import VerificationRegister from './components/VerificationRegister';
+
 import FAQs from './components/FAQs';
 import GeneralQuestions from './components/GeneralQuestions';
 import AccountAndProfiles from './components/AccountAndProfiles';
@@ -106,6 +108,7 @@ const MainStack = () => (
     <Stack.Screen name="GuestLogin" component={GuestLogin} />
     <Stack.Screen name="RequestedServices" component={RequestedServices} />
     <Stack.Screen name="ServicesScreenWithDrawer" component={ServicesScreenWithDrawer} />
+    <Stack.Screen name="VerificationRegister" component={VerificationRegister} />
 
     
     <Stack.Screen name="FAQs" component={FAQs} />

@@ -1,50 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
-const Verification = () => {
+const VerificationRegister = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
   const navigation = useNavigation();
+  const route = useRoute();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
 
   useEffect(() => {
-    const fetchUserEmail = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        if (!userId) {
-          console.error("User ID not found");
-          return;
-        }
-
-        const response = await fetch(`${BASE_URL}/api/users/${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setEmail(data.email);
-        } else {
-          console.error("Failed to fetch user email:", data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching user email:", error);
-      }
-    };
-
-    fetchUserEmail();
-  }, []);
+    if (route.params && route.params.email) {
+      setEmail(route.params.email);
+    }
+  }, [route.params]);
 
   const handleInputChange = (text, index) => {
-    if (!/^\d*$/.test(text)) return;
+    if (!/^\d*$/.test(text)) return; // Only allow numeric input
 
     let codeArray = verificationCode.split('');
     codeArray[index] = text;
     setVerificationCode(codeArray.join(''));
 
+    // Automatically focus the next input box
     if (text && index < 5) {
       const nextInput = index + 1;
       const nextInputRef = inputRefs[nextInput];
@@ -86,7 +68,24 @@ const Verification = () => {
 
       if (response.ok) {
         console.log("OTP verified successfully:", data);
-        setIsVerified(true); // Show confirmation modal
+
+        // Step 2: Complete the registration process
+        const registerResponse = await fetch(`${BASE_URL}/api/users/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(route.params.formData),
+        });
+
+        const registerData = await registerResponse.json();
+
+        if (registerResponse.ok) {
+          setIsVerified(true); // Show confirmation modal
+        } else {
+          console.error('Error completing registration:', registerData);
+          alert(registerData.message || 'Registration failed');
+        }
       } else {
         alert("Invalid or expired OTP. Please try again.");
         console.error("OTP verification error:", data.message);
@@ -99,7 +98,7 @@ const Verification = () => {
 
   const handleConfirmation = () => {
     setIsVerified(false);
-    navigation.navigate("MainTabs", { screen: "HistoryTab" }); // Navigate to the main app
+    navigation.navigate("SignIn"); // Navigate to the SignIn screen
   };
 
   const handleBackPress = () => {
@@ -155,7 +154,7 @@ const Verification = () => {
               Yahoo! You have successfully verified the account.
             </Text>
             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmation}>
-              <Text style={styles.confirmButtonText}>Continue to Home</Text>
+              <Text style={styles.confirmButtonText}>Continue to Sign In</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -169,84 +168,84 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '104%',
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#f6f6f6", 
+    backgroundColor: "#f6f6f6",
   },
   card: {
     backgroundColor: '#fff',
-    padding: 30,  
-    borderRadius: 50,  
+    padding: 30,
+    borderRadius: 50,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 }, 
-    shadowOpacity: 0.2,  
-    shadowRadius: 12,  
-    elevation: 6, 
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
     top: 20,
     width: '85%',
-    alignItems: 'center', 
+    alignItems: 'center',
     marginVertical: 20,
   },
   title: {
-    fontSize: 28,  
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
   },
   subtitle: {
-    fontSize: 16,  
+    fontSize: 16,
     color: '#777',
-    marginVertical: 15,  
+    marginVertical: 15,
     textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 20, 
+    marginVertical: 20,
   },
   inputBox: {
-    width: 50,  
-    height: 50,    
+    width: 50,
+    height: 50,
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,  
+    borderRadius: 10,
     textAlign: 'center',
-    fontSize: 24,  
+    fontSize: 24,
     borderWidth: 1,
     borderColor: '#ccc',
   },
   click: {
-    marginTop: 15,  
+    marginTop: 15,
     color: '#6d6d6d',
-    fontSize: 16,  
+    fontSize: 16,
   },
   resendButton: {
-    marginTop: 15,  
+    marginTop: 15,
   },
   resendButtonText: {
     color: 'green',
-    fontSize: 16,  
+    fontSize: 16,
   },
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: 15,  
-    borderRadius: 50,  
-    marginTop: 25,  
+    paddingVertical: 15,
+    borderRadius: 50,
+    marginTop: 25,
     alignItems: 'center',
-  }, 
+  },
   verifyButtonText: {
     color: '#fff',
-    fontSize: 18,  
+    fontSize: 18,
     fontWeight: 'bold',
   },
   email: {
     color: 'green',
-    bottom: 10
+    bottom: 10,
   },
   backButton: {
-    position: 'absolute', 
-    top: 40, 
-    left: 20, 
+    position: 'absolute',
+    top: 40,
+    left: 20,
     backgroundColor: 'transparent',
     padding: 10,
   },
@@ -292,4 +291,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Verification;
+export default VerificationRegister;
