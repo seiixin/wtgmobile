@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,7 @@ const Verification = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState(''); // State to store the email
   const navigation = useNavigation();
+  const inputRefs = Array.from({ length: 6 }, () => React.createRef()); // Ref to manage input focus
 
   // Fetch user email from the database
   useEffect(() => {
@@ -38,9 +39,63 @@ const Verification = () => {
   }, []);
 
   const handleInputChange = (text, index) => {
+    if (!/^\d*$/.test(text)) return; // Only allow numeric input
+
     let codeArray = verificationCode.split('');
     codeArray[index] = text;
     setVerificationCode(codeArray.join(''));
+
+    // Automatically focus the next input box
+    if (text && index < 5) {
+      const nextInput = index + 1;
+      const nextInputRef = inputRefs[nextInput];
+      if (nextInputRef && nextInputRef.current) nextInputRef.current.focus();
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/otp/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("OTP resent successfully!");
+      } else {
+        alert("Failed to resend OTP. Please try again.");
+        console.error("Resend OTP error:", data.message);
+      }
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      alert("Error resending OTP. Please try again.");
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/otp/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: verificationCode }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("OTP verified successfully!");
+        navigation.navigate("MainTabs", { screen: "HistoryTab" });
+      } else {
+        alert("Invalid or expired OTP. Please try again.");
+        console.error("OTP verification error:", data.message);
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      alert("Error verifying OTP. Please try again.");
+    }
   };
 
   const handleBackPress = () => {
@@ -65,6 +120,7 @@ const Verification = () => {
           {Array.from({ length: 6 }).map((_, index) => (
             <TextInput
               key={index}
+              ref={(ref) => (inputRefs[index] = ref)}
               style={styles.inputBox}
               value={verificationCode[index] || ''}
               onChangeText={(text) => handleInputChange(text, index)}
@@ -76,11 +132,11 @@ const Verification = () => {
         </View>
 
         <Text style={styles.click}>Don't receive OTP?</Text>
-        <TouchableOpacity style={styles.resendButton}>
+        <TouchableOpacity style={styles.resendButton} onPress={handleResendCode}>
           <Text style={styles.resendButtonText}>Resend Code</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.verifyButton} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+        <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
           <Text style={styles.verifyButtonText}>Verify</Text>
         </TouchableOpacity>
       </View>

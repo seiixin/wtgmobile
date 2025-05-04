@@ -1,9 +1,19 @@
 const express = require('express');
 const multer = require('multer');
-const { registerUser, loginUser, getUserById, updateUser, validatePassword, updatePassword, uploadProfileImage } = require('../controllers/userController');
+const { 
+    registerUser, 
+    loginUser, 
+    getUserById, 
+    updateUser, 
+    validatePassword, 
+    updatePassword, 
+    uploadProfileImage, 
+    findEmail, 
+    resetPassword 
+} = require('../controllers/userController');
 
 const router = express.Router();
-const { findEmail, resetPassword } = require('../controllers/userController'); // Import functions
+const path = require('path'); // Ensure 'path' is imported
 
 // ✅ Configure Multer for file storage
 const storage = multer.diskStorage({
@@ -30,18 +40,17 @@ const upload = multer({
     fileFilter 
 });
 
-// ✅ User authentication routes
+// Specific routes first
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/:id', getUserById);
-router.put('/update/:id', updateUser);
-router.post('/validate-password/:id', validatePassword);
-router.put('/update-password/:id', updatePassword);
 router.post('/find-email', findEmail);
 router.post('/reset-password', resetPassword);
-
-
-// ✅ Route for uploading profile images
+router.post('/validate-password/:id', validatePassword);
+router.put('/update-password/:id', updatePassword);
+router.put('/update/:id', updateUser);
 router.post('/upload-image/:id', upload.single("profileImage"), uploadProfileImage);
+
+// Dynamic routes last
+router.get('/:id', getUserById);
 
 module.exports = router;
