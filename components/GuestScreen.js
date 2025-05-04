@@ -96,7 +96,7 @@ const CustomDrawerContent = (props) => {
           style={styles.drawerItem}
           onPress={() => {
             props.navigation.navigate('FAQsGuestScreen');
-            props.navigation.dispatch(DrawerActions.closeDrawer()); // Close the drawer
+           
           }}
         >
           <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
@@ -108,7 +108,6 @@ const CustomDrawerContent = (props) => {
           style={styles.drawerItem}
           onPress={() => {
             props.navigation.navigate('GuestScreen');
-            props.navigation.dispatch(DrawerActions.closeDrawer()); // Close the drawer
           }}
         >
           <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />

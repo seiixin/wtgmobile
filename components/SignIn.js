@@ -11,14 +11,15 @@ const SignIn = () => {
   const navigation = useNavigation(); 
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
-
-
   const handleSignIn = () => {
     if (!email || !password) {
       alert("Please enter both email and password");
       return;
     }
-  
+
+    console.log("Starting login process...");
+
+    // Step 1: Login the user
     fetch(`${BASE_URL}/api/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,23 +27,48 @@ const SignIn = () => {
     })
       .then(response => response.json())
       .then(data => {
+        console.log("Login response:", data);
+
         if (data.user && data.user._id) {
+          // Step 2: Store user ID in AsyncStorage
           AsyncStorage.setItem("userId", data.user._id)
             .then(() => {
-              alert("Login successful. Please verify your account with the OTP sent to your email.");
-              navigation.navigate("Verification", { email: data.user.email }); // Pass email to Verification screen
+              console.log("User ID stored in AsyncStorage:", data.user._id);
+
+              // Step 3: Send OTP to the user's email
+              fetch(`${BASE_URL}/api/otp/send-otp`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: data.user.email }),
+              })
+                .then(otpResponse => otpResponse.json())
+                .then(otpData => {
+                  console.log("OTP response:", otpData);
+
+                  if (otpData.success) {
+                    alert("Login successful. Please verify your account with the OTP sent to your email.");
+                    // Step 4: Navigate to the Verification screen
+                    navigation.navigate("Verification", { email: data.user.email });
+                  } else {
+                    alert("Failed to send OTP. Please try again.");
+                  }
+                })
+                .catch(error => {
+                  console.error("Error sending OTP:", error);
+                  alert("Error sending OTP. Please try again.");
+                });
             })
             .catch(error => {
-              alert("Error storing user data");
-              console.error(error);
+              console.error("Error storing user data:", error);
+              alert("Error storing user data.");
             });
         } else {
           alert(data.message || "Invalid credentials");
         }
       })
       .catch(error => {
+        console.error("Login failed:", error);
         alert("Login failed. Please try again.");
-        console.error(error);
       });
   };
 
