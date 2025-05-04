@@ -1,44 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
-const Verification = () => {
+const VerificationForgotPass = () => {
   const [verificationCode, setVerificationCode] = useState('');
-  const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const navigation = useNavigation();
+  const route = useRoute();
+  const email = route.params?.email || ''; // Get email from route params
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
 
+  // Countdown timer logic
   useEffect(() => {
-    const fetchUserEmail = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        if (!userId) {
-          console.error("User ID not found");
-          return;
-        }
-
-        const response = await fetch(`${BASE_URL}/api/users/${userId}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setEmail(data.email);
-        } else {
-          console.error("Failed to fetch user email:", data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching user email:", error);
-      }
-    };
-
-    fetchUserEmail();
-
-    // Countdown timer logic
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
@@ -59,12 +36,13 @@ const Verification = () => {
   };
 
   const handleInputChange = (text, index) => {
-    if (!/^\d*$/.test(text)) return;
+    if (!/^\d*$/.test(text)) return; // Only allow numeric input
 
     let codeArray = verificationCode.split('');
     codeArray[index] = text;
     setVerificationCode(codeArray.join(''));
 
+    // Automatically focus the next input box
     if (text && index < 5) {
       const nextInput = index + 1;
       const nextInputRef = inputRefs[nextInput];
@@ -115,7 +93,7 @@ const Verification = () => {
         console.log("OTP verified successfully:", data);
         setIsVerified(true); // Show confirmation modal
       } else {
-        alert("Invalid or expired OTP. Please try again.");
+        alert("Invalid or expired OTP. Please try again.");     
       }
     } catch (error) {
       alert("Error verifying OTP. Please try again.");
@@ -124,11 +102,7 @@ const Verification = () => {
 
   const handleConfirmation = () => {
     setIsVerified(false);
-    navigation.navigate("MainTabs", { screen: "HistoryTab" }); // Navigate to the main app
-  };
-
-  const handleBackPress = () => {
-    navigation.goBack();
+    navigation.navigate("ResetPassword", { email }); // Navigate to ResetPassword screen
   };
 
   return (
@@ -137,7 +111,7 @@ const Verification = () => {
       style={styles.background}
     >
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={30} color="black" />
       </TouchableOpacity>
 
@@ -162,6 +136,7 @@ const Verification = () => {
 
         {/* Countdown Timer */}
         <Text style={styles.timer}>Time left: {formatTime(timeLeft)}</Text>
+
         <Text style={styles.click}>Don't receive OTP?</Text>
         <TouchableOpacity
           style={[styles.resendButton, timeLeft > 0 && styles.disabledButton]}
@@ -188,7 +163,7 @@ const Verification = () => {
               Yahoo! You have successfully verified the account.
             </Text>
             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmation}>
-              <Text style={styles.confirmButtonText}>Continue to Home</Text>
+              <Text style={styles.confirmButtonText}>Continue to Reset Password</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -198,135 +173,29 @@ const Verification = () => {
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: '100%',
-    height: '104%',
-    justifyContent: 'center', 
-    alignItems: 'center',
-    backgroundColor: "#f6f6f6", 
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 30,  
-    borderRadius: 50,  
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 }, 
-    shadowOpacity: 0.2,  
-    shadowRadius: 12,  
-    elevation: 6, 
-    top: 20,
-    width: '85%',
-    alignItems: 'center', 
-    marginVertical: 20,
-    marginBottom: 50,
-  },
-  title: {
-    fontSize: 28,  
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,  
-    color: '#777',
-    marginVertical: 15,  
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 20, 
-  },
-  inputBox: {
-    width: 50,  
-    height: 50,    
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,  
-    textAlign: 'center',
-    fontSize: 24,  
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  click: {
-    marginTop: 15,  
-    color: '#6d6d6d',
-    fontSize: 16,  
-  },
-  resendButton: {
-    marginTop: 15,  
-  },
-  resendButtonText: {
-    color: 'green',
-    fontSize: 16,  
-  },
-  verifyButton: {
-    width: '85%',
-    backgroundColor: '#00aa13',
-    paddingVertical: 15,  
-    borderRadius: 50,  
-    marginTop: 25,  
-    alignItems: 'center',
-  }, 
-  verifyButtonText: {
-    color: '#fff',
-    fontSize: 18,  
-    fontWeight: 'bold',
-  },
-  email: {
-    color: 'green',
-    bottom: 10
-  },
-  backButton: {
-    position: 'absolute', 
-    top: 40, 
-    left: 20, 
-    backgroundColor: 'transparent',
-    padding: 10,
-  },
-  modalContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1e1e1e',
-    marginVertical: 10,
-  },
-  modalMessage: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  confirmButton: {
-    backgroundColor: '#38b6ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  timer: { fontSize: 14, color: 'red', marginBottom: 0},
+  // Add styles similar to VerificationRegister
+  background: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  card: { backgroundColor: '#fff', padding: 30, borderRadius: 20, alignItems: 'center', width: '85%', marginBottom: 10, },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#000' },
+  subtitle: { fontSize: 16, color: '#777', marginVertical: 15, textAlign: 'center' },
+  inputContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginVertical: 20 },
+  inputBox: { width: 50, height: 50, backgroundColor: '#f5f5f5', borderRadius: 10, textAlign: 'center', fontSize: 24, borderWidth: 1, borderColor: '#ccc' },
+  timer: { fontSize: 16, color: 'red', marginBottom: 10 },
+  click: { marginTop: 15, color: '#6d6d6d', fontSize: 16 },
+  resendButton: { marginTop: 15 },
+  resendButtonText: { color: 'green', fontSize: 16 },
   disabledButton: { opacity: 0.5 },
   disabledText: { color: 'gray' },
+  verifyButton: { width: '85%', backgroundColor: '#00aa13', paddingVertical: 15, borderRadius: 50, marginTop: 25, alignItems: 'center' },
+  verifyButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  email: { color: 'green', bottom: 10 },
+  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: 'transparent', padding: 10 },
+  modalContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  modalContent: { width: '80%', backgroundColor: 'white', borderRadius: 20, padding: 20, alignItems: 'center' },
+  modalTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e1e1e', marginVertical: 10 },
+  modalMessage: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 20 },
+  confirmButton: { backgroundColor: '#38b6ff', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
+  confirmButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });
 
-export default Verification;
+export default VerificationForgotPass;

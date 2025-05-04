@@ -44,6 +44,8 @@ import GuestLogin from './components/GuestLogin';
 import RequestedServices from './components/RequestedServices';
 import ServicesScreenWithDrawer from './components/Services';
 import VerificationRegister from './components/VerificationRegister';
+import VerificationForgotPass from './components/VerificationForgotPass';
+
 
 import FAQs from './components/FAQs';
 import GeneralQuestions from './components/GeneralQuestions';
@@ -63,6 +65,7 @@ import GuestGraveSearch from './components/GuestGraveSearch';
 import GuestVirtualTributes from './components/GuestVirtualTributes';
 import GuestCemeteryServices from './components/GuestCemeteryServices';
 import GuestTechnicalSupport from './components/GuestTechnicaSuppport';
+
 
 // Create Navigators
 const Tab = createBottomTabNavigator();
@@ -109,6 +112,8 @@ const MainStack = () => (
     <Stack.Screen name="RequestedServices" component={RequestedServices} />
     <Stack.Screen name="ServicesScreenWithDrawer" component={ServicesScreenWithDrawer} />
     <Stack.Screen name="VerificationRegister" component={VerificationRegister} />
+    <Stack.Screen name="VerificationForgotPass" component={VerificationForgotPass} />
+
 
     
     <Stack.Screen name="FAQs" component={FAQs} />

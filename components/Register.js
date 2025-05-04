@@ -60,7 +60,8 @@ const Register = () => {
   });
 
   const [checked, setChecked] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State to toggle password visibility
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for Password visibility
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false); // State for Confirm Password visibility
   const [dateOfBirth, setDateOfBirth] = useState(''); // Store selected date as string
   const [datePickerVisible, setDatePickerVisible] = useState(false); // To toggle the date picker visibility
   const [selectedDate, setSelectedDate] = useState(new Date()); // Store the actual date object
@@ -354,18 +355,21 @@ const Register = () => {
           </View>
         </View>
 
-        {/* Password and Confirm Password */}
+        {/* Password */}
         <Text style={styles.label}>Password*</Text>
         <View style={styles.passwordContainer}>
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#D3D3D3"
-            secureTextEntry={!isPasswordVisible} // Toggle between visible and hidden password
+            secureTextEntry={!isPasswordVisible} // Toggle visibility for Password
             value={formData.password}
             onChangeText={(text) => handleInputChange('password', text)}
           />
-          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
+          <TouchableOpacity
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)} // Toggle Password visibility
+            style={styles.eyeIcon}
+          >
             <Ionicons
               name={isPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
               size={24}
@@ -376,14 +380,26 @@ const Register = () => {
 
         {/* Confirm Password */}
         <Text style={styles.label}>Confirm Password*</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#D3D3D3"
-          secureTextEntry={!isPasswordVisible} // Toggle between visible and hidden password
-          value={formData.confirmPassword}
-          onChangeText={(text) => handleInputChange('confirmPassword', text)}
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor="#D3D3D3"
+            secureTextEntry={!isConfirmPasswordVisible} // Toggle visibility for Confirm Password
+            value={formData.confirmPassword}
+            onChangeText={(text) => handleInputChange('confirmPassword', text)}
+          />
+          <TouchableOpacity
+            onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} // Toggle Confirm Password visibility
+            style={styles.eyeIcon}
+          >
+            <Ionicons
+              name={isConfirmPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
+              size={24}
+              color="gray"
+            />
+          </TouchableOpacity>
+        </View>
         {!passwordMatch && <Text style={styles.errorText}>Passwords do not match!</Text>}
 
         {/* Terms & Conditions */}
