@@ -9,7 +9,7 @@ const VerificationRegister = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
   const navigation = useNavigation();
   const route = useRoute();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
@@ -72,7 +72,7 @@ const VerificationRegister = () => {
 
       if (response.ok) {
         alert("OTP resent successfully!");
-        setTimeLeft(600); // Reset the timer to 10 minutes
+        setTimeLeft(60); // Reset the timer to 1 minute
       } else {
         alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);

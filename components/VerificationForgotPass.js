@@ -8,7 +8,7 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const VerificationForgotPass = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
   const navigation = useNavigation();
   const route = useRoute();
   const email = route.params?.email || ''; // Get email from route params
@@ -68,7 +68,7 @@ const VerificationForgotPass = () => {
 
       if (response.ok) {
         alert("OTP resent successfully!");
-        setTimeLeft(600); // Reset the timer to 10 minutes
+        setTimeLeft(60); // Reset the timer to 1 minute
       } else {
         alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);

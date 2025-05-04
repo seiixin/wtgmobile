@@ -11,7 +11,13 @@ const SignIn = () => {
   const navigation = useNavigation(); 
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
-  const handleSignIn = () => {
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleSignIn = async () => {
     if (!email || !password) {
       alert("Please enter both email and password");
       return;
@@ -19,57 +25,64 @@ const SignIn = () => {
 
     console.log("Starting login process...");
 
-    // Step 1: Login the user
-    fetch(`${BASE_URL}/api/users/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        console.log("Login response:", data);
-
-        if (data.user && data.user._id) {
-          // Step 2: Store user ID in AsyncStorage
-          AsyncStorage.setItem("userId", data.user._id)
-            .then(() => {
-              console.log("User ID stored in AsyncStorage:", data.user._id);
-
-              // Step 3: Send OTP to the user's email
-              fetch(`${BASE_URL}/api/otp/send-otp`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: data.user.email }),
-              })
-                .then(otpResponse => otpResponse.json())
-                .then(otpData => {
-                  console.log("OTP response:", otpData);
-
-                  if (otpData.success) {
-                    alert("Login successful. Please verify your account with the OTP sent to your email.");
-                    // Step 4: Navigate to the Verification screen
-                    navigation.navigate("Verification", { email: data.user.email });
-                  } else {
-                    alert("Failed to send OTP. Please try again.");
-                  }
-                })
-                .catch(error => {
-                  console.error("Error sending OTP:", error);
-                  alert("Error sending OTP. Please try again.");
-                });
-            })
-            .catch(error => {
-              console.error("Error storing user data:", error);
-              alert("Error storing user data.");
-            });
-        } else {
-          alert(data.message || "Invalid credentials");
-        }
-      })
-      .catch(error => {
-        console.error("Login failed:", error);
-        alert("Login failed. Please try again.");
+    try {
+      // Step 1: Login the user
+      const response = await fetch(`${BASE_URL}/api/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
+
+      const data = await response.json();
+      console.log("Login response:", data);
+
+      if (data.user && data.user._id) {
+        // Step 2: Check if the timer is still active
+        const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
+        if (savedTime) {
+          const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
+          if (remainingTime > 0) {
+            alert(`Please wait for the countdown to finish before proceeding. Time left: ${formatTime(remainingTime)}`);
+            return;
+          } else {
+            // Clear expired timer
+            await AsyncStorage.removeItem(`verificationTimer_${email}`);
+          }
+        }
+
+        // Step 3: Store user ID in AsyncStorage
+        await AsyncStorage.setItem("userId", data.user._id);
+        console.log("User ID stored in AsyncStorage:", data.user._id);
+
+        // Step 4: Send OTP to the user's email
+        const otpResponse = await fetch(`${BASE_URL}/api/otp/send-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.user.email }),
+        });
+
+        const otpData = await otpResponse.json();
+        console.log("OTP response:", otpData);
+
+        if (otpResponse.ok && otpData.success) {
+          alert("Login successful. Please verify your account with the OTP sent to your email.");
+
+          // Step 5: Save the timer in AsyncStorage
+          const newTime = 60; // 1 minute
+          await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
+
+          // Step 6: Navigate to the Verification screen
+          navigation.navigate("Verification", { email: data.user.email });
+        } else {
+          alert("Failed to send OTP. Please try again.");
+        }
+      } else {
+        alert(data.message || "Invalid credentials");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Please try again.");
+    }
   };
 
   return (

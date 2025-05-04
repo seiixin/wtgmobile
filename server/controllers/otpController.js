@@ -18,22 +18,26 @@ exports.sendOtp = async (req, res) => {
     const { email } = req.body;
     console.log('Email received:', email);
 
+    // Generate OTP and set expiration to 1 minute
     const otp = crypto.randomInt(100000, 999999).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60000);
+    const expiresAt = new Date(Date.now() + 1 * 60000); // 1 minute
 
     try {
+        // Save OTP to the database
         const otpEntry = new Otp({ email, otp, expiresAt });
         await otpEntry.save();
 
+        // Email configuration
         const mailOptions = {
             from: 'shanegregg.cereno@gmail.com',
             to: email,
             subject: 'Your OTP Code',
-            text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+            text: `Your OTP is ${otp}. It will expire in 1 minute.`,
         };
 
         console.log('Sending email with options:', mailOptions);
 
+        // Send OTP via email
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 console.error('Error sending OTP:', error);
@@ -48,19 +52,20 @@ exports.sendOtp = async (req, res) => {
     }
 };
 
-
 exports.verifyOtp = async (req, res) => {
     const { otp } = req.body;
 
     try {
+        // Check if the OTP exists and is not expired
         const otpEntry = await Otp.findOne({ otp, expiresAt: { $gt: new Date() } });
 
         if (!otpEntry) {
             return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
         }
 
-        await Otp.deleteOne({ otp }); // Remove OTP after successful verification
-        res.json({ success: true, message: 'OTP verified' });
+        // Remove OTP after successful verification
+        await Otp.deleteOne({ otp });
+        res.json({ success: true, message: 'OTP verified successfully' });
     } catch (error) {
         console.error('Internal Server Error during OTP verification:', error);
         res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
