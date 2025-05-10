@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
@@ -56,8 +57,7 @@ const VerificationRegister = () => {
 
   const handleResendCode = async () => {
     if (timeLeft > 0) {
-      // Show an alert if the countdown is still ongoing
-      alert(`Please wait for the countdown to finish before resending the code. Time left: ${formatTime(timeLeft)}`);
+      Alert.alert(`Please wait for the countdown to finish before resending the code. Time left: ${formatTime(timeLeft)}`);
       return;
     }
 
@@ -71,15 +71,16 @@ const VerificationRegister = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("OTP resent successfully!");
+        Alert.alert("OTP resent successfully!");
         setTimeLeft(60); // Reset the timer to 1 minute
+        await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + 60).toString());
       } else {
-        alert("Failed to resend OTP. Please try again.");
+        Alert.alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);
       }
     } catch (error) {
       console.error("Error resending OTP:", error);
-      alert("Error resending OTP. Please try again.");
+      Alert.alert("Error resending OTP. Please try again.");
     }
   };
 
@@ -109,17 +110,18 @@ const VerificationRegister = () => {
 
         if (registerResponse.ok) {
           setIsVerified(true); // Show confirmation modal
+          await AsyncStorage.removeItem(`verificationTimer_${email}`); // Reset the OTP timer in AsyncStorage
         } else {
           console.error('Error completing registration:', registerData);
-          alert(registerData.message || 'Registration failed');
+          Alert.alert(registerData.message || 'Registration failed');
         }
       } else {
-        alert("Invalid or expired OTP. Please try again.");
+        Alert.alert("Invalid or expired OTP. Please try again.");
         console.error("OTP verification error:", data.message);
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      alert("Error verifying OTP. Please try again.");
+      Alert.alert("Error verifying OTP. Please try again.");
     }
   };
 
@@ -198,6 +200,7 @@ const VerificationRegister = () => {
     </ImageBackground>
   );
 };
+
 
 const styles = StyleSheet.create({
   background: {
