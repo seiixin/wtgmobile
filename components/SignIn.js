@@ -23,7 +23,7 @@ const SignIn = () => {
       return;
     }
 
-    console.log("Starting login process...");
+ 
 
     try {
       // Step 1: Login the user
@@ -34,7 +34,6 @@ const SignIn = () => {
       });
 
       const data = await response.json();
-      console.log("Login response:", data);
 
       if (data.user && data.user._id) {
         // Step 2: Check if the timer is still active

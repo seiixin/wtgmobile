@@ -166,7 +166,42 @@ const ServicesScreen = () => {
               <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
               <Text style={styles.modalDescription}>{selectedService.description}</Text>
               <TouchableOpacity 
-                onPress={() => setConfirmationVisible(true)} 
+                onPress={async () => {
+                  try {
+                    const userId = await AsyncStorage.getItem('userId'); // Get the logged-in user's ID
+                    if (!userId) {
+                      Alert.alert("Error", "You must be logged in to request a service.");
+                      return;
+                    }
+
+                    // API call to add the service request to the database
+                    const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/service-requests', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        userId,
+                        serviceName: selectedService.title,
+                        price: parseFloat(selectedService.pricing.replace(/[^0-9.]/g, '')), // Extract numeric price
+                      }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                      Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
+                    } else {
+                      console.error("Error submitting request:", data.message);
+                      Alert.alert("Error", data.message || "Failed to submit the service request.");
+                    }
+                  } catch (error) {
+                    console.error("Error submitting request:", error);
+                    Alert.alert("Error", "An error occurred while submitting the service request.");
+                  }
+
+                  setModalVisible(false); // Close the service details modal
+                }} 
                 style={styles.requestButton}
               >
                 <LinearGradient
@@ -186,12 +221,44 @@ const ServicesScreen = () => {
       <ConfirmationModal
         visible={confirmationVisible}
         message="Are you sure you want to request this service?"
-        onConfirm={() => {
-          setConfirmationVisible(false); // Close the modal
-          setModalVisible(false);
-          Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
+        onConfirm={async () => {
+          try {
+            const userId = await AsyncStorage.getItem('userId'); // Get the logged-in user's ID
+            if (!userId) {
+              Alert.alert("Error", "You must be logged in to request a service.");
+              return;
+            }
+
+            // API call to add the service request to the database
+            const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/service-requests', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId,
+                serviceName: selectedService.title,
+                price: parseFloat(selectedService.pricing.replace(/[^0-9.]/g, '')), // Extract numeric price
+              }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
+            } else {
+              console.error("Error submitting request:", data.message);
+              Alert.alert("Error", data.message || "Failed to submit the service request.");
+            }
+          } catch (error) {
+            console.error("Error submitting request:", error);
+            Alert.alert("Error", "An error occurred while submitting the service request.");
+          }
+
+          setConfirmationVisible(false); // Close the confirmation modal
+          setModalVisible(false); // Close the service details modal
         }}
-        onCancel={() => setConfirmationVisible(false)} 
+        onCancel={() => setConfirmationVisible(false)}
       />
     </ImageBackground>
   );

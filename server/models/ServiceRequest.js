@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const serviceRequestSchema = new mongoose.Schema({
+const ServiceRequestSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Reference to User model (assuming you have a User model)
+    ref: 'User',
     required: true,
   },
   serviceName: {
@@ -14,16 +14,15 @@ const serviceRequestSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  description: {
+  status: {
     type: String,
-    required: true,
+    enum: ['Pending', 'Approved', 'Completed'],
+    default: 'Pending',
   },
-  requestDate: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
-
-module.exports = ServiceRequest;
+module.exports = mongoose.model('ServiceRequest', ServiceRequestSchema);

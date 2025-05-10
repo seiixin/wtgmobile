@@ -28,8 +28,19 @@ const ChangePassword = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      Alert.alert('Error', 'New password should be at least 6 characters');
+    // Password validation logic from Register.js
+    const validatePassword = (password) =>
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[@$!%*?&#]/.test(password);
+
+    if (!validatePassword(newPassword)) {
+      Alert.alert(
+        'Error',
+        'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.'
+      );
       return;
     }
 
@@ -63,6 +74,9 @@ const ChangePassword = () => {
 
       const updateData = await updateResponse.json();
       if (updateResponse.ok) {
+        // Reset OTP timer in AsyncStorage
+        await AsyncStorage.removeItem(`verificationTimer_${userId}`);
+
         Alert.alert('Success', 'Password has been changed successfully');
         navigation.goBack(); // Navigate back to profile
       } else {

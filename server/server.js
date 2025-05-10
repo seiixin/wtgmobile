@@ -40,7 +40,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://happytooou:cFI51B3bXpjM
 
 // ✅ Routes
 app.use('/api/users', userRoutes);
-app.use('/api/service-request', serviceRequestRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/graves', graveRoutes);
 app.use('/uploads', express.static(uploadDir));
 app.use('/api/otp', otpRoutes);

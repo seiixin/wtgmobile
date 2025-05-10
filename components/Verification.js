@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -56,21 +56,17 @@ const Verification = () => {
     };
 
     fetchTimer();
-
-    // Countdown timer logic
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer);
-          AsyncStorage.removeItem(`verificationTimer_${email}`); // Clear timer when it expires
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer); // Cleanup on component unmount
   }, [email]);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+
+      return () => clearInterval(timer); // Cleanup the interval on component unmount
+    }
+  }, [timeLeft]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -108,17 +104,15 @@ const Verification = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("OTP resent successfully!");
-        const newTime = 60; // 1 minute
-        setTimeLeft(newTime);
-        await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
+        Alert.alert("OTP resent successfully!");
+        setTimeLeft(60); // Reset the timer to 60 seconds
       } else {
-        alert("Failed to resend OTP. Please try again.");
+        Alert.alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);
       }
     } catch (error) {
       console.error("Error resending OTP:", error);
-      alert("Error resending OTP. Please try again.");
+      Alert.alert("Error resending OTP. Please try again.");
     }
   };
 
