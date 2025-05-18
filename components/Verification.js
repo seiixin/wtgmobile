@@ -129,6 +129,8 @@ const Verification = () => {
       if (response.ok) {
         console.log("OTP verified successfully:", data);
         setIsVerified(true); // Show confirmation modal
+        // Reset the verification timer in AsyncStorage
+        await AsyncStorage.removeItem(`verificationTimer_${email}`);
       } else {
         alert("Invalid or expired OTP. Please try again.");
       }

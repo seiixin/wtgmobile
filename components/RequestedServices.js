@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Swipeable } from 'react-native-gesture-handler';
+import { Picker } from '@react-native-picker/picker';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 const RequestedServices = () => {
   const [activeTab, setActiveTab] = useState("Request Cart"); // Track the active tab
@@ -9,7 +12,43 @@ const RequestedServices = () => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0); // Track total spent for paid transactions
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Bone Apartment");
+  const [apartmentOpen, setApartmentOpen] = useState(false);
+  const [apartmentValue, setApartmentValue] = useState(null);
+  const [apartments, setApartments] = useState([
+    { label: 'Bone Apartment', value: 'Bone Apartment' },
+    { label: 'Child Apartment', value: 'Child Apartment' },
+    { label: 'Adult Apartment', value: 'Adult Apartment' },
+  ]);
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [graveDetails, setGraveDetails] = useState({
+    deceasedName: '',
+    dateOfBurial: '',
+    dateOfDeath: '',
+    phaseBlk: '',
+    category: '',
+    apartmentNo: '',
+  });
+  const [userInfo, setUserInfo] = useState({ name: '', avatar: '' });
+  const [expandedTransactionId, setExpandedTransactionId] = useState(null);
 
+const GradientNextButton = ({ onPress }) => (
+  <TouchableOpacity style={{ width: '100%' }} onPress={onPress} activeOpacity={0.8}>
+    <ImageBackground
+      source={require('../assets/gradient-btn.png')}
+      style={[modalStyles.nextButton, { width: '110%' }]} // Ensure full width
+      imageStyle={{ borderRadius: 30, width: '100%', resizeMode: 'stretch' }} // Stretch image to fit
+      resizeMode="stretch"
+    >
+      <Text style={modalStyles.nextButtonText}>Next</Text>
+      <View style={modalStyles.nextButtonCircle}>
+        <Text style={modalStyles.nextButtonArrow}>➔</Text>
+      </View>
+    </ImageBackground>
+  </TouchableOpacity>
+);
   const serviceIcons = {
     "Yearly Grave Cleaning": require("../assets/YearlyIcon.png"),
     "Electricity Use": require("../assets/ElectricityIcon.png"),
@@ -56,7 +95,7 @@ const RequestedServices = () => {
     }
 
     // Fetch paid transactions
-    fetch(`https://walktogravemobile-backendserver.onrender.com/api/paid-transactions/${userId}`, {
+    fetch(`https://walktogravemobile-backendserver.onrender.com/api/transactions/user/${userId}`, {
       method: "GET",
     })
       .then(async (response) => {
@@ -68,7 +107,7 @@ const RequestedServices = () => {
         }
         const data = await response.json();
         setPaidTransactions(data.data || []); // Ensure it's an array even if undefined
-        const totalSpentAmount = (data.data || []).reduce((sum, transaction) => sum + transaction.price, 0);
+        const totalSpentAmount = (data.data || []).reduce((sum, transaction) => sum + (transaction.total || 0), 0);
         setTotalSpent(totalSpentAmount); // Calculate total spent
       })
       .catch(error => {
@@ -109,6 +148,51 @@ const RequestedServices = () => {
     alert("Proceeding to payment...");
   };
 
+  const handleRemoveService = async (serviceId) => {
+    try {
+      // Call backend to delete the service request
+      const response = await fetch(`https://walktogravemobile-backendserver.onrender.com/api/service-requests/${serviceId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        // Remove from local state
+        const updatedServices = selectedServices.filter(service => service._id !== serviceId);
+        setSelectedServices(updatedServices);
+        // Recalculate total price
+        const newTotal = updatedServices
+          .filter(service => service.selected)
+          .reduce((sum, service) => sum + service.price, 0);
+        setTotal(newTotal);
+      } else {
+        alert('Failed to remove service from cart.');
+      }
+    } catch (error) {
+      console.error('Error removing service:', error);
+      alert('Error removing service.');
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+      fetch(`https://walktogravemobile-backendserver.onrender.com/api/users/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Fetched user info:', data);
+          setUserInfo({
+            name: data.name, // <-- use data.name directly
+            avatar: data.profileImage || '', // <-- use data.profileImage if that's your avatar
+          });
+        });
+    };
+    fetchUserInfo();
+  }, []);
+
+  const toggleExpand = (transactionId) => {
+    setExpandedTransactionId(expandedTransactionId === transactionId ? null : transactionId);
+  };
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -137,56 +221,178 @@ const RequestedServices = () => {
       {activeTab === "Request Cart" ? (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {selectedServices.map((service) => (
-            <View key={service._id} style={styles.serviceRow}>
-              <TouchableOpacity
-                onPress={() => handleSelectService(service._id)}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderWidth: 2,
-                  borderColor: service.selected ? "#fab636" : "#aaa",
-                  backgroundColor: service.selected ? "#fab636" : "transparent",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 4,
-                  marginRight: 10,
-                }}
-              >
-                {service.selected && <Text style={{ color: "#fff", fontWeight: "bold" }}>✓</Text>}
-              </TouchableOpacity>
-              <View style={styles.serviceCard}>
-                <Image source={serviceIcons[service.serviceName]} style={styles.serviceIcon} />
-                <View style={styles.serviceDetails}>
-                  <Text style={styles.serviceName}>{service.serviceName}</Text>
-                  <Text style={styles.servicePrice}>₱{service.price.toLocaleString()}</Text>
+            <Swipeable
+              key={service._id}
+              renderRightActions={() => (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#ff4d4d',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: 85,
+                    height: '79%',
+                    borderRadius: 10,
+                    marginVertical: 5,
+                  }}
+                  onPress={() => handleRemoveService(service._id)}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Remove</Text>
+                </TouchableOpacity>
+              )}
+            >
+              <View style={styles.serviceRow}>
+                <TouchableOpacity
+                  onPress={() => handleSelectService(service._id)}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderWidth: 2,
+                    borderColor: service.selected ? "#fab636" : "#aaa",
+                    backgroundColor: service.selected ? "#fab636" : "transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 4,
+                    marginRight: 10,
+                  }}
+                >
+                  {service.selected && <Text style={{ color: "#fff", fontWeight: "bold" }}>✓</Text>}
+                </TouchableOpacity>
+                <View style={styles.serviceCard}>
+                  <Image source={serviceIcons[service.serviceName]} style={styles.serviceIcon} />
+                  <View style={styles.serviceDetails}>
+                    <Text style={styles.serviceName}>{service.serviceName}</Text>
+                    <Text style={styles.servicePrice}>₱{service.price.toLocaleString()}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
+            </Swipeable>
           ))}
         </ScrollView>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {paidTransactions.length > 0 ? (
-            paidTransactions.map((transaction) => (
-              <View key={transaction._id} style={styles.transactionCard}>
-                <Image source={serviceIcons[transaction.serviceName]} style={styles.serviceIcon} />
-                <View style={styles.transactionDetails}>
-                  <Text style={styles.serviceName}>{transaction.serviceName}</Text>
-                  <Text style={styles.transactionStatus}>{transaction.status}</Text>
-                  <Text style={styles.transactionInfo}>Paid by: {transaction.paymentMethod}</Text>
-                  <Text style={styles.transactionInfo}>Order Time: {transaction.orderTime}</Text>
-                  <Text style={styles.transactionInfo}>Payment Time: {transaction.paymentTime}</Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noTransactionsText}>No paid transactions available.</Text>
-          )}
-          <View style={styles.footer}>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            {paidTransactions.length > 0 ? (
+              paidTransactions.map((transaction) => {
+                const isExpanded = expandedTransactionId === transaction._id;
+                return (
+                  <View
+                    key={transaction._id}
+                    style={[
+                      styles.transactionCard,
+                      {
+                        flexDirection: 'column',
+                        position: 'relative',
+                        backgroundColor: '#f9f9f9',
+                        borderRadius: 12,
+                        marginBottom: 12,
+                        width: '100%', // Make card take full width of container
+                        paddingHorizontal: 0, // Remove extra horizontal padding
+                        paddingVertical: 0, // Remove extra vertical padding
+                        minHeight: 65,
+                        justifyContent: 'center',
+                      }
+                    ]}
+                  >
+                    {/* Collapsed Row: Icon, Name, Status */}
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        minHeight: 65,
+                        paddingHorizontal: 18, // Add horizontal padding inside the card
+                        width: '100%',
+                      }}
+                      onPress={() => toggleExpand(transaction._id)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <Image
+                          source={serviceIcons[transaction.services?.[0]?.serviceName]}
+                          style={{ width: 40, height: 40, marginRight: 16 }}
+                        />
+                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#333' }}>
+                          {transaction.services?.[0]?.serviceName}
+                          {transaction.services?.length > 1 && (
+                            <Text style={{ color: '#888', fontSize: 15 }}>
+                              {`  +${transaction.services.length - 1} more`}
+                            </Text>
+                          )}
+                        </Text>
+                      </View>
+                      <Text style={{
+                        color: transaction.status === 'paid' || transaction.status === 'Completed' ? '#1976d2' : '#fab636',
+                        fontWeight: 'bold',
+                        fontSize: 13,
+                        minWidth: 90,
+                        textAlign: 'right'
+                      }}>
+                        {transaction.status === 'paid'
+                          ? 'Completed'
+                          : (transaction.status || 'To Process')}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Expanded Details */}
+                    {isExpanded && (
+                      <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 10, padding: 10 }}>
+                        <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>Services:</Text>
+                        {transaction.services.map((service, idx) => (
+                          <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <Text style={{ color: '#333' }}>{service.serviceName}</Text>
+                            <Text style={{ color: '#333' }}>₱{service.price?.toLocaleString()}</Text>
+                          </View>
+                        ))}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={{ color: '#888' }}>Paid by</Text>
+                          <Text style={{ color: '#333', fontWeight: 'bold' }}>
+                            {transaction.paymentMethod === 'gcash' ? 'Gcash' : (transaction.paymentMethod || 'Cash')}
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={{ color: '#888' }}>Order Time</Text>
+                          <Text style={{ color: '#333' }}>
+                            {transaction.orderTime ? new Date(transaction.orderTime).toLocaleDateString() + ' ' + new Date(transaction.orderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <Text style={{ color: '#888' }}>Payment Time</Text>
+                          <Text style={{ color: '#333' }}>
+                            {transaction.paymentTime ? new Date(transaction.paymentTime).toLocaleDateString() + ' ' + new Date(transaction.paymentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </Text>
+                        </View>
+                        <View style={{ borderTopWidth: 1, borderColor: '#eee', marginVertical: 8 }} />
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: '#333', fontWeight: 'bold' }}>Total Payment:</Text>
+                          <Text style={{ fontWeight: 'bold', color: '#388e3c', fontSize: 16 }}>
+                            ₱{transaction.total?.toLocaleString()}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Expand/Collapse Button */}
+                    <TouchableOpacity
+                      style={{ alignSelf: 'center', marginTop: isExpanded ? 8 : 0 }}
+                      onPress={() => toggleExpand(transaction._id)}
+                    >
+                      <Text style={{ color: '#888', fontSize: 13 }}>
+                        {isExpanded ? 'View Less  ⌃' : 'View Details  ⌄'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.noTransactionsText}>No paid transactions available.</Text>
+            )}
+            <View style={{ height: 80 }} /> 
+          </ScrollView>
+          <View style={styles.fixedFooter}>
             <Text style={styles.totalText}>Total Spent:</Text>
             <Text style={styles.totalAmount}>₱{totalSpent.toLocaleString()}</Text>
           </View>
-        </ScrollView>
+        </View>
       )}
       {activeTab === "Request Cart" && (
         <View style={styles.footerContainer}>
@@ -210,12 +416,249 @@ const RequestedServices = () => {
             <TouchableOpacity style={styles.paymentButton} onPress={handleProceedToPayment}>
               <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.collapseButton}>
+            <TouchableOpacity
+              style={styles.collapseButton}
+              onPress={() => setIsModalVisible(true)}
+            >
               <Text style={styles.collapseIcon}>⌃</Text> 
             </TouchableOpacity>
           </ImageBackground>
         </View>
       )}
+
+      {/* Modal for Edit Grave Details */}
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.modalContent}>
+            <TouchableOpacity
+              style={modalStyles.closeButton}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={modalStyles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+            <Text style={modalStyles.title}>Edit Grave Details</Text>
+            <View style={modalStyles.row}>
+              <View style={modalStyles.inputContainer}>
+                <Text style={modalStyles.label}>Name of the Deceased *</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.deceasedName}
+                  onChangeText={text => setGraveDetails({ ...graveDetails, deceasedName: text })}
+                />
+              </View>
+              <View style={modalStyles.inputContainer}>
+                <Text style={modalStyles.label}>Date of Burial *</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.dateOfBurial}
+                  onChangeText={text => setGraveDetails({ ...graveDetails, dateOfBurial: text })}
+                />
+              </View>
+            </View>
+            <View style={modalStyles.row}>
+              <View style={modalStyles.inputContainer}>
+                <Text style={modalStyles.label}>Date of Death *</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.dateOfDeath}
+                  onChangeText={text => setGraveDetails({ ...graveDetails, dateOfDeath: text })}
+                />
+              </View>
+              <View style={modalStyles.inputContainer}>
+                <Text style={modalStyles.label}>Phase / Blk *</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.phaseBlk}
+                  onChangeText={text => setGraveDetails({ ...graveDetails, phaseBlk: text })}
+                />
+              </View>
+            </View>
+            <View style={modalStyles.row}>
+              <View style={[modalStyles.inputContainer, { flex: 1.2 }]}>
+                <Text style={modalStyles.label}>Select Category *</Text>
+                <DropDownPicker
+                  open={apartmentOpen}
+                  value={graveDetails.category}
+                  setValue={val => setGraveDetails({ ...graveDetails, category: val() })}
+                  items={apartments}
+                  setOpen={setApartmentOpen}
+                  
+                  setItems={setApartments}
+                  placeholder="Select Apartment"
+                  style={{
+                    height: 38, // Set your desired height here
+                    borderColor: '#ccc',
+                    backgroundColor: '#f9f9f9',
+                    minHeight: 38, // Ensures minimum height
+                    paddingVertical: 0, // Remove extra padding
+                  }}
+                  containerStyle={{
+                    height: 38, // Match the height here as well
+                  }}
+                  dropDownContainerStyle={{
+                    borderColor: '#ccc',
+                  }}
+                  zIndex={1000}
+                  
+                />
+              </View>
+              <View style={modalStyles.inputContainer}>
+                <Text style={modalStyles.label}>Apt. no.</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.apartmentNo}
+                  onChangeText={text => setGraveDetails({ ...graveDetails, apartmentNo: text })}
+                />
+              </View>
+            </View>
+            <GradientNextButton onPress={() => {
+  setIsModalVisible(false);           // Hide Edit Grave Details modal
+  setIsPaymentModalVisible(true);     // Show Payment Method modal
+}} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for Payment Method */}
+      <Modal
+        visible={isPaymentModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsPaymentModalVisible(false)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.modalContent}>
+            <TouchableOpacity
+              style={modalStyles.closeButton}
+              onPress={() => setIsPaymentModalVisible(false)}
+            >
+              <Text style={modalStyles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+            <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 20, marginBottom: 24, alignSelf: 'flex-start' }}>Payment Method</Text>
+            <View style={{ width: '100%', marginBottom: 20 }}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}
+                onPress={() => setSelectedPayment('gcash')}
+                activeOpacity={0.8}
+              >
+                <Image source={require('../assets/gcash.png')} style={{ width: 50, height: 50, marginRight: 16 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Gcash</Text>
+                  <Text style={{ fontSize: 12, color: '#555' }}>
+                    Payment (min. ₱50) should be completed within 24 hrs. Accessible 24/7 and may entail additional 2% fee.
+                  </Text>
+                </View>
+                <View style={{
+                  width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#FFD600',
+                  alignItems: 'center', justifyContent: 'center', marginLeft: 8,
+                  backgroundColor: selectedPayment === 'gcash' ? '#FFD600' : '#fff'
+                }}>
+                  {selectedPayment === 'gcash' && (
+                    <View style={{
+                      width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFD600'
+                    }} />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+                onPress={() => setSelectedPayment('cash')}
+                activeOpacity={0.8}
+              >
+                <Image source={require('../assets/cash.png')} style={{ width: 50, height: 50, marginRight: 16 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Pay in Cash</Text>
+                </View>
+                <View style={{
+                  width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#FFD600',
+                  alignItems: 'center', justifyContent: 'center', marginLeft: 8,
+                  backgroundColor: selectedPayment === 'cash' ? '#FFD600' : '#fff'
+                }}>
+                  {selectedPayment === 'cash' && (
+                    <View style={{
+                      width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFD600'
+                    }} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={{
+                width: '100%',
+                backgroundColor: 'transparent',
+                borderRadius: 30,
+                overflow: 'hidden',
+                marginTop: 10,
+              }}
+              onPress={async () => {
+                setIsPaymentModalVisible(false);
+                const userId = await AsyncStorage.getItem('userId');
+                if (!userInfo.name) {
+                  alert('User info not loaded. Please try again.');
+                  return;
+                }
+                const payload = {
+                  userId,
+                  userName: userInfo.name,
+                  userAvatar: userInfo.avatar,
+                  graveDetails,
+                  services: selectedServices.filter(s => s.selected),
+                  total,
+                  paymentMethod: selectedPayment,
+                  status: 'pending',
+                  orderTime: new Date(),
+                };
+                console.log('Submitting transaction:', payload); // <-- Add this
+                fetch('https://walktogravemobile-backendserver.onrender.com/api/transactions', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    console.log('Transaction response:', data); // <-- Add this
+                    alert('Request submitted!');
+                  })
+                  .catch(err => alert('Failed to submit request'));
+              }}
+              activeOpacity={0.8}
+            >
+              <ImageBackground
+                source={require('../assets/gradient-btn.png')}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderRadius: 30,
+                  width: '120%',
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                }}
+                imageStyle={{ borderRadius: 30, resizeMode: 'stretch' }}
+                resizeMode="stretch"
+              >
+                <Text style={{ color: '#1a5242', fontWeight: 'bold', fontSize: 18 }}>Complete Request</Text>
+                <View style={{
+                  backgroundColor: '#fff',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  right: 65,
+                }}>
+                  <Text style={{ color: '#1a5242', fontWeight: 'bold', fontSize: 18 }}>➔</Text>
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -307,12 +750,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   transactionCard: {
-    flexDirection: "row",
-    alignItems: "center",
     backgroundColor: "#f9f9f9",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 12,
+    marginBottom: 12,
+    width: '100%',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    minHeight: 65,
+    justifyContent: 'center',
   },
   serviceIcon: {
     width: 40,
@@ -437,6 +882,128 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
+  fixedFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    zIndex: 10,
+  },
 });
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    paddingBottom: 40,
+    minHeight: 420, // Set your desired fixed height here
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: -25,
+    alignSelf: 'center',
+    backgroundColor: '#1a5242',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 20,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  row: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 10,
+    marginBottom: 10,
+    zIndex: 1000, // Add this line
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 13,
+    marginBottom: 2,
+    color: '#222',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 2,
+    padding: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 8,
+    backgroundColor: '#f9f9f9',
+    justifyContent: 'center',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 30,
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    marginTop: 30,
+  },
+  nextButtonText: {
+    color: '#1a5242',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  nextButtonCircle: {
+    backgroundColor: '#fff',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+    right: 35,
+  },
+  nextButtonArrow: {
+    color: '#1a5242',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+});
+
 
 export default RequestedServices;
