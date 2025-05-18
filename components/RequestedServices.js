@@ -1,11 +1,129 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const RequestedServices = () => {
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
+// ✅ Custom Drawer Content
+const CustomDrawerContent = (props) => {
+    const navigation = useNavigation();
+    const [user, setUser] = useState(null);
+
+    const handleSignOut = () => {
+        Alert.alert(
+            "Are you sure?",
+            "Do you really want to log out?",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => console.log("Sign out canceled"),
+                    style: "cancel",
+                },
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        try {
+                            // Clear user data from AsyncStorage
+                            await AsyncStorage.removeItem("userId");
+
+                            // Navigate to the SignIn screen
+                            navigation.reset({
+                                index: 0, // Reset stack to the SignIn screen
+                                routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                            });
+                        } catch (error) {
+                            console.error("Error during sign out:", error);
+                        }
+                    },
+                },
+            ],
+            { cancelable: false } // Disable dismissing the alert by tapping outside
+        );
+    };
+
+    // ✅ Fetch user data whenever the drawer is focused (opened)
+    useFocusEffect(
+        React.useCallback(() => {
+            AsyncStorage.getItem("userId")
+                .then(userId => {
+                    if (!userId) return Promise.reject("No user ID found");
+                    return fetch(`${BASE_URL}/api/users/${userId}`);
+                })
+                .then(response => response.json())
+                .then(data => setUser(data))
+                .catch(error => console.error("Error fetching user:", error));
+        }, []) // Empty dependency ensures it re-runs when focused
+    );
+
+    return (
+        <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
+            {/* Profile Section */}
+            <View style={styles.profileSection}>
+                <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                <TouchableOpacity
+                    style={styles.editProfileButton}
+                    onPress={() => navigation.navigate('EditProfile')} // Navigate to ProfileScreen
+                >
+                    <MaterialIcons name="edit" size={16} color="green" />
+                    <Text style={styles.editProfileText}>Edit Profile</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Drawer Items */}
+            <View style={styles.menuSection}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+                    <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextGreen}>Home</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
+                    <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Bookmarks</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
+                    <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
+                    <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
+                    <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextBlue}>Requested Services</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
+                    <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextBlue}>FAQs</Text>
+                </TouchableOpacity>
+
+            </View>
+
+            {/* Sign Out Button */}
+            <View style={styles.signOutSection}>
+                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                    <FontAwesome name="sign-out" size={24} color="black" />
+                    <Text style={styles.signOutText}>Sign out</Text>
+                </TouchableOpacity>
+            </View>
+        </DrawerContentScrollView>
+    );
+};
+
+// --- Main RequestedServicesScreen (your existing code) ---
+const RequestedServicesScreen = () => {
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Request Cart"); // Track the active tab
   const [requestedServices, setRequestedServices] = useState([]);
   const [paidTransactions, setPaidTransactions] = useState([]); // Store paid transactions
@@ -195,6 +313,21 @@ const GradientNextButton = ({ onPress }) => (
 
   return (
     <View style={styles.container}>
+      {/* Drawer Hamburger Button */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 40,
+          left: 20,
+          zIndex: 100,
+          borderRadius: 20,
+          padding: 8,
+        }}
+        onPress={() => navigation.openDrawer()}
+      >
+        <Ionicons name="menu" size={28} color="#1a5242" />
+      </TouchableOpacity>
+
       <ImageBackground
         source={require("../assets/RequestedBg.png")} // Background image
         style={styles.headerBackground}
@@ -613,7 +746,7 @@ const GradientNextButton = ({ onPress }) => (
                   status: 'pending',
                   orderTime: new Date(),
                 };
-                console.log('Submitting transaction:', payload); // <-- Add this
+                console.log('Submitting transaction:', payload);
                 fetch('https://walktogravemobile-backendserver.onrender.com/api/transactions', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -621,8 +754,19 @@ const GradientNextButton = ({ onPress }) => (
                 })
                   .then(res => res.json())
                   .then(data => {
-                    console.log('Transaction response:', data); // <-- Add this
+                    console.log('Transaction response:', data);
                     alert('Request submitted!');
+                    // 1. Clear the grave details fields
+                    setGraveDetails({
+                      deceasedName: '',
+                      dateOfBurial: '',
+                      dateOfDeath: '',
+                      phaseBlk: '',
+                      category: '',
+                      apartmentNo: '',
+                    });
+                    // 2. Refresh paid transactions
+                    fetchPaidTransactions();
                   })
                   .catch(err => alert('Failed to submit request'));
               }}
@@ -662,6 +806,8 @@ const GradientNextButton = ({ onPress }) => (
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -901,6 +1047,87 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 10,
   },
+  drawerContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  profileSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  profileLocation: {
+    fontSize: 14,
+    color: '#555',
+  },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  editProfileText: {
+    fontSize: 14,
+    color: 'green',
+    marginLeft: 5,
+  },
+  menuSection: {
+    marginVertical: 10,
+  },
+  drawerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  drawerTextGreen: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#12894f',
+  },
+  drawerTextYellow: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#cb9717',
+  },
+  drawerTextBlue: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#1580c2',
+  },
+  signOutSection: {
+    marginTop: 'auto',
+    borderTopWidth: 1,
+    borderColor: '#ccc',
+    paddingTop: 10,
+    paddingBottom: 40,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  signOutText: {
+    fontSize: 16,
+    marginLeft: 10,
+    color: '#333',
+  },
+  drawerIcon: {
+    width: 40, // Set width
+    height: 40, // Set height
+    resizeMode: 'contain', // Make sure it scales properly
+    marginRight: 10, // Add spacing between icon and text
+  },
 });
 
 const modalStyles = StyleSheet.create({
@@ -1004,6 +1231,14 @@ const modalStyles = StyleSheet.create({
     fontSize: 18,
   },
 });
+
+const Drawer = createDrawerNavigator();
+
+const RequestedServices = () => (
+  <Drawer.Navigator drawerContent={props => <CustomDrawerContent {...props} />} screenOptions={{ headerShown: false }}>
+    <Drawer.Screen name="RequestedServicesScreen" component={RequestedServicesScreen} />
+  </Drawer.Navigator>
+);
 
 
 export default RequestedServices;
