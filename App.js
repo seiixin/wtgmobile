@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -238,4 +239,3 @@ const styles = StyleSheet.create({
     color: '#12894f',
   },
 });
- 

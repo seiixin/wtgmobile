@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
 },
 container: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 20,
 },
 topSection: {
     position: 'relative',
@@ -375,15 +375,17 @@ image: {
     resizeMode: 'contain',
 },
 searchBarContainer: {
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     paddingTop: 10,
     marginBottom: 40,
+    marginTop: 18,
     zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 5,
     paddingHorizontal: 10,
+    
 },
 searchBar: {
     flex: 1,
@@ -498,6 +500,8 @@ buttonRow: {
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     marginBottom: 10,
+    height: 40,
+
 
 },
 actionButton: {
@@ -510,8 +514,8 @@ actionButton: {
     marginHorizontal: 5,
 },
 buttonImage: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     resizeMode: 'contain',
 },
 IconDivider: {

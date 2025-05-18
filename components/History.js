@@ -226,8 +226,8 @@ const HistoryScreen = () => {
                 {/* SectionList */}
                 <SectionList
                     sections={[
-                        { title: 'Search Results', data: searchResults, type: 'searchResults' },
-                        { title: 'Recently Viewed', data: historyList, type: 'historyList' },
+                        { title: '', data: searchResults, type: 'searchResults' },
+                        { title: '', data: historyList, type: 'historyList' },
                     ]}
                     keyExtractor={(item, index) => `${item._id}-${index}`} // Ensure unique keys
                     renderSectionHeader={({ section }) => (
@@ -363,9 +363,10 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
     },
     searchBarContainer: {
-        marginHorizontal: 20,
+        marginHorizontal: 10,
         paddingTop: 10,
         marginBottom: 40,
+        marginTop: 18,
         zIndex: 2,
         flexDirection: 'row',
         alignItems: 'center',

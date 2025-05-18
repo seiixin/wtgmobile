@@ -353,9 +353,9 @@ const CustomDrawerContent = (props) => {
           <Text style={styles.drawerText}>Requested Services</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('About')}>
-          <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
-          <Text style={styles.drawerText}>About</Text>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
+            <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerText}>FAQs</Text>
         </TouchableOpacity>
 
       </View>
