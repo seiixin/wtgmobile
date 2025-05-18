@@ -77,25 +77,14 @@ const Register = () => {
 
   const onDateChange = (event, selectedDate) => {
     if (event.type === 'set') {
-      setSelectedDate(selectedDate); // Set the selected date
+      const formattedDate = formatDate(selectedDate);
+      setDateOfBirth(formattedDate);
+      setFormData((prevData) => ({
+        ...prevData,
+        dob: formattedDate,
+      }));
     }
-  };
-
-  const confirmDate = () => {
-    const formattedDate = formatDate(selectedDate); // Format the date
-    setDateOfBirth(formattedDate); // Update the local display of the date
-
-    // Update the dob field in formData
-    setFormData((prevData) => ({
-      ...prevData,
-      dob: formattedDate, // Ensure dob is set in formData
-    }));
-
-    setDatePickerVisible(false); // Hide the modal after confirming the date
-  };
-
-  const cancelDate = () => {
-    setDatePickerVisible(false); // Hide the modal if canceled
+    setDatePickerVisible(false); // Always close after selection
   };
 
   const formatDate = (date) => {
@@ -470,17 +459,9 @@ const Register = () => {
               display="spinner"
               value={selectedDate}
               onChange={onDateChange}
-              minimumDate={new Date('1900-01-01')} // Limit to start from January 1, 1900
-              maximumDate={new Date()} // Limit to today's date
+              minimumDate={new Date('1900-01-01')}
+              maximumDate={new Date()}
             />
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={cancelDate} style={styles.button}>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={confirmDate} style={styles.button}>
-                <Text style={styles.buttonText}>Confirm</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       </Modal>

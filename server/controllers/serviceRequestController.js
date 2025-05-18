@@ -68,9 +68,25 @@ const updateServiceRequestStatus = async (req, res) => {
   }
 };
 
+// Delete a service request
+const deleteServiceRequest = async (req, res) => {
+  const { requestId } = req.params;
+  try {
+    const deleted = await ServiceRequest.findByIdAndDelete(requestId);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
+    res.status(200).json({ message: 'Service request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service request:', error);
+    res.status(500).json({ message: 'Failed to delete service request' });
+  }
+};
+
 module.exports = {
   verifyToken,
   createServiceRequest,
   getServiceRequestsByUser,
   updateServiceRequestStatus,
+  deleteServiceRequest,
 };

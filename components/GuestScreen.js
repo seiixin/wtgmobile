@@ -96,7 +96,6 @@ const CustomDrawerContent = (props) => {
           style={styles.drawerItem}
           onPress={() => {
             props.navigation.navigate('FAQsGuestScreen');
-           
           }}
         >
           <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
@@ -112,6 +111,16 @@ const CustomDrawerContent = (props) => {
         >
           <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
           <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Sign In Button at the bottom */}
+      <View style={{ flex: 1, justifyContent: 'flex-end', marginTop: 40 }}>
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={() => props.navigation.navigate('SignIn')}
+        >
+          <Text style={styles.signInButtonText}>Sign In</Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>
@@ -454,6 +463,19 @@ const styles = StyleSheet.create({
     height: 40,
     resizeMode: 'contain',
     marginRight: 10,
+  },
+  signInButton: {
+    backgroundColor: '#00aa13',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 15,
+    marginTop: 20,
+  },
+  signInButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
