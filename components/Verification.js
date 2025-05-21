@@ -155,12 +155,15 @@ const Verification = () => {
     >
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Ionicons name="arrow-back" size={30} color="black" />
+        <View style={styles.backButtonCircle}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </View>
       </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>Please enter the verification code sent to your email.</Text>
+        <Text style={styles.subtitle}>Please enter the code we just sent to
+</Text>
         <Text style={styles.email}>{email}</Text>
         <View style={styles.inputContainer}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -191,7 +194,7 @@ const Verification = () => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
-          <Text style={styles.verifyButtonText}>Verify</Text>
+          <Text style={styles.verifyButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
 
@@ -271,16 +274,17 @@ const styles = StyleSheet.create({
     fontSize: 16,  
   },
   resendButton: {
-    marginTop: 15,  
+    marginTop: 5,  
   },
   resendButtonText: {
     color: 'green',
-    fontSize: 16,  
+    fontSize: 14,  
+    textDecorationLine: 'underline',
   },
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: 15,  
+    paddingVertical: 8,  
     borderRadius: 50,  
     marginTop: 25,  
     alignItems: 'center',
@@ -295,11 +299,20 @@ const styles = StyleSheet.create({
     bottom: 10
   },
   backButton: {
-    position: 'absolute', 
-    top: 40, 
-    left: 20, 
+    position: 'absolute',
+    top: 40,
+    left: 20,
     backgroundColor: 'transparent',
-    padding: 10,
+    padding: 0,
+    zIndex: 10,
+  },
+  backButtonCircle: {
+    backgroundColor: '#fcbd21',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
     position: 'absolute',
