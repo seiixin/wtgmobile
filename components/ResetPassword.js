@@ -66,7 +66,7 @@ const ResetPassword = () => {
               secureTextEntry={!isPasswordVisible}
             />
             <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-              <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={24} color="gray" />
+              <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={18} color="#d9d9d9" />
             </TouchableOpacity>
           </View>
 
@@ -81,7 +81,7 @@ const ResetPassword = () => {
               secureTextEntry={!isConfirmPasswordVisible}
             />
             <TouchableOpacity onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}>
-              <Ionicons name={isConfirmPasswordVisible ? "eye" : "eye-off"} size={24} color="gray" />
+              <Ionicons name={isConfirmPasswordVisible ? "eye" : "eye-off"} size={18} color="#d9d9d9" />
             </TouchableOpacity>
           </View>
 
@@ -120,34 +120,28 @@ const styles = StyleSheet.create({
   backIcon: { width: 40, height: 40 },
   container: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
+    marginTop: 120
   },
   icon: {
     width: 150,
-    height: 50,
+    height: 70,
     resizeMode: "contain",
     marginBottom: 10,
   },
   card: {
     width: "80%",
-    backgroundColor: "#fff",
     borderRadius: 60,
     paddingVertical: 20,
     paddingBottom: 40,
     paddingHorizontal: 35,
     top: 40,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#1e1e1e",
+    color: "black",
   },
   subtitle: {
     fontSize: 12,
@@ -160,7 +154,7 @@ const styles = StyleSheet.create({
   label: {
     width: "100%",
     fontSize: 13,
-    color: "#1e1e1e",
+    color: "black",
     marginTop: 10,
     fontWeight: "bold",
   },
@@ -168,14 +162,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: "100%",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
+    backgroundColor: "#fff",           // White background
+    borderRadius: 10,                  // More rounded corners
+    borderWidth: 1,                    // Add border
+    borderColor: "#e0e0e0",            // Light gray border
     paddingHorizontal: 10,
-    marginTop: 5,
+    marginTop: 8,
+    marginBottom: 10,
+    shadowColor: "#000",               // Subtle shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   input: {
     flex: 1,
     height: 45,
+    backgroundColor: "transparent",    // No background, handled by container
+    fontSize: 15,
+    color: "#222",
   },
   ChangePassButton: {
     width: "100%",

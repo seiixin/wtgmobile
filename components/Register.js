@@ -7,6 +7,9 @@ import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { useFonts, Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
+
+
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const Register = () => {
   const [genderOpen, setGenderOpen] = useState(false);
@@ -68,6 +71,7 @@ const Register = () => {
   const [selectedDate, setSelectedDate] = useState(new Date()); // Store the actual date object
   const [passwordMatch, setPasswordMatch] = useState(true); // Track password match
   const [isModalVisible, setModalVisible] = useState(false); // State to control modal visibility
+  const [termsVisible, setTermsVisible] = useState(false);
 
   const navigation = useNavigation();
 
@@ -237,6 +241,8 @@ const Register = () => {
       alert("Error verifying OTP. Please try again.");
     }
   };
+
+ 
 
   return (
     <ImageBackground source={require('../assets/RegisterBg.png')} style={styles.background}>
@@ -429,7 +435,13 @@ const Register = () => {
             />
           </View>
           <Text>
-            Agree with <Text style={{ color: 'green' }}>Terms & Conditions</Text>
+            Agree with{' '}
+            <Text
+              style={{ color: 'green', textDecorationLine: 'underline' }}
+              onPress={() => setTermsVisible(true)}
+            >
+              Terms & Conditions
+            </Text>
           </Text>
         </View>
 
@@ -451,20 +463,16 @@ const Register = () => {
       </Text>
 
       {/* Date Picker Modal */}
-      <Modal visible={datePickerVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <DateTimePicker
-              mode="date"
-              display="spinner"
-              value={selectedDate}
-              onChange={onDateChange}
-              minimumDate={new Date('1900-01-01')}
-              maximumDate={new Date()}
-            />
-          </View>
-        </View>
-      </Modal>
+      {datePickerVisible && (
+        <DateTimePicker
+          mode="date"
+          display="default"
+          value={selectedDate}
+          onChange={onDateChange}
+          minimumDate={new Date('1900-01-01')}
+          maximumDate={new Date()}
+        />
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -476,6 +484,51 @@ const Register = () => {
         }}
         onCancel={() => setModalVisible(false)} // Close the modal
       />
+
+      
+      <Modal
+        visible={termsVisible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setTermsVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={[styles.modalContent, { maxHeight: '80%', backgroundColor: '#fff' }]}>
+            <Text style={[styles.header, { fontSize: 18 }]}>Terms & Conditions</Text>
+            <View style={{ marginVertical: 10 }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13 }}>
+                Welcome to Walk to Grave Mobile. By creating an account, you agree to the following terms:
+                {"\n\n"}
+                1. You will provide accurate and truthful information during registration.
+                {"\n\n"}
+                2. Your personal data will be handled securely and used only for app functionality.
+                {"\n\n"}
+                3. You will not use the app for any unlawful, abusive, or fraudulent purposes.
+                {"\n\n"}
+                4. You are responsible for maintaining the confidentiality of your account credentials.
+                {"\n\n"}
+                5. We may update these terms from time to time. Continued use of the app means you accept any changes.
+                {"\n\n"}
+                6. We reserve the right to suspend or terminate accounts that violate these terms or engage in suspicious activity.
+                {"\n\n"}
+                7.You must be at least 18 years old to create an account. If you are under 18, you must have parental consent.
+                {"\n\n"}
+                8. You agree not to misuse any features or attempt to disrupt the normal operation of the app.
+                {"\n\n"}
+                9. You must be a relative of the deceased to use this app and access its features.
+                {"\n\n"}
+                10. For more questions, please check our FAQs.
+                {"\n\n"}
+                11. By clicking "Close", you acknowledge that you have read and understood these terms.
+                {"\n\n"}
+              </Text>
+            </View>
+            <TouchableOpacity style={[styles.registerButton, { marginTop: 10 }]} onPress={() => setTermsVisible(false)}>
+              <Text style={styles.registerButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 };
@@ -488,7 +541,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f6f6',
   },
   container: {
-    marginTop: 120,
+    marginTop: 165,
     width: '85%',
     backgroundColor: 'white',
     borderRadius: 50,
@@ -497,31 +550,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
-    elevation: 3,
+    elevation: 5,
+    height: 'auto',
+    height: '72%',
   },
   header: {
     fontSize: 25,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
+    fontFamily: 'Inter_700Bold', // Add this line
   },
   subheader: {
     fontSize: 12,
     color: 'gray',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
+    fontFamily: 'Inter_400Regular', // Add this line
   },
   input: {
-    height: 40,
+    height: 32,
     width: "100%",
     borderColor: 'gray',
     borderWidth: 0.5,
     borderRadius: 5,
-    width: '100%',
     paddingHorizontal: 8,
+    paddingVertical: 0, // Add this line
     fontSize: 14,
     marginBottom: 10,
-    textAlignVertical: 'center'
+    textAlignVertical: 'center',
+    fontFamily: 'Inter_400Regular',
   },
   inputDate: {
     height: 50,
@@ -530,19 +588,23 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: '100%',
     paddingHorizontal: 8,
+    paddingVertical: 0, // Add this line
     fontSize: 14,
-    marginBottom: 10,
+    marginBottom: 5,
+    fontFamily: 'Inter_400Regular',
+    textAlignVertical: 'center', // Add this line for consistency
   },
   label: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
+    fontFamily: 'Inter_700Bold', // Add this line
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 5,
     width: "104%"
   },
   inputContainer: {
@@ -558,16 +620,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,
+    fontFamily: 'Inter_400Regular'
   },
   button: {
     backgroundColor: '#fdbd21',
     padding: 11,
     borderRadius: 5,
     margin: 5,
+    fontFamily: 'Inter_400Regular'
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontFamily: 'Inter_400Regular'
   },
   modalContainer: {
     flex: 1,
@@ -577,7 +642,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: 350,
-    backgroundColor: 'gray',
+    backgroundColor: 'transparent', // or remove this line
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
@@ -599,19 +664,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'Inter_400Regular'
   },
   signInLink: {
     color: 'red',
     textAlign: 'center',
-    top: 10,
+    top: 5,
+    fontFamily: 'Inter_400Regular'
   },
   blackText: {
     color: "#000",
+    fontFamily: 'Inter_400Regular'
   },
   redText: {
     color: "red",
     fontWeight: "bold",
-    top: 4
+    top: 4,
+    fontFamily: 'Inter_400Regular'
   },
   passwordContainer: {
     width: '100%',
@@ -636,6 +705,7 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginTop: 5,
+    fontFamily: 'Inter_400Regular'
   },
 });
 

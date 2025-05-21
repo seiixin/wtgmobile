@@ -141,12 +141,15 @@ const VerificationRegister = () => {
     >
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Ionicons name="arrow-back" size={30} color="black" />
+        <View style={styles.backButtonCircle}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </View>
       </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>Please enter the verification code sent to your email.</Text>
+        <Text style={styles.subtitle}>Please enter the code we just sent to
+</Text>
         <Text style={styles.email}>{email}</Text>
         <View style={styles.inputContainer}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -178,7 +181,7 @@ const VerificationRegister = () => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
-          <Text style={styles.verifyButtonText}>Verify</Text>
+          <Text style={styles.verifyButtonText}>Verify Email</Text>
         </TouchableOpacity>
       </View>
 
@@ -230,12 +233,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+    fontFamily: 'Inter_700Bold', // Use Inter for title
   },
   subtitle: {
     fontSize: 16,
     color: '#777',
     marginVertical: 15,
     textAlign: 'center',
+    fontFamily: 'Inter_400Regular', // Use Inter for subtitle
   },
   inputContainer: {
     flexDirection: 'row',
@@ -252,18 +257,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     borderWidth: 1,
     borderColor: '#ccc',
+    fontFamily: 'Inter_700Bold', // Use Inter for input
   },
   click: {
     marginTop: 15,
     color: '#6d6d6d',
     fontSize: 16,
+    fontFamily: 'Inter_400Regular', // Use Inter for click text
   },
   resendButton: {
-    marginTop: 15,
+    marginTop: 5,
   },
   resendButtonText: {
     color: 'green',
-    fontSize: 16,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    fontFamily: 'Inter_400Regular', // Use Inter for resend
   },
   verifyButton: {
     width: '85%',
@@ -277,17 +286,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'CodeProBold', // Use Code Pro for button text
   },
   email: {
     color: 'green',
     bottom: 10,
+    fontFamily: 'Inter_400Regular', // Use Inter for email
   },
   backButton: {
     position: 'absolute',
     top: 40,
     left: 20,
     backgroundColor: 'transparent',
-    padding: 10,
+    padding: 0,
+    zIndex: 10,
+  },
+  backButtonCircle: {
+    backgroundColor: '#fde245', // yellow
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
     position: 'absolute',
@@ -311,12 +331,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1e1e1e',
     marginVertical: 10,
+    fontFamily: 'Inter_700Bold', // Use Inter for modal title
   },
   modalMessage: {
     fontSize: 16,
     color: '#555',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: 'Inter_400Regular', // Use Inter for modal message
   },
   confirmButton: {
     backgroundColor: '#38b6ff',
@@ -328,10 +350,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'CodeProBold', // Use Code Pro for confirm button
   },
-  timer: { fontSize: 16, color: 'red', marginBottom: 10 },
+  timer: { fontSize: 16, color: 'red', marginBottom: 10, fontFamily: 'Inter_400Regular' },
   disabledButton: { opacity: 0.5 },
-  disabledText: { color: 'gray' },
+  disabledText: { color: 'gray', fontFamily: 'Inter_400Regular' },
 });
 
 export default VerificationRegister;

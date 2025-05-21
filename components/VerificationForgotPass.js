@@ -108,12 +108,14 @@ const VerificationForgotPass = () => {
     >
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={30} color="black" />
+        <View style={styles.backButtonCircle}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </View>
       </TouchableOpacity>
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>Please enter the verification code sent to your email.</Text>
+        <Text style={styles.subtitle}>Please enter the code we just sent to</Text>
         <Text style={styles.email}>{email}</Text>
         <View style={styles.inputContainer}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -145,7 +147,7 @@ const VerificationForgotPass = () => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
-          <Text style={styles.verifyButtonText}>Verify</Text>
+          <Text style={styles.verifyButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
 
@@ -178,14 +180,29 @@ const styles = StyleSheet.create({
   inputBox: { width: 50, height: 50, backgroundColor: '#f5f5f5', borderRadius: 10, textAlign: 'center', fontSize: 24, borderWidth: 1, borderColor: '#ccc' },
   timer: { fontSize: 16, color: 'red', marginBottom: 10 },
   click: { marginTop: 15, color: '#6d6d6d', fontSize: 16 },
-  resendButton: { marginTop: 15 },
-  resendButtonText: { color: 'green', fontSize: 16 },
+  resendButton: { marginTop: 5, padding: 5, backgroundColor: '#fff', borderRadius: 50, alignItems: 'center', },
+  resendButtonText: { color: 'green', fontSize: 14, textDecorationLine: 'underline', },
   disabledButton: { opacity: 0.5 },
   disabledText: { color: 'gray' },
-  verifyButton: { width: '85%', backgroundColor: '#00aa13', paddingVertical: 15, borderRadius: 50, marginTop: 25, alignItems: 'center' },
+  verifyButton: { width: '85%', backgroundColor: '#00aa13', paddingVertical: 8, borderRadius: 50, marginTop: 25, alignItems: 'center' },
   verifyButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   email: { color: 'green', bottom: 10 },
-  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: 'transparent', padding: 10 },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    backgroundColor: 'transparent',
+    padding: 0,
+    zIndex: 10,
+  },
+  backButtonCircle: {
+    backgroundColor: '#fcbd21', // yellow
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { width: '80%', backgroundColor: 'white', borderRadius: 20, padding: 20, alignItems: 'center' },
   modalTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e1e1e', marginVertical: 10 },

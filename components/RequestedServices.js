@@ -7,6 +7,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
@@ -151,13 +152,15 @@ const RequestedServicesScreen = () => {
   });
   const [userInfo, setUserInfo] = useState({ name: '', avatar: '' });
   const [expandedTransactionId, setExpandedTransactionId] = useState(null);
+  const [burialPickerVisible, setBurialPickerVisible] = useState(false);
+const [deathPickerVisible, setDeathPickerVisible] = useState(false);
 
 const GradientNextButton = ({ onPress }) => (
   <TouchableOpacity style={{ width: '100%' }} onPress={onPress} activeOpacity={0.8}>
     <ImageBackground
       source={require('../assets/gradient-btn.png')}
       style={[modalStyles.nextButton, { width: '110%' }]} // Ensure full width
-      imageStyle={{ borderRadius: 30, width: '100%', resizeMode: 'stretch' }} // Stretch image to fit
+      imageStyle={{ borderRadius: 10, width: '100%', resizeMode: 'stretch' }} // Stretch image to fit
       resizeMode="stretch"
     >
       <Text style={modalStyles.nextButtonText}>Next</Text>
@@ -546,7 +549,7 @@ const GradientNextButton = ({ onPress }) => (
             style={styles.footerBottom}
             imageStyle={styles.footerImage}
           >
-            <TouchableOpacity style={styles.paymentButton} onPress={handleProceedToPayment}>
+            <TouchableOpacity style={styles.paymentButton }onPress={() => setIsModalVisible(true)}>
               <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -576,7 +579,7 @@ const GradientNextButton = ({ onPress }) => (
             </TouchableOpacity>
             <Text style={modalStyles.title}>Edit Grave Details</Text>
             <View style={modalStyles.row}>
-              <View style={modalStyles.inputContainer}>
+              <View style={[modalStyles.inputContainer, { flex: 1.3 }]}>
                 <Text style={modalStyles.label}>Name of the Deceased *</Text>
                 <TextInput
                   style={modalStyles.input}
@@ -584,23 +587,64 @@ const GradientNextButton = ({ onPress }) => (
                   onChangeText={text => setGraveDetails({ ...graveDetails, deceasedName: text })}
                 />
               </View>
-              <View style={modalStyles.inputContainer}>
+              <View style={[modalStyles.inputContainer, { flex: 0.7 }]}>
                 <Text style={modalStyles.label}>Date of Burial *</Text>
-                <TextInput
-                  style={modalStyles.input}
-                  value={graveDetails.dateOfBurial}
-                  onChangeText={text => setGraveDetails({ ...graveDetails, dateOfBurial: text })}
-                />
+                <TouchableOpacity onPress={() => setBurialPickerVisible(true)}>
+                  <TextInput
+                    style={modalStyles.input}
+                    value={graveDetails.dateOfBurial}
+                    placeholder="Select Date"
+                    editable={false}
+                    pointerEvents="none"
+                  />
+                </TouchableOpacity>
+                {burialPickerVisible && (
+                  <DateTimePicker
+                    value={graveDetails.dateOfBurial ? new Date(graveDetails.dateOfBurial) : new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setBurialPickerVisible(false);
+                      if (selectedDate) {
+                        const d = selectedDate;
+                        const formatted = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+                        setGraveDetails({ ...graveDetails, dateOfBurial: formatted });
+                      }
+                    }}
+                    maximumDate={new Date()}
+                  />
+                )}
               </View>
             </View>
             <View style={modalStyles.row}>
-              <View style={modalStyles.inputContainer}>
+              <View style={[modalStyles.inputContainer, { flex: 0.9 }]}>
                 <Text style={modalStyles.label}>Date of Death *</Text>
-                <TextInput
-                  style={modalStyles.input}
-                  value={graveDetails.dateOfDeath}
-                  onChangeText={text => setGraveDetails({ ...graveDetails, dateOfDeath: text })}
-                />
+                <TouchableOpacity onPress={() => setDeathPickerVisible(true)}>
+                  <TextInput
+                    style={modalStyles.input}
+                    value={graveDetails.dateOfDeath}
+                    placeholder="Select Date"
+                    editable={false}
+                    pointerEvents="none"
+                  />
+                </TouchableOpacity>
+                {deathPickerVisible && (
+                  <DateTimePicker
+                    value={graveDetails.dateOfDeath ? new Date(graveDetails.dateOfDeath) : new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setDeathPickerVisible(false);
+                      if (selectedDate) {
+                        // Format as MM/DD/YYYY
+                        const d = selectedDate;
+                        const formatted = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+                        setGraveDetails({ ...graveDetails, dateOfDeath: formatted });
+                      }
+                    }}
+                    maximumDate={new Date()}
+                  />
+                )}
               </View>
               <View style={modalStyles.inputContainer}>
                 <Text style={modalStyles.label}>Phase / Blk *</Text>
@@ -612,7 +656,7 @@ const GradientNextButton = ({ onPress }) => (
               </View>
             </View>
             <View style={modalStyles.row}>
-              <View style={[modalStyles.inputContainer, { flex: 1.2 }]}>
+              <View style={[modalStyles.inputContainer, { flex: 1.4 }]}>
                 <Text style={modalStyles.label}>Select Category *</Text>
                 <DropDownPicker
                   open={apartmentOpen}
@@ -650,9 +694,14 @@ const GradientNextButton = ({ onPress }) => (
               </View>
             </View>
             <GradientNextButton onPress={() => {
-  setIsModalVisible(false);           // Hide Edit Grave Details modal
-  setIsPaymentModalVisible(true);     // Show Payment Method modal
-}} />
+              // Prevent proceeding if no service is selected
+              if (!selectedServices.some(s => s.selected)) {
+                alert("Please select at least one service in your cart before proceeding.");
+                return;
+              }
+              setIsModalVisible(false);           // Hide Edit Grave Details modal
+              setIsPaymentModalVisible(true);     // Show Payment Method modal
+            }} />
           </View>
         </View>
       </Modal>
@@ -1214,7 +1263,7 @@ const modalStyles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 2,
     padding: 8,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff', // <-- Make input field white
   },
   dropdown: {
     borderWidth: 1,
@@ -1228,7 +1277,7 @@ const modalStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 30,
+    borderRadius: 5,
     width: '100%',
     paddingVertical: 14,
     paddingHorizontal: 24,
