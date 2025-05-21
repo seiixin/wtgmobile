@@ -430,11 +430,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
+    backgroundColor: "white",
+    width: 114,    // Adjust width as needed
+    height: 105,
   },
   serviceImage: {
     width: 124,
-    height: 103,
-    marginBottom: 2,
+    height: 105,
     marginRight: 5,
   },
   serviceText: {
