@@ -218,7 +218,7 @@ const GradientNextButton = ({ onPress }) => (
     })
       .then(async (response) => {
         if (!response.ok) {
-          console.error(`Error fetching paid transactions: ${response.status}`);
+          console.error(`Error fetching transactions: ${response.status}`);
           setPaidTransactions([]); // Set to an empty array if the response is not OK
           setTotalSpent(0); // Set total spent to 0
           return;
@@ -229,14 +229,14 @@ const GradientNextButton = ({ onPress }) => (
         setTotalSpent(totalSpentAmount); // Calculate total spent
       })
       .catch(error => {
-        console.error("Error fetching paid transactions:", error);
+        console.error("Error fetching transactions:", error);
         setPaidTransactions([]); // Set to an empty array if there's an error
       });
   };
 
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
-    if (tab === "Paid Transactions" && paidTransactions.length === 0) {
+    if (tab === "Transactions" && paidTransactions.length === 0) {
       fetchPaidTransactions(); // Fetch paid transactions only when switching to the tab
     }
   };
@@ -345,9 +345,9 @@ const GradientNextButton = ({ onPress }) => (
             Request Cart
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabSwitch("Paid Transactions")}>
-          <Text style={[styles.tab, activeTab === "Paid Transactions" && styles.activeTab]}>
-            Paid Transactions
+        <TouchableOpacity onPress={() => handleTabSwitch("Transactions")}>
+          <Text style={[styles.tab, activeTab === "Transactions" && styles.activeTab]}>
+            Transactions
           </Text>
         </TouchableOpacity>
       </View>
@@ -477,7 +477,7 @@ const GradientNextButton = ({ onPress }) => (
                           </View>
                         ))}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                          <Text style={{ color: '#888' }}>Paid by</Text>
+                          <Text style={{ color: '#888' }}>Paid in</Text>
                           <Text style={{ color: '#333', fontWeight: 'bold' }}>
                             {transaction.paymentMethod === 'gcash' ? 'Gcash' : (transaction.paymentMethod || 'Cash')}
                           </Text>
@@ -517,7 +517,7 @@ const GradientNextButton = ({ onPress }) => (
                 );
               })
             ) : (
-              <Text style={styles.noTransactionsText}>No paid transactions available.</Text>
+              <Text style={styles.noTransactionsText}>No transactions available.</Text>
             )}
             <View style={{ height: 80 }} /> 
           </ScrollView>
@@ -674,6 +674,8 @@ const GradientNextButton = ({ onPress }) => (
             </TouchableOpacity>
             <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 20, marginBottom: 24, alignSelf: 'flex-start' }}>Payment Method</Text>
             <View style={{ width: '100%', marginBottom: 20 }}>
+              {/* Remove Gcash option */}
+              {/* 
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}
                 onPress={() => setSelectedPayment('gcash')}
@@ -698,6 +700,7 @@ const GradientNextButton = ({ onPress }) => (
                   )}
                 </View>
               </TouchableOpacity>
+              */}
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
                 onPress={() => setSelectedPayment('cash')}
@@ -753,21 +756,42 @@ const GradientNextButton = ({ onPress }) => (
                   body: JSON.stringify(payload),
                 })
                   .then(res => res.json())
-                  .then(data => {
+                  .then(async data => {
                     console.log('Transaction response:', data);
-                    alert('Request submitted!');
-                    // 1. Clear the grave details fields
-                    setGraveDetails({
-                      deceasedName: '',
-                      dateOfBurial: '',
-                      dateOfDeath: '',
-                      phaseBlk: '',
-                      category: '',
-                      apartmentNo: '',
-                    });
-                    // 2. Refresh paid transactions
-                    fetchPaidTransactions();
-                  })
+                    if (selectedPayment === 'cash') {
+    alert('Service successfully requested! Please proceed to the St. Joseph Cemetery office to complete payment on-site.');
+  } else {
+    alert('Request submitted!');
+  }
+  // 1. Clear the grave details fields
+  setGraveDetails({
+    deceasedName: '',
+    dateOfBurial: '',
+    dateOfDeath: '',
+    phaseBlk: '',
+    category: '',
+    apartmentNo: '',
+  });
+
+  fetchPaidTransactions();
+
+  // Remove selected services from the database
+  const selectedToDelete = selectedServices.filter(service => service.selected);
+  await Promise.all(selectedToDelete.map(service =>
+    fetch(`https://walktogravemobile-backendserver.onrender.com/api/service-requests/${service._id}`, {
+      method: 'DELETE',
+    })
+  ));
+
+  // Remove only the selected services from the cart in local state
+  setSelectedServices(prev =>
+    prev.filter(service => !service.selected)
+  );
+  setTotal(prev =>
+    selectedServices.filter(service => !service.selected).reduce((sum, s) => sum + s.price, 0)
+  );
+  setActiveTab("Transactions"); // Redirect to Transactions tab
+})
                   .catch(err => alert('Failed to submit request'));
               }}
               activeOpacity={0.8}
