@@ -240,7 +240,7 @@ const BookmarksScreen = () => {
                                     style={styles.cardImage}
                                 />
                                 <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>{item.firstName} {item.lastName}</Text>
+                                    <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
                                     <Text style={styles.cardDates}>
                                         {item.dateOfBirth
                                             ? new Intl.DateTimeFormat('en-US', {

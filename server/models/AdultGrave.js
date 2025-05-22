@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const AdultGraveSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
+    nickname: { type: String, required: true  },
     dateOfBirth: { type: Date, required: true }, // Changed from birthDate
     burial: { type: Date, required: true }, // Changed from burialDate
     phase: { type: String, required: true }, // Changed from blockPhase

@@ -197,7 +197,7 @@ const HistoryScreen = () => {
     }, [historyList]);
 
     return (
-        <ImageBackground source={require('../assets/HistoryBg.png')} style={styles.background}>
+        <ImageBackground source={require('../assets/HistoryBgg.png')} style={styles.background}>
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.topSection}>
@@ -208,23 +208,52 @@ const HistoryScreen = () => {
                         <View style={styles.imageContainer}></View>
                     </View>
 
-                    {/* Search Bar */}
-                    <View style={styles.searchBarContainer}>
-                        <TextInput
-                            style={styles.searchBar}
-                            placeholder="Search by Firstname or Lastname"
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                            <Ionicons name="search" size={20} color="white" />
-                        </TouchableOpacity>
+                    {/* Search Bar & Button Row Grouped in White Background */}
+                    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 10, paddingBottom: 0 }}>
+                        <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+                            <TextInput
+                                style={styles.searchBar}
+                                placeholder="Search by Firstname or Lastname"
+                                placeholderTextColor="gray"
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                            />
+                            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+                                <Ionicons name="search" size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.divider3} />
+
+                        {/* Four Buttons (copied from Bookmarks.js) */}
+                        <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+
+                            <View style={styles.IconDivider} />
+
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+
+                            <View style={styles.IconDivider} />
+
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+
+                            <View style={styles.IconDivider} />
+
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    <View style={styles.divider3} />
                 </View>
 
                 {/* SectionList */}
                 <SectionList
+                style={{ marginTop: 26 }} // <-- Add this line to bring down the SectionList
                     sections={[
                         { title: '', data: searchResults, type: 'searchResults' },
                         { title: '', data: historyList, type: 'historyList' },
@@ -264,7 +293,7 @@ const HistoryScreen = () => {
                                     style={styles.cardImage}
                                 />
                                 <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>{item.firstName} {item.lastName}</Text>
+                                    <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
                                     <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
                                     <Text style={styles.cardLocation}>
                                         {item.phase}, Apartment {item.aptNo}
@@ -273,7 +302,7 @@ const HistoryScreen = () => {
                             </TouchableOpacity>
                         );
                     }}
-                    contentContainerStyle={{ paddingBottom: 60 }} // Ensure proper spacing
+                    contentContainerStyle={{ paddingBottom: 60}} // Ensure proper spacing
                 />
 
                 {/* Bottom Navigation */}
@@ -365,7 +394,7 @@ const styles = StyleSheet.create({
     searchBarContainer: {
         marginHorizontal: 10,
         paddingTop: 10,
-        marginBottom: 40,
+
         marginTop: 18,
         zIndex: 2,
         flexDirection: 'row',
@@ -416,6 +445,7 @@ const styles = StyleSheet.create({
         flex: 1,
         top: '5%',
         paddingHorizontal: 15,
+        
         backgroundColor: 'white',
     },
     card: {

@@ -23,8 +23,10 @@
     "axios": "1.9.0",
     "expo": "53.0.9",
     "expo-av": "^15.1.4",
+    "expo-barcode-scanner": "^13.0.1",
     "expo-image-picker": "^16.1.4",
     "expo-linear-gradient": "^14.1.4",
+    "expo-media-library": "~17.1.6",
     "expo-status-bar": "^2.2.3",
     "nodemailer": "^6.10.1",
     "react": "19.0.0",
@@ -41,11 +43,23 @@
     "react-native-screens": "^4.10.0",
     "react-native-svg": "^15.11.2",
     "react-native-vector-icons": "10.2.0",
+    "react-native-view-shot": "^4.0.3",
     "react-navigation-stack": "2.10.4",
     "undefined": "\\"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2"
   },
-  "private": true
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shanedevs/Walk-to-Grave-Mobile.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/shanedevs/Walk-to-Grave-Mobile/issues"
+  },
+  "homepage": "https://github.com/shanedevs/Walk-to-Grave-Mobile#readme",
+  "description": ""
 }

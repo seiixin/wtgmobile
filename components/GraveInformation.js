@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ViewShot from 'react-native-view-shot';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 const GraveInformation = () => {
     const route = useRoute();
@@ -12,6 +15,24 @@ const GraveInformation = () => {
     const [isCandleLit, setIsCandleLit] = useState(false);
     const [hasCandleBeenLit, setHasCandleBeenLit] = useState(false);
     const [candleCount, setCandleCount] = useState(0);
+    const modalContentRef = useRef(null); // Reference to the modal content
+
+    const saveModalAsImage = async () => {
+        try {
+            const uri = await modalContentRef.current.capture(); // Capture the modal content
+            const permission = await MediaLibrary.requestPermissionsAsync(); // Request media library permissions
+
+            if (permission.granted) {
+                await MediaLibrary.createAssetAsync(uri); // Save the image to the gallery
+                Alert.alert('Success', 'The image has been saved to your gallery.');
+            } else {
+                Alert.alert('Permission Denied', 'Unable to save the image without permission.');
+            }
+        } catch (error) {
+            console.error('Error saving image:', error);
+            Alert.alert('Error', 'An error occurred while saving the image.');
+        }
+    };
 
     const handleLightCandle = async () => {
         try {
@@ -26,9 +47,9 @@ const GraveInformation = () => {
             const now = new Date().getTime();
 
             // Check if the user can light a candle (1-day interval)
-            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
-                Alert.alert('Candle Already Lit', 'You can light another candle tomorrow.');
-                return;
+            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 5 * 1000) {
+            Alert.alert('Candle Already Lit', 'You can light another candle in 5 seconds.');
+              return;
             }
 
             // Update the candle data for the grave
@@ -130,12 +151,12 @@ const GraveInformation = () => {
                         />
                     </View>
                     <View style={styles.profileInfo}>
-                        <Text style={styles.name}>{grave.firstName} {grave.lastName}</Text>
+                        <Text style={styles.name}>{grave.firstName}{grave.nickname ? ` '${grave.nickname}'` : ''} {grave.lastName}</Text>
                         <Text style={styles.dates}>
                             Born on {grave.dateOfBirth ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.dateOfBirth)) : 'N/A'}
                         </Text>
                         <Text style={styles.dates}>
-                            Buried on {grave.burial ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.burial)) : 'N/A'}
+                            Buried {grave.burial ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.burial)) : 'N/A'}
                         </Text>
                         <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
                     </View>
@@ -229,6 +250,98 @@ const GraveInformation = () => {
                         </View>
                     </TouchableOpacity>
                 </View>
+
+                {/* Hidden ViewShot for Modal Content */}
+                <View style={{ position: 'absolute', left: -9999, top: -9999 }}>
+  <ViewShot ref={modalContentRef} options={{ format: 'png', quality: 0.9 }}>
+    <ImageBackground
+      source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
+      style={{
+        width: 350,
+        height: 500,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+        overflow: 'hidden',
+      }}
+      imageStyle={{ resizeMode: 'cover', transform: [{ scale: 1.05 }] }}
+    >
+      <View style={{
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        borderRadius: 20,
+      }} />
+      <View style={{ zIndex: 2, alignItems: 'center', width: '100%', padding: 20, paddingHorizontal: 50 }}>
+        <Image source={require('../assets/WtG2.png')} style={styles.wtg2logo} />
+        <Text style={[styles.memorialHeader, { fontSize: 32, marginBottom: 5 }]}>Memorial Candle</Text>
+        <Text style={[styles.memorialSubtext, { fontSize: 16, marginBottom: 15 }]}>Thank you for taking part in the memory.</Text>
+        <View style={[styles.imageBorderOuter, { width: 80, height: 80, borderRadius: 40 }]}>
+        <View style={[styles.imageBorderInner, { width: 75, height: 75, borderRadius: 37.5 }]}>
+            <Image
+              source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/100' }}
+              style={[styles.modalProfileImage, { width: 70, height: 70, borderRadius: 35 }]}
+            />
+          </View>
+        </View>
+        <Text style={styles.candleCount}>
+          Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
+          <Text style={styles.boldText}>{grave.firstName} {grave.lastName}{grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>
+        </Text>
+        <Text style={styles.encourageText}>
+          Help light more candles for {grave.firstName} and share with family and friends.
+        </Text>
+      </View>
+    </ImageBackground>
+  </ViewShot>
+</View>
+
+                {/* Modal */}
+                <Modal
+    transparent={true}
+    visible={isCandleLit}
+    animationType="fade"
+    onRequestClose={() => setIsCandleLit(false)}
+>
+    <TouchableWithoutFeedback onPress={() => setIsCandleLit(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Image source={require('../assets/WtG2.png')} style={styles.wtg2logo} />
+            <Text style={styles.memorialHeader}>Memorial Candle</Text>
+            <Text style={styles.memorialSubtext}>Thank you for taking part in the memory.</Text>
+            <View style={styles.imageBorderOuter}>
+              <View style={styles.imageBorderInner}>
+                <Image
+                  source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/100' }}
+                  style={styles.modalProfileImage}
+                />
+              </View>
+            </View>
+            <Text style={styles.candleCount}>
+              Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
+              <Text style={styles.boldText}>{grave.firstName} {grave.lastName} {grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>.
+            </Text>
+            <Text style={styles.encourageText}>
+              Help light more candles for {grave.firstName} and share with family and friends.
+            </Text>
+          </View>
+          {/* Social Media and Save Buttons */}
+          <View style={styles.socialIcons}>
+            <TouchableOpacity onPress={saveModalAsImage}>
+              <Ionicons name="download-outline" size={55} color="white" style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image source={require('../assets/fb2.png')} style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image source={require('../assets/whatsapp.png')} style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image source={require('../assets/twitter.png')} style={styles.icon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+    </TouchableWithoutFeedback>
+</Modal>
             </ScrollView>
         </View>
     );
@@ -385,6 +498,26 @@ bottomButton: {
   paddingHorizontal: 20,
   flex: 1, // Makes both buttons take equal width
 },
+modalBackgroundImage: {
+    width: '100%',
+    minHeight: 500, // Adjust as needed for your modal size
+    borderRadius: 20,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+},
+modalBackgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)', // Black with opacity
+    zIndex: 1,
+},
+modalContentAbsolute: {
+    zIndex: 2,
+    alignItems: 'center',
+    width: '100%',
+    padding: 20,
+},
 
 bottomButtonText: {
   marginTop: 5, // Adds space between icon & text
@@ -475,10 +608,11 @@ modalOverlay: {
     alignItems: "center",
   },
   memorialHeader: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: "bold",
     marginBottom: 10,
     color: "white",
+    textAlign: "center",
   },
   memorialSubtext: {
     fontSize: 20,
