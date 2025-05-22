@@ -154,15 +154,15 @@ const SignIn = () => {
               <Image source={require("../assets/facebook.png")} style={styles.socialIcon} />
             </TouchableOpacity>
           </View>
+        </View>
+      </View>
 
-          <Text style={styles.registerText}>
+      <Text style={styles.registerText}>
             <Text style={styles.blackText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.Text}>Register</Text>
             </TouchableOpacity>
           </Text>
-        </View>
-      </View>
     </ImageBackground>
   );
 };
@@ -221,7 +221,9 @@ const styles = StyleSheet.create({
   forgotPassword: {
     color: "#00aa13",
     left: 70,
+    fontSize: 12,
     marginTop: 5,
+    textDecorationLine: "underline",
   },
   eyeIcon: {
     position: "absolute",
@@ -235,10 +237,9 @@ const styles = StyleSheet.create({
   signInButton: {
     width: "100%",
     backgroundColor: "#00aa13",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 50,
     marginTop: 20,
-    alignItems: "center",
   },
   signInText: {
     color: "#fff",
@@ -262,7 +263,8 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center",
+    gap: 20,
     width: "100%",
     marginBottom: 20,
   },
@@ -272,12 +274,13 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   registerText: {
+    position: "absolute",
     fontSize: 14,
-    textAlign: "center",
-    marginTop: 10,
+    left: 100,
+    bottom: 130,
   },
   blackText: {
-    color: "#000",
+    color: "white",
   },
   Text: {
     color: "#fde245",
@@ -294,7 +297,7 @@ const styles = StyleSheet.create({
   signInButton: {
     flex: 1,
     backgroundColor: "#00aa13",
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 10,
     alignItems: "center",
     marginRight: 10,
@@ -304,7 +307,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderWidth: 2,
     borderColor: "#00aa13",
-    paddingVertical: 12,
+    paddingVertical: 8,
     color: 'green',
     borderRadius: 10,
     alignItems: "center",

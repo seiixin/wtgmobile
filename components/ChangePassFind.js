@@ -83,7 +83,7 @@ const ChangePassFinds = () => {
       </TouchableOpacity>
 
       <View style={styles.container}>
-        <Text style={styles.header}>Find Your Account</Text>
+        <Text style={styles.header}>Find your Account</Text>
         <Text style={styles.subHeader}>Enter your email to reset your password</Text>
 
         <TextInput
@@ -113,8 +113,8 @@ const styles = StyleSheet.create({
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
   subHeader: { fontSize: 16, color: 'gray', marginBottom: 20 },
   input: { width: '100%', height: 45, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingLeft: 10, marginBottom: 15 },
-  button: { marginTop: 15, backgroundColor: '#00aa13', padding: 15, borderRadius: 50, width: '80%', alignItems: 'center' },
-  button2: { marginTop: 10, backgroundColor: 'white', padding: 15, borderRadius: 50, borderColor: '#00aa13', borderWidth: 1, width: '80%', alignItems: 'center' },
+  button: { marginTop: 15, backgroundColor: '#00aa13', padding: 9, borderRadius: 50, width: '80%', alignItems: 'center' },
+  button2: { marginTop: 10, backgroundColor: 'white', padding: 9, borderRadius: 50, borderColor: '#00aa13', borderWidth: 1, width: '80%', alignItems: 'center' },
   buttonText: { color: 'white', fontSize: 16 },
   buttonText2: { color: '#00aa13', fontSize: 16 },
 });
