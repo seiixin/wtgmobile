@@ -11,27 +11,37 @@ const VerificationRegister = () => {
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
   const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
+  const [timerId, setTimerId] = useState(null);
   const navigation = useNavigation();
   const route = useRoute();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
 
-  useEffect(() => {
-    if (route.params && route.params.email) {
-      setEmail(route.params.email);
-    }
-
-    // Countdown timer logic
-    const timer = setInterval(() => {
+  // Start or restart the countdown timer
+  const startTimer = (duration = 60) => {
+    setTimeLeft(duration);
+    if (timerId) clearInterval(timerId);
+    const id = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timer);
+          clearInterval(id);
           return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
+    setTimerId(id);
+  };
 
-    return () => clearInterval(timer); // Cleanup on component unmount
+  useEffect(() => {
+    if (route.params && route.params.email) {
+      setEmail(route.params.email);
+    }
+    startTimer(60); // Start timer on mount
+
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.params]);
 
   const formatTime = (seconds) => {
@@ -72,7 +82,7 @@ const VerificationRegister = () => {
 
       if (response.ok) {
         Alert.alert("OTP resent successfully!");
-        setTimeLeft(60); // Reset the timer to 1 minute
+        startTimer(60); // Reset the timer to 1 minute
         await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + 60).toString());
       } else {
         Alert.alert("Failed to resend OTP. Please try again.");
