@@ -25,11 +25,7 @@
     "expo": "53.0.9",
     "expo-app-loading": "^2.1.1",
     "expo-av": "^15.1.4",
-<<<<<<< HEAD
     "expo-barcode-scanner": "^13.0.1",
-=======
-    "expo-font": "~13.3.1",
->>>>>>> 9ccc0d9bd7b2d42eee3ad997ad7df540e23ff5ab
     "expo-image-picker": "^16.1.4",
     "expo-linear-gradient": "^14.1.4",
     "expo-media-library": "~17.1.6",
