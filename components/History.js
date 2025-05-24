@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Platform, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
+const { width, height } = Dimensions.get('window');
 
 // ✅ Custom Drawer Content
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
+
+    
 
     const handleSignOut = () => {
         Alert.alert(
@@ -32,7 +38,7 @@ const CustomDrawerContent = (props) => {
                             // Navigate to the SignIn screen
                             navigation.reset({
                                 index: 0, // Reset stack to the SignIn screen
-                                routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                                routes: [{ name: 'SignIn' }], // Navigate to SignIn
                             });
                         } catch (error) {
                             console.error("Error during sign out:", error);
@@ -124,30 +130,30 @@ const HistoryScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [historyList, setHistoryList] = useState([]); // Ensure this is initialized as an empty array
+    const [hasSearched, setHasSearched] = useState(false); // Add this state
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    
+    const handleGraveClick = async (grave) => {
+        try {
+            // Get current history list from AsyncStorage
+            const data = await AsyncStorage.getItem('historyList');
+            let historyList = data ? JSON.parse(data) : [];
 
-    const handleGraveClick = (grave) => {
-        console.log('Clicked Grave:', {
-            ...grave,
-            image: grave.image ? grave.image.substring(0, 50) + '...' : 'No image',
-        });
+            // Remove if already exists, then add to top
+            historyList = historyList.filter(item => item._id !== grave._id);
+            historyList = [grave, ...historyList];
 
-        setHistoryList((prevHistory) => {
-            // Check if the grave already exists in the historyList
-            if (prevHistory.some((item) => item._id === grave._id)) {
-                console.log('Grave already exists in history:', grave._id);
-                return prevHistory; // Return the existing list without changes
-            }
-            const updatedHistory = [...prevHistory, grave];
-            console.log('Updated History List:', updatedHistory.map(item => ({
-                ...item,
-                image: item.image ? item.image.substring(0, 50) + '...' : 'No image',
-            })));
-            // Save the updated history list to AsyncStorage
-            AsyncStorage.setItem('historyList', JSON.stringify(updatedHistory))
-                .then(() => console.log('History saved to AsyncStorage'))
-                .catch((error) => console.error('Error saving history:', error));
-            return updatedHistory;
-        });
+            // Save updated history list
+            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
+            setHistoryList(historyList); // Update local state
+        } catch (error) {
+            console.error('Error updating history list:', error);
+        }
+
+        // Reset search state after clicking a result
+        setSearchQuery('');
+        setSearchResults([]);
+        setHasSearched(false);
 
         navigation.navigate('GraveInformation', { grave });
     };
@@ -155,18 +161,18 @@ const HistoryScreen = () => {
     // Function to handle search
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
-            setSearchResults([]); // Clear search results if the search bar is empty
+            setSearchResults([]);
+            setHasSearched(false); // No search performed
             return;
         }
-
         try {
-            console.log('Search Query:', searchQuery); // Log the search query
             const response = await fetch(`${BASE_URL}/api/graves/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
-            console.log('Search Results:', data); // Log the results
-            setSearchResults(data); // Update the search results state
+            setSearchResults(data);
+            setHasSearched(true); // Search performed
         } catch (error) {
             console.error('Error fetching search results:', error);
+            setHasSearched(true); // Even on error, mark as searched to show "No results"
         }
     };
 
@@ -202,27 +208,40 @@ const HistoryScreen = () => {
                 {/* Header */}
                 <View style={styles.topSection}>
                     <View style={styles.topBar}>
-                        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                            <Ionicons name="menu" size={24} color="black" />
-                        </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.openDrawer()}>
+                        <Ionicons
+                            name="menu"
+                            size={24}
+                            color="black"
+                            style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                        />
+                    </TouchableOpacity>
                         <View style={styles.imageContainer}></View>
                     </View>
 
                     {/* Search Bar & Button Row Grouped in White Background */}
-                    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 10, paddingBottom: 0 }}>
+                    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
                         <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
                             <TextInput
                                 style={styles.searchBar}
-                                placeholder="Search by Firstname or Lastname"
+                                placeholder="Search by Fullname or Nickname"
                                 placeholderTextColor="gray"
                                 value={searchQuery}
-                                onChangeText={setSearchQuery}
+                                onChangeText={text => {
+                                    setSearchQuery(text);
+                                    if (text.trim() === '') {
+                                        setSearchResults([]);
+                                        setHasSearched(false);
+                                    }
+                                }}
+                                onFocus={() => setIsSearchFocused(true)}
+                                
                             />
                             <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
                                 <Ionicons name="search" size={20} color="white" />
                             </TouchableOpacity>
                         </View>
-                        <View style={styles.divider3} />
+                        
 
                         {/* Four Buttons (copied from Bookmarks.js) */}
                         <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
@@ -251,92 +270,112 @@ const HistoryScreen = () => {
                     </View>
                 </View>
 
-                {/* SectionList */}
-                <SectionList
-                style={{ marginTop: 26 }} // <-- Add this line to bring down the SectionList
-                    sections={[
-                        { title: '', data: searchResults, type: 'searchResults' },
-                        { title: '', data: historyList, type: 'historyList' },
-                    ]}
-                    keyExtractor={(item, index) => `${item._id}-${index}`} // Ensure unique keys
-                    renderSectionHeader={({ section }) => (
-                        <Text style={styles.sectionTitle}>{section.title}</Text>
-                    )}
-                    renderItem={({ item, section }) => {
-                        const formattedDateOfBirth = item.dateOfBirth
-                            ? new Intl.DateTimeFormat('en-US', {
-                                  month: 'long',
-                                  day: '2-digit',
-                                  year: 'numeric',
-                              }).format(new Date(item.dateOfBirth))
-                            : 'Unknown';
+                {/* Only show SectionList if search bar is empty OR search has been performed */}
+                {searchQuery.trim().length === 0 ? (
+                    // Show history list when search bar is not focused or empty
+                    <SectionList
+                        style={{ marginTop: 26 }}
+                        sections={[
+                            { title: '', data: historyList, type: 'historyList' }
+                        ]}
+                        keyExtractor={(item, index) => `${item._id}-${index}`}
+                        renderSectionHeader={({ section }) => (
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
+                        )}
+                        renderItem={({ item, section }) => {
+                            const formattedDateOfBirth = item.dateOfBirth
+                                ? new Intl.DateTimeFormat('en-US', {
+                                      month: 'long',
+                                      day: '2-digit',
+                                      year: 'numeric',
+                                  }).format(new Date(item.dateOfBirth))
+                                : 'Unknown';
 
-                        const formattedBurialDate = item.burial
-                            ? new Intl.DateTimeFormat('en-US', {
-                                  month: 'long',
-                                  day: '2-digit',
-                                  year: 'numeric',
-                              }).format(new Date(item.burial))
-                            : 'Unknown';
+                            const formattedBurialDate = item.burial
+                                ? new Intl.DateTimeFormat('en-US', {
+                                      month: 'long',
+                                      day: '2-digit',
+                                      year: 'numeric',
+                                  }).format(new Date(item.burial))
+                                : 'Unknown';
 
-                        return (
-                            <TouchableOpacity
-                                style={styles.card}
-                                onPress={() =>
-                                    section.type === 'searchResults'
-                                        ? handleGraveClick(item)
-                                        : navigation.navigate('GraveInformation', { grave: item })
-                                }
-                            >
-                                <Image
-                                    source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
-                                    style={styles.cardImage}
-                                />
-                                <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
-                                    <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
-                                    <Text style={styles.cardLocation}>
-                                        {item.phase}, Apartment {item.aptNo}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    }}
-                    contentContainerStyle={{ paddingBottom: 60}} // Ensure proper spacing
-                />
-
-                {/* Bottom Navigation */}
-                <View style={styles.bottomNav}>
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => {
-                            navigation.navigate('MainTabs', { screen: 'HistoryTab' });
+                            return (
+                                <TouchableOpacity
+                                    style={styles.card}
+                                    onPress={() => handleGraveClick(item)}
+                                >
+                                    <Image
+                                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                        style={styles.cardImage}
+                                    />
+                                    <View style={styles.cardContent}>
+                                        <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
+                                        <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
+                                        <Text style={styles.cardLocation}>
+                                            {item.phase}, Apartment {item.aptNo}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            );
                         }}
-                    >
-                        <Ionicons name="time" size={24} color="green" />
-                        <Text style={{ color: 'green' }}>History</Text>
-                    </TouchableOpacity>
+                        contentContainerStyle={{ paddingBottom: 100 }}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.noResultsText}>No history found.</Text>
+                        )}
+                    />
+                ) : hasSearched ? (
+                    // Show search results only after searching
+                    <SectionList
+                        style={{ marginTop: 26 }}
+                        sections={[
+                            { title: '', data: searchResults, type: 'searchResults' }
+                        ]}
+                        keyExtractor={(item, index) => `${item._id}-${index}`}
+                        renderSectionHeader={({ section }) => (
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
+                        )}
+                        renderItem={({ item, section }) => {
+                            const formattedDateOfBirth = item.dateOfBirth
+                                ? new Intl.DateTimeFormat('en-US', {
+                                      month: 'long',
+                                      day: '2-digit',
+                                      year: 'numeric',
+                                  }).format(new Date(item.dateOfBirth))
+                                : 'Unknown';
 
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => {
-                            navigation.navigate('MainTabs', { screen: 'BookmarksTab' });
-                        }}
-                    >
-                        <Ionicons name="bookmark" size={24} color="gray" />
-                        <Text style={{ color: 'gray' }}>Bookmarks</Text>
-                    </TouchableOpacity>
+                            const formattedBurialDate = item.burial
+                                ? new Intl.DateTimeFormat('en-US', {
+                                      month: 'long',
+                                      day: '2-digit',
+                                      year: 'numeric',
+                                  }).format(new Date(item.burial))
+                                : 'Unknown';
 
-                    <TouchableOpacity
-                        style={styles.navItem}
-                        onPress={() => {
-                            navigation.navigate('MainTabs', { screen: 'PrayersTab' });
+                            return (
+                                <TouchableOpacity
+                                    style={styles.card}
+                                    onPress={() => handleGraveClick(item)} // <-- Use the same handler as historyList
+                                >
+                                    <Image
+                                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                        style={styles.cardImage}
+                                    />
+                                    <View style={styles.cardContent}>
+                                        <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
+                                        <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
+                                        <Text style={styles.cardLocation}>
+                                            {item.phase}, Apartment {item.aptNo}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            );
                         }}
-                    >
-                        <Ionicons name="heart" size={24} color="gray" />
-                        <Text style={{ color: 'gray' }}>Prayers</Text>
-                    </TouchableOpacity>
-                </View>
+                        contentContainerStyle={{ paddingBottom: 100 }}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.noResultsText}>No results found.</Text>
+                        )}
+                    />
+                ) : null}
             </View>
         </ImageBackground>
     );
@@ -358,11 +397,11 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         height: '100%',
-        resizeMode: 'cover', // Ensure it stretches properly
+        resizeMode: 'cover',
     },
     container: {
         flex: 1,
-        paddingTop: 40,
+        paddingTop: height * 0.04,
     },
     topSection: {
         position: 'relative',
@@ -370,7 +409,7 @@ const styles = StyleSheet.create({
     },
     bg: {
         width: '100%',
-        height: '130%',
+        height: height * 1.3,
         position: 'absolute',
         top: 0,
     },
@@ -378,7 +417,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 10,
+        padding: width * 0.025,
         backgroundColor: 'transparent',
         zIndex: 1,
     },
@@ -387,73 +426,67 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: 150,
-        height: 50,
+        width: width * 0.4,
+        height: height * 0.06,
         resizeMode: 'contain',
     },
     searchBarContainer: {
-        marginHorizontal: 10,
-        paddingTop: 10,
-
-        marginTop: 18,
+        marginHorizontal: width * 0.025,
+        paddingTop: height * 0.012,
+        marginTop: height * 0.022,
         zIndex: 2,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'white',
-        borderRadius: 5,
-        paddingHorizontal: 10,
+        borderRadius: width * 0.015,
+        paddingHorizontal: width * 0.025,
     },
     searchBar: {
         flex: 1,
-        padding: 10,
+        padding: width * 0.025,
+        fontSize: width * 0.04,
     },
     searchButton: {
-        padding: 10,
+        padding: width * 0.025,
         backgroundColor: 'green',
-        borderRadius: 5,
-    },
-    waveContainer: {
-        position: 'absolute',
-        top: '35%',
-        width: screenWidth,
-        left: 0,
-        right: 0,
+        borderRadius: width * 0.015,
+        marginLeft: width * 0.012,
     },
     filterContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
-        paddingHorizontal: 25,
+        marginBottom: height * 0.012,
+        paddingHorizontal: width * 0.06,
     },
     filterText: {
-        fontSize: 20,
+        fontSize: width * 0.05,
         color: 'green',
     },
     filterButton: {
-        padding: 8,
-        borderRadius: 5,
+        padding: width * 0.02,
+        borderRadius: width * 0.015,
         backgroundColor: '#fff',
     },
     divider: {
         height: 2,
         backgroundColor: 'green',
-        marginBottom: 20,
-        marginTop: -5,
+        marginBottom: height * 0.025,
+        marginTop: -height * 0.006,
     },
     content: {
         flex: 1,
         top: '5%',
-        paddingHorizontal: 15,
-        
+        paddingHorizontal: width * 0.04,
         backgroundColor: 'white',
+        paddingTop: height * 0.012,
     },
     card: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: 10,
-        marginBottom: 10,
-        padding: 10,
+        borderRadius: width * 0.025,
+        marginBottom: height * 0.012,
+        padding: width * 0.025,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -461,164 +494,158 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cardImage: {
-        width: 70,
-        height: 70,
-        borderRadius: 10,
-        marginRight: 10,
+        width: width * 0.18,
+        height: width * 0.18,
+        borderRadius: width * 0.025,
+        marginRight: width * 0.025,
     },
     cardContent: {
         flex: 1,
     },
     cardTitle: {
-        fontSize: 16,
+        fontSize: width * 0.045,
         fontWeight: 'bold',
         color: '#333',
     },
     cardDates: {
-        fontSize: 14,
+        fontSize: width * 0.038,
         color: '#666',
     },
     cardLocation: {
-        fontSize: 12,
+        fontSize: width * 0.032,
         color: '#999',
     },
     cardAction: {
         backgroundColor: 'green',
-        padding: 8,
-        borderRadius: 8,
+        padding: width * 0.02,
+        borderRadius: width * 0.02,
     },
-    bottomNav: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        padding: 10,
-        backgroundColor: '#f8f8f8',
-        elevation: 10, // Shadow for Android
-        shadowColor: '#000', // Shadow color
-        shadowOffset: { width: 0, height: -8 }, // Shadow above the nav bar
-        shadowOpacity: 0.4,
-        shadowRadius: 4,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 60,
-    },
+
     navItem: {
         alignItems: 'center',
     },
     buttonRow: {
-        bottom: 30,
+        bottom: height * 0.04,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 10,
+        paddingHorizontal: width * 0.05,
+        marginBottom: height * 0.012,
+        height: height * 0.06,
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
-        borderRadius: 5,
+        padding: width * 0.025,
+        borderRadius: width * 0.015,
         flex: 1,
         justifyContent: 'center',
-        marginHorizontal: 5,
+        marginHorizontal: width * 0.012,
     },
     buttonImage: {
-        width: 20,
-        height: 20,
+        width: width * 0.05,
+        height: width * 0.05,
         resizeMode: 'contain',
     },
     IconDivider: {
-        height: 45,
+        height: height * 0.06,
         width: 0.5,
         backgroundColor: 'gray',
     },
-    divider3: {
-        height: 0.5,
-        width: '85%',
-        backgroundColor: 'gray',
-        marginHorizontal: 35,
-        bottom: 28,
-    },
     drawerContainer: {
         flex: 1,
-        padding: 20,
+        padding: width * 0.05,
         backgroundColor: '#fff',
+        borderTopRightRadius: width * 0.25,
+        borderBottomRightRadius: width * 0.25,
     },
     profileSection: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: height * 0.025,
     },
     profileImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: width * 0.21,
+        height: width * 0.21,
+        borderRadius: width * 0.105,
     },
     profileName: {
-        fontSize: 18,
+        fontSize: width * 0.048,
         fontWeight: 'bold',
-        marginTop: 10,
+        marginTop: height * 0.012,
     },
     profileLocation: {
-        fontSize: 14,
+        fontSize: width * 0.038,
         color: '#555',
     },
     editProfileButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 5,
+        marginTop: height * 0.006,
     },
     editProfileText: {
-        fontSize: 14,
+        fontSize: width * 0.038,
         color: 'green',
-        marginLeft: 5,
+        marginLeft: width * 0.012,
     },
     menuSection: {
-        marginVertical: 10,
+        marginVertical: height * 0.012,
     },
     drawerItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 10,
+        paddingVertical: height * 0.012,
+        paddingHorizontal: width * 0.04,
+        borderRadius: width * 0.025,
     },
     drawerTextGreen: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#12894f',
     },
     drawerTextYellow: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#cb9717',
     },
     drawerTextBlue: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#1580c2',
     },
     signOutSection: {
         marginTop: 'auto',
         borderTopWidth: 1,
         borderColor: '#ccc',
-        paddingTop: 10,
-        paddingBottom: 40,
+        paddingTop: height * 0.012,
+        paddingBottom: height * 0.05,
     },
     signOutButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 15,
+        paddingVertical: height * 0.018,
     },
     signOutText: {
-        fontSize: 16,
-        marginLeft: 10,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.025,
         color: '#333',
     },
     drawerIcon: {
-        width: 40, // Set width
-        height: 40, // Set height
-        resizeMode: 'contain', // Make sure it scales properly
-        marginRight: 10, // Add spacing between icon and text
+        width: width * 0.11,
+        height: width * 0.11,
+        resizeMode: 'contain',
+        marginRight: width * 0.025,
+    },
+    sectionTitle: {
+        fontSize: width * 0.05,
+        fontWeight: 'bold',
+        color: '#12894f',
+        marginVertical: height * 0.01,
+        marginLeft: width * 0.03,
+    },
+    noResultsText: {
+        textAlign: 'center',
+        color: 'gray',
+        marginTop: height * 0.3,
+        fontSize: width * 0.04,
     },
 });
 

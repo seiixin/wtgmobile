@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Modal, Platform, Pressable } from 'react-native';
+import { View, Text, Dimensions, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Modal, Platform, Pressable } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Checkbox } from 'react-native-paper';
@@ -9,6 +9,7 @@ import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjus
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { useFonts, Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
 
+const { width, height } = Dimensions.get('window');
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const Register = () => {
@@ -272,8 +273,16 @@ const Register = () => {
               setOpen={setGenderOpen}
               setValue={(callback) => handleDropdownChange('gender', callback(formData.gender))}
               placeholder="Gender"
-              style={styles.input}
-              dropDownStyle={{ borderColor: 'gray' }}
+              style={styles.dropdown}
+              containerStyle={{ height: styles.dropdown.height, minHeight: styles.dropdown.height, maxHeight: styles.dropdown.height, marginBottom: height * 0.012 }}
+              dropDownContainerStyle={{ borderColor: 'gray' }}
+              listItemContainerStyle={{ height: styles.dropdown.height, justifyContent: 'center' }}
+              listItemLabelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              labelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              itemSeparatorStyle={{ height: 0 }}
+              dropDownDirection="AUTO"
+              maxHeight={height * 0.25}
+              listMode="FLATLIST"
             />
           </View>
 
@@ -283,6 +292,7 @@ const Register = () => {
               <TextInput
                 style={styles.inputDate}
                 placeholder="Select Date"
+                placeholderTextColor="#999"
                 value={dateOfBirth}
                 editable={false}
                 onPressIn={toggleDatepicker}
@@ -299,8 +309,16 @@ const Register = () => {
               setOpen={setNationalityOpen}
               setValue={(callback) => handleDropdownChange('nationality', callback(formData.nationality))}
               placeholder="Nationality"
-              style={styles.input}
-              dropDownStyle={{ borderColor: 'gray' }}
+              style={styles.dropdown}
+              containerStyle={{ height: styles.dropdown.height, minHeight: styles.dropdown.height, maxHeight: styles.dropdown.height, marginBottom: height * 0.012 }}
+              dropDownContainerStyle={{ borderColor: 'gray' }}
+              listItemContainerStyle={{ height: styles.dropdown.height, justifyContent: 'center' }}
+              listItemLabelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              labelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              itemSeparatorStyle={{ height: 0 }}
+              dropDownDirection="AUTO"
+              maxHeight={height * 0.25}
+              listMode="FLATLIST"
             />
           </View>
         </View>
@@ -343,8 +361,16 @@ const Register = () => {
               setOpen={setProvinceOpen}
               setValue={(callback) => handleDropdownChange('province', callback(formData.province))}
               placeholder="Province"
-              style={styles.input}
-              dropDownStyle={{ borderColor: 'gray' }}
+              style={styles.dropdown}
+              containerStyle={{ height: styles.dropdown.height, minHeight: styles.dropdown.height, maxHeight: styles.dropdown.height, marginBottom: height * 0.012 }}
+              dropDownContainerStyle={{ borderColor: 'gray' }}
+              listItemContainerStyle={{ height: styles.dropdown.height, justifyContent: 'center' }}
+              listItemLabelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              labelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              itemSeparatorStyle={{ height: 0 }}
+              dropDownDirection="AUTO"
+              maxHeight={height * 0.25}
+              listMode="FLATLIST"
             />
           </View>
 
@@ -357,8 +383,16 @@ const Register = () => {
               setOpen={setCityOpen}
               setValue={(callback) => handleDropdownChange('city', callback(formData.city))}
               placeholder="City"
-              style={styles.input}
-              dropDownStyle={{ borderColor: 'gray' }}
+              style={styles.dropdown}
+              containerStyle={{ height: styles.dropdown.height, minHeight: styles.dropdown.height, maxHeight: styles.dropdown.height, marginBottom: height * 0.012 }}
+              dropDownContainerStyle={{ borderColor: 'gray' }}
+              listItemContainerStyle={{ height: styles.dropdown.height, justifyContent: 'center' }}
+              listItemLabelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              labelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              itemSeparatorStyle={{ height: 0 }}
+              dropDownDirection="AUTO"
+              maxHeight={height * 0.25}
+              listMode="FLATLIST"
             />
           </View>
 
@@ -371,8 +405,16 @@ const Register = () => {
               setOpen={setDistrictOpen}
               setValue={(callback) => handleDropdownChange('district', callback(formData.district))}
               placeholder="District"
-              style={styles.input}
-              dropDownStyle={{ borderColor: 'gray' }}
+              style={styles.dropdown}
+              containerStyle={{ height: styles.dropdown.height, minHeight: styles.dropdown.height, maxHeight: styles.dropdown.height, marginBottom: height * 0.012 }}
+              dropDownContainerStyle={{ borderColor: 'gray' }}
+              listItemContainerStyle={{ height: styles.dropdown.height, justifyContent: 'center' }}
+              listItemLabelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              labelStyle={{ fontSize: styles.dropdown.fontSize, fontFamily: 'Inter_400Regular', textAlignVertical: 'center' }}
+              itemSeparatorStyle={{ height: 0 }}
+              dropDownDirection="AUTO"
+              maxHeight={height * 0.25}
+              listMode="FLATLIST"
             />
           </View>
         </View>
@@ -541,98 +583,111 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f6f6',
   },
   container: {
-    marginTop: 165,
-    width: '85%',
+    marginTop: height * 0.06,
+    width: width * 0.88,
     backgroundColor: 'white',
-    borderRadius: 50,
-    padding: 20,
+    borderRadius: width * 0.12,
+    padding: width * 0.05,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
     height: 'auto',
-    height: '72%',
+    minHeight: height * 0.72,
   },
   header: {
-    fontSize: 25,
+    fontSize: width * 0.065,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 5,
-    fontFamily: 'Inter_700Bold', // Add this line
+    marginBottom: height * 0.008,
+    fontFamily: 'Inter_700Bold',
   },
   subheader: {
-    fontSize: 12,
+    fontSize: width * 0.035,
     color: 'gray',
     textAlign: 'center',
-    marginBottom: 10,
-    fontFamily: 'Inter_400Regular', // Add this line
+    marginBottom: height * 0.012,
+    fontFamily: 'Inter_400Regular',
   },
   input: {
-    height: 32,
-    width: "100%",
-    borderColor: 'gray',
-    borderWidth: 0.5,
-    borderRadius: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 0, // Add this line
-    fontSize: 14,
-    marginBottom: 10,
-    textAlignVertical: 'center',
-    fontFamily: 'Inter_400Regular',
-  },
-  inputDate: {
-    height: 50,
-    borderColor: 'gray',
-    borderWidth: 0.5,
-    borderRadius: 5,
-    width: '100%',
-    paddingHorizontal: 8,
-    paddingVertical: 0, // Add this line
-    fontSize: 14,
-    marginBottom: 5,
-    fontFamily: 'Inter_400Regular',
-    textAlignVertical: 'center', // Add this line for consistency
-  },
+  height: height * 0.055, // slightly taller
+  width: "100%",
+  borderColor: 'gray',
+  borderWidth: 0.5,
+  borderRadius: width * 0.015,
+  paddingHorizontal: width * 0.025,
+  fontSize: width * 0.038, // smaller font size
+  marginBottom: height * 0.012,
+  textAlignVertical: 'center',
+  fontFamily: 'Inter_400Regular',
+  backgroundColor: "#f9f9f9",
+},
+inputDate: {
+  height: height * 0.055,
+  borderColor: 'gray',
+  borderWidth: 0.5,
+  borderRadius: width * 0.015,
+  width: '100%',
+  paddingHorizontal: width * 0.025,
+  fontSize: width * 0.038,
+  marginBottom: height * 0.008,
+  fontFamily: 'Inter_400Regular',
+  textAlignVertical: 'center',
+  backgroundColor: "#f9f9f9",
+},
+dropdown: {
+  height: height * 0.055,
+  minHeight: height * 0.055,
+  maxHeight: height * 0.055,
+  borderColor: 'gray',
+  borderWidth: 0.5,
+  borderRadius: width * 0.015,
+  paddingHorizontal: width * 0.025,
+  fontSize: width * 0.038,
+  backgroundColor: "#f9f9f9",
+  justifyContent: 'center',
+},
   label: {
-    fontSize: 12,
+    fontSize: width * 0.032,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
-    fontFamily: 'Inter_700Bold', // Add this line
+    marginBottom: height * 0.004,
+    fontFamily: 'Inter_700Bold',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
-    width: "104%"
+    marginBottom: height * 0.008,
+    width: "104%",
   },
   inputContainer: {
     flex: 1,
-    marginRight: 10,
+    marginRight: width * 0.02,
   },
   horizontalContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: height * 0.012,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 10,
-    fontFamily: 'Inter_400Regular'
+    marginTop: height * 0.012,
+    fontFamily: 'Inter_400Regular',
   },
   button: {
     backgroundColor: '#fdbd21',
-    padding: 11,
-    borderRadius: 5,
-    margin: 5,
-    fontFamily: 'Inter_400Regular'
+    padding: height * 0.015,
+    borderRadius: width * 0.025,
+    margin: width * 0.012,
+    fontFamily: 'Inter_400Regular',
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontFamily: 'Inter_400Regular'
+    fontFamily: 'Inter_400Regular',
+    fontSize: width * 0.04,
   },
   modalContainer: {
     flex: 1,
@@ -641,10 +696,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: 350,
-    backgroundColor: 'transparent', // or remove this line
-    padding: 20,
-    borderRadius: 10,
+    width: width * 0.9,
+    backgroundColor: '#fff',
+    padding: width * 0.06,
+    borderRadius: width * 0.04,
     alignItems: 'center',
   },
   datePicker: {
@@ -654,33 +709,37 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: '#fdbd21',
-    padding: 12,
-    borderRadius: 50,
-    width: 220,
+    padding: height * 0.018,
+    borderRadius: width * 0.12,
+    width: width * 0.55,
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: height * 0.012,
   },
   registerButtonText: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontFamily: 'Inter_400Regular'
+    fontFamily: 'Inter_400Regular',
+    fontSize: width * 0.045,
   },
   signInLink: {
     color: 'red',
     textAlign: 'center',
-    top: 5,
-    fontFamily: 'Inter_400Regular'
+    top: height * 0.008,
+    fontFamily: 'Inter_400Regular',
+    fontSize: width * 0.04,
   },
   blackText: {
     color: "#000",
-    fontFamily: 'Inter_400Regular'
+    fontFamily: 'Inter_400Regular',
+    fontSize: width * 0.04,
   },
   redText: {
     color: "red",
     fontWeight: "bold",
-    top: 4,
-    fontFamily: 'Inter_400Regular'
+    top: height * 0.004,
+    fontFamily: 'Inter_400Regular',
+    fontSize: width * 0.04,
   },
   passwordContainer: {
     width: '100%',
@@ -688,24 +747,25 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 10,
-    top: 5,
+    right: width * 0.025,
+    top: height * 0.012,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    left: 10,
+    left: width * 0.01,
+    marginBottom: height * 0.01,
   },
   checkboxWrapper: {
-    marginRight: 10,
-    height: 35,
-    width: 35,
+    marginRight: width * 0.02,
+    height: width * 0.08,
+    width: width * 0.08,
   },
   errorText: {
     color: 'red',
-    fontSize: 12,
-    marginTop: 5,
-    fontFamily: 'Inter_400Regular'
+    fontSize: width * 0.032,
+    marginTop: height * 0.004,
+    fontFamily: 'Inter_400Regular',
   },
 });
 

@@ -1,6 +1,10 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, ImageBackground, ScrollView } from "react-native";
 import { useNavigation } from '@react-navigation/native';
+import { Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get("window");
+
 const AdultDetails = () => {
    const navigation = useNavigation();
 
@@ -65,140 +69,139 @@ const AdultDetails = () => {
 };
 
 const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-  
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
   backText: {
-    fontSize: 20,
+    fontSize: width * 0.05,
     color: "#2D6A4F",
   },
-  header:{
-    fontSize:23,
-    fontWeight: 'bold',
+  header: {
+    fontSize: width * 0.058,
+    fontWeight: "bold",
     textAlign: "center",
-    marginTop:10
+    marginTop: height * 0.012,
   },
   headerTitle: {
-    fontSize: 25,
+    fontSize: width * 0.065,
     fontWeight: "bold",
     color: "#2D6A4F",
     textAlign: "center",
-    marginTop:10
+    marginTop: height * 0.012,
   },
   headerSubtitle: {
-    fontSize: 21,
+    fontSize: width * 0.052,
     color: "#555",
     textAlign: "center",
-    fontWeight:'bold',
-    marginTop: 5,
+    fontWeight: "bold",
+    marginTop: height * 0.006,
   },
   image: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: width * 0.32,
+    height: width * 0.32,
+    borderRadius: width * 0.16,
   },
   profileImageContainer: {
-    backgroundColor: '#cadf94', // Background color applied to the image container
-    width: 140,  // Slightly larger than the image
-    height: 140, // Same height as width to keep it circular
-    borderRadius: 70, // Ensures it’s a circle
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 170,
+    backgroundColor: "#cadf94",
+    width: width * 0.37,
+    height: width * 0.37,
+    borderRadius: width * 0.185,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: height * 0.18,
     alignSelf: "center",
   },
   dateText: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#555",
     textAlign: "center",
   },
   contractText: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#555",
     textAlign: "center",
-    marginTop: 5,
+    marginTop: height * 0.006,
   },
   renewableText: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#555",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: height * 0.018,
   },
   headsContainer: {
-    flexDirection: 'row',  // Aligns items horizontally
-    alignItems: 'center',  // Centers the items vertically in the container
-    top:50,
-    justifyContent: 'center',  // Centers the "View Details" text
+    flexDirection: "row",
+    alignItems: "center",
+    top: height * 0.06,
+    justifyContent: "center",
   },
   backButton: {
-    position: 'absolute',
-    left: 20, 
-    top:10,
+    position: "absolute",
+    left: width * 0.05,
+    top: height * 0.012,
   },
   backImage: {
-    width: 40, // Set the size of the back button
-    height: 40,
+    width: width * 0.11,
+    height: width * 0.11,
   },
-  detailsContainer:{ 
-    alignItems: 'flex-start',
-    paddingLeft: 20,
-
-    paddingTop:40
+  detailsContainer: {
+    alignItems: "flex-start",
+    paddingLeft: width * 0.05,
+    paddingTop: height * 0.05,
   },
-  detailsContainer1:{ 
-    alignItems: 'flex-start',
-    paddingLeft: 20,
-   
-    
+  detailsContainer1: {
+    alignItems: "flex-start",
+    paddingLeft: width * 0.05,
   },
   optionContainer: {
-    marginVertical: 5,
-    paddingVertical: 10,
-    backgroundColor: "#e9f7f1", 
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    width: '90%', 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between',
-    alignSelf: 'center', 
-    minHeight: 70,
+    marginVertical: height * 0.006,
+    paddingVertical: height * 0.014,
+    backgroundColor: "#e9f7f1",
+    borderRadius: width * 0.025,
+    paddingHorizontal: width * 0.05,
+    width: "90%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    alignSelf: "center",
+    minHeight: height * 0.09,
   },
   textContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    flex: 1, 
+    flexDirection: "column",
+    justifyContent: "center",
+    paddingHorizontal: width * 0.05,
+    flex: 1,
   },
   optionTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#2D6A4F",
   },
   optionPrice: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     color: "#333",
-    marginTop: 5,
-    textAlign: 'right', 
+    marginTop: height * 0.006,
+    textAlign: "right",
   },
   checkboxText: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#555",
   },
   // Styling for the logo section
   logo: {
-    alignSelf: 'flex-end', // Align the logo to the right
-    marginTop: -40, // Adjust the margin to fit the layout better
-    marginRight: 10
+    alignSelf: "flex-end",
+    marginTop: -height * 0.05,
+    marginRight: width * 0.025,
   },
   logoImage: {
-    width: 70,  // Adjust the size of the logo
-    height: 50,
-    
+    width: width * 0.18,
+    height: width * 0.13,
+    resizeMode: "contain",
+  },
+  scrollViewContent: {
+    paddingBottom: height * 0.04,
   },
 });
 

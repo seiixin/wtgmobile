@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, SectionList, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import WaveCurve from './WaveCurve';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -34,7 +36,7 @@ const handleSignOut = () => {
                         // Navigate to the SignIn screen
                         navigation.reset({
                             index: 0, // Reset stack to the SignIn screen
-                            routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                            routes: [{ name: 'SignIn' }], // Navigate to SignIn
                         });
                     } catch (error) {
                         console.error("Error during sign out:", error);
@@ -130,22 +132,23 @@ const BookmarksScreen = () => {
     const navigation = useNavigation();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    const [selectedTab, setSelectedTab] = useState('Bookmarks'); // Add selectedTab state
+    const [hasSearched, setHasSearched] = useState(false); // Add this state
+    const [bookmarks, setBookmarks] = useState([]); // Add bookmarks state
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
-            setSearchResults([]); // Clear search results if the search bar is empty
+            setSearchResults([]);
+            setHasSearched(false); // No search performed
             return;
         }
-
         try {
-            console.log('Search Query:', searchQuery); // Log the search query
             const response = await fetch(`${BASE_URL}/api/graves/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
-            console.log('Search Results:', data); // Log the results
-            setSearchResults(data); // Update the search results state
+            setSearchResults(data);
+            setHasSearched(true); // Search performed
         } catch (error) {
             console.error('Error fetching search results:', error);
+            setHasSearched(true); // Even on error, mark as searched to show "No results"
         }
     };
 
@@ -154,6 +157,7 @@ const BookmarksScreen = () => {
             try {
                 const storedBookmarks = await AsyncStorage.getItem('bookmarks');
                 const bookmarks = storedBookmarks ? JSON.parse(storedBookmarks) : [];
+                setBookmarks(bookmarks); // Set bookmarks state
                 setSearchResults(bookmarks); // Use searchResults to display bookmarks
             } catch (error) {
                 console.error('Error loading bookmarks:', error);
@@ -165,160 +169,206 @@ const BookmarksScreen = () => {
         return unsubscribe; // Cleanup the listener on unmount
     }, [navigation]);
 
+    const handleResultCardClick = async (grave) => {
+        try {
+            // Get current history list from AsyncStorage
+            const data = await AsyncStorage.getItem('historyList');
+            let historyList = data ? JSON.parse(data) : [];
+
+            // Remove if already exists, then add to top
+            historyList = historyList.filter(item => item._id !== grave._id);
+            historyList = [grave, ...historyList];
+
+            // Save updated history list
+            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
+        } catch (error) {
+            console.error('Error updating history list:', error);
+        }
+
+        // Reset search state
+        setSearchQuery('');
+        setSearchResults([]);
+        setHasSearched(false);
+
+        navigation.navigate('GraveInformation', { grave });
+    };
+
     return (
-        <View style={{ flex: 1 }}>
-            <ImageBackground
-                source={require('../assets/HistoryBg.png')}
-                style={styles.background}
-            >
+        <ImageBackground source={require('../assets/HistoryBgg.png')} style={styles.background}>
                 <View style={styles.container}>
                     {/* Background & Header */}
-                    <View style={styles.topBar}>
-                        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                            <Ionicons name="menu" size={24} color="black" />
-                        </TouchableOpacity>
-                        <View style={styles.imageContainer}></View>
-                    </View>
+                    <View style={styles.topSection}>
+    <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Ionicons
+                name="menu"
+                size={24}
+                color="black"
+                style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+            />
+        </TouchableOpacity>
+        <View style={styles.imageContainer}></View>
+    </View>
 
-                    {/* Search Bar */}
-                    <View style={styles.searchBarContainer}>
-                        <TextInput
-                            style={styles.searchBar}
-                            placeholder="Search by Firstname or Lastname"
-                            placeholderTextColor="gray"
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                            <Ionicons name="search" size={20} color="white" />
-                        </TouchableOpacity>
-                    </View>
+    {/* Search Bar & Button Row Grouped in White Background */}
+    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
+        <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+            <TextInput
+                style={styles.searchBar}
+                placeholder="Search by Fullname or Nickname"
+                placeholderTextColor="gray"
+                value={searchQuery}
+                onChangeText={text => {
+                    setSearchQuery(text);
+                    if (text.trim() === '') {
+                        setSearchResults([]);
+                        setHasSearched(false);
+                    }
+                }}
+            />
+            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+                <Ionicons name="search" size={20} color="white" />
+            </TouchableOpacity>
+        </View>
+        <View style={styles.divider3} />
 
-                    <View style={styles.divider3} />
+        {/* Four Buttons */}
+        <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+            <TouchableOpacity style={styles.actionButton}>
+                <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+            </TouchableOpacity>
+            <View style={styles.IconDivider} />
+            <TouchableOpacity style={styles.actionButton}>
+                <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+            </TouchableOpacity>
+            <View style={styles.IconDivider} />
+            <TouchableOpacity style={styles.actionButton}>
+                <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+            </TouchableOpacity>
+            <View style={styles.IconDivider} />
+            <TouchableOpacity style={styles.actionButton}>
+                <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
+            </TouchableOpacity>
+        </View>
+    </View>
+</View>
 
-                    {/* Four Buttons */}
-                    <View style={styles.buttonRow}>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
 
-                        <View style={styles.IconDivider} />
+{searchQuery.trim().length === 0 ? (
+    // Show bookmarks list when search bar is empty
+    <SectionList
+        style={{ marginTop: 26 }}
+        sections={[
+            { title: '', data: [...bookmarks].reverse(), type: 'bookmarks' } // Reverse for latest first
+        ]}
+        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+        renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+        )}
+        renderItem={({ item, section }) => {
+            const formattedDateOfBirth = item.dateOfBirth
+                ? new Intl.DateTimeFormat('en-US', {
+                      month: 'long',
+                      day: '2-digit',
+                      year: 'numeric',
+                  }).format(new Date(item.dateOfBirth))
+                : 'Unknown';
 
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
+            const formattedBurialDate = item.burial
+                ? new Intl.DateTimeFormat('en-US', {
+                      month: 'long',
+                      day: '2-digit',
+                      year: 'numeric',
+                  }).format(new Date(item.burial))
+                : 'Unknown';
 
-                        <View style={styles.IconDivider} />
-
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-
-                        <View style={styles.IconDivider} />
-
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Wave Background */}
-                    <View style={styles.waveContainer}>
-                        <WaveCurve color="#fff" />
-                    </View>
-
-                    {/* Content Area */}
-                    <FlatList
-                        data={searchResults}
-                        keyExtractor={(item) => item._id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={styles.card}
-                                onPress={() => navigation.navigate('GraveInformation', { grave: item })}
-                            >
-                                <Image
-                                    source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
-                                    style={styles.cardImage}
-                                />
-                                <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
-                                    <Text style={styles.cardDates}>
-                                        {item.dateOfBirth
-                                            ? new Intl.DateTimeFormat('en-US', {
-                                                  month: 'long',
-                                                  day: '2-digit',
-                                                  year: 'numeric',
-                                              }).format(new Date(item.dateOfBirth))
-                                            : 'Unknown'} - 
-                                        {item.burial
-                                            ? new Intl.DateTimeFormat('en-US', {
-                                                  month: 'long',
-                                                  day: '2-digit',
-                                                  year: 'numeric',
-                                              }).format(new Date(item.burial))
-                                            : 'Unknown'}
-                                    </Text>
-                                    <Text style={styles.cardLocation}>
-                                        {item.phase}, Apartment {item.aptNo}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={() => (
-                            <Text style={styles.noResultsText}>No bookmarks found.</Text>
-                        )}
-                        contentContainerStyle={{ paddingBottom: 60 }} // Ensure proper spacing
+            return (
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => navigation.navigate('GraveInformation', { grave: item })}
+                >
+                    <Image
+                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                        style={styles.cardImage}
                     />
-
-                    {/* Bottom Navigation */}
-                    <View style={styles.bottomNav}>
-                        <TouchableOpacity
-                            style={styles.navItem}
-                            onPress={() => {
-                                setSelectedTab('History'); // Update selectedTab state
-                                navigation.navigate('MainTabs', { screen: 'HistoryTab' });
-                            }}
-                        >
-                            <Ionicons
-                                name="time"
-                                size={24}
-                                color={selectedTab === 'History' ? 'green' : 'gray'}
-                            />
-                            <Text style={{ color: selectedTab === 'History' ? 'green' : 'gray' }}>History</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.navItem}
-                            onPress={() => {
-                                setSelectedTab('Bookmarks'); // Update selectedTab state
-                                navigation.navigate('MainTabs', { screen: 'BookmarksTab' });
-                            }}
-                        >
-                            <Ionicons
-                                name="bookmark"
-                                size={24}
-                                color={selectedTab === 'Bookmarks' ? 'green' : 'gray'}
-                            />
-                            <Text style={{ color: selectedTab === 'Bookmarks' ? 'green' : 'gray' }}>Bookmarks</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.navItem}
-                            onPress={() => {
-                                setSelectedTab('Prayers'); // Update selectedTab state
-                                navigation.navigate('MainTabs', { screen: 'PrayersTab' });
-                            }}
-                        >
-                            <Ionicons
-                                name="heart"
-                                size={24}
-                                color={selectedTab === 'Prayers' ? 'green' : 'gray'}
-                            />
-                            <Text style={{ color: selectedTab === 'Prayers' ? 'green' : 'gray' }}>Prayers</Text>
-                        </TouchableOpacity>
+                    <View style={styles.cardContent}>
+                        <Text style={styles.cardTitle}>
+                            {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
+                        </Text>
+                        <Text style={styles.cardDates}>
+                            {formattedDateOfBirth} - {formattedBurialDate}
+                        </Text>
+                        <Text style={styles.cardLocation}>
+                            {item.phase}, Apartment {item.aptNo}
+                        </Text>
                     </View>
+                </TouchableOpacity>
+            );
+        }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        ListEmptyComponent={() => (
+            <Text style={styles.noResultsText}>No bookmarks found.</Text>
+        )}
+    />
+) : hasSearched ? (
+    // Show search results only after searching
+    <SectionList
+        style={{ marginTop: 26 }}
+        sections={[
+            { title: '', data: searchResults, type: 'searchResults' }
+        ]}
+        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+        renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+        )}
+        renderItem={({ item, section }) => {
+            const formattedDateOfBirth = item.dateOfBirth
+                ? new Intl.DateTimeFormat('en-US', {
+                      month: 'long',
+                      day: '2-digit',
+                      year: 'numeric',
+                  }).format(new Date(item.dateOfBirth))
+                : 'Unknown';
+
+            const formattedBurialDate = item.burial
+                ? new Intl.DateTimeFormat('en-US', {
+                      month: 'long',
+                      day: '2-digit',
+                      year: 'numeric',
+                  }).format(new Date(item.burial))
+                : 'Unknown';
+
+            return (
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => handleResultCardClick(item)}
+                >
+                    <Image
+                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                        style={styles.cardImage}
+                    />
+                    <View style={styles.cardContent}>
+                        <Text style={styles.cardTitle}>
+                            {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
+                        </Text>
+                        <Text style={styles.cardDates}>
+                            {formattedDateOfBirth} - {formattedBurialDate}
+                        </Text>
+                        <Text style={styles.cardLocation}>
+                            {item.phase}, Apartment {item.aptNo}
+                        </Text>
+                    </View>
+                </TouchableOpacity>
+            );
+        }}
+        contentContainerStyle={{ paddingBottom: 100 }} // Match History.js
+        ListEmptyComponent={() => (
+            <Text style={styles.noResultsText}>No results found.</Text>
+        )}
+    />
+) : null}
                 </View>
             </ImageBackground>
-        </View>
     );
 };
 
@@ -335,307 +385,249 @@ const Bookmarks = () => {
 
 const styles = StyleSheet.create({
     background: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    position: 'absolute', // Ensure it stays in place
-    top: 0,
-    left: 0,
-    resizeMode: 'cover', // Ensure it scales properly
-},
-container: {
-    flex: 1,
-    paddingTop: 20,
-},
-topSection: {
-    position: 'relative',
-    width: '100%',
-},
-bg: {
-    width: '100%',
-    height: '130%',
-    position: 'absolute',
-    top: 0,
-},
-topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: 'transparent',
-    zIndex: 1,
-},
-imageContainer: {
-    flex: 1,
-    alignItems: 'center',
-},
-image: {
-    width: 150,
-    height: 50,
-    resizeMode: 'contain',
-},
-searchBarContainer: {
-    marginHorizontal: 10,
-    paddingTop: 10,
-    marginBottom: 40,
-    marginTop: 18,
-    zIndex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    
-},
-searchBar: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
-},
-searchButton: {
-    padding: 10,
-    backgroundColor: 'green',
-    borderRadius: 5,
-    marginLeft: 10,
-},
-waveContainer: {
-    position: 'absolute',
-    top: '35%',
-    width: screenWidth,
-    left: 0,
-    right: 0,
-},
-filterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-    paddingHorizontal: 25,
-},
-filterText: {
-    fontSize: 20,
-    color: 'green',
-},
-filterButton: {
-    padding: 8,
-    borderRadius: 5,
-    backgroundColor: '#fff',
-},
-divider: {
-    height: 2,
-    backgroundColor: 'green',
-    marginBottom: 20,
-    marginTop: -5,
-},
-content: {
-    flex: 1,
-    top: '5%',
-    paddingHorizontal: 15,
-    backgroundColor: 'white',
-},
-card: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    marginBottom: 10,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    alignItems: 'center',
-},
-cardImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
-    marginRight: 10,
-},
-cardContent: {
-    flex: 1,
-},
-cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-},
-cardDates: {
-    fontSize: 14,
-    color: '#666',
-},
-cardLocation: {
-    fontSize: 12,
-    color: '#999',
-},
-cardAction: {
-    backgroundColor: 'green',
-    padding: 8,
-    borderRadius: 8,
-},
-bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 10,
-    backgroundColor: '#f8f8f8',
-    elevation: 10, // Shadow for Android
-    shadowColor: '#000', // Shadow color
-    shadowOffset: { width: 0, height: -8 }, // Shadow above the nav bar
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-},
-navItem: {
-    alignItems: 'center',
-},
-buttonRow: {
-    bottom:30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    height: 40,
-
-
-},
-actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    justifyContent: 'center',
-    marginHorizontal: 5,
-},
-buttonImage: {
-    width: 18,
-    height: 18,
-    resizeMode: 'contain',
-},
-IconDivider: {
-    height: 45,
-    width: 0.5,
-    backgroundColor: 'gray',
-},
-divider3: {
-    height: 0.5,
-    width: '85%',
-    backgroundColor: 'gray',
-    marginHorizontal: 35,
-    bottom: 28,
-},
-searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    top:12,
-    backgroundColor: 'white',
-},
-searchBar: {
-    flex: 1,
-    padding: 10,
-},
-searchIcon: {
-    padding: 10,
-},
-drawerContainer: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    borderTopRightRadius: 100,
-    borderBottomRightRadius: 100
-},
-profileSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-},
-profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-},
-profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-},
-profileLocation: {
-    fontSize: 14,
-    color: '#555',
-},
-editProfileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-},
-editProfileText: {
-    fontSize: 14,
-    color: 'green',
-    marginLeft: 5,
-},
-menuSection: {
-    marginVertical: 10,
-},
-drawerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-},
-drawerTextGreen: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#12894f',
-},
-drawerTextYellow: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#cb9717',
-},
-drawerTextBlue: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#1580c2',
-},
-signOutSection: {
-    marginTop: 'auto',
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-    paddingTop: 10,
-    paddingBottom:40
-},
-signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-},
-signOutText: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: '#333',
-},
-drawerIcon: {
-    width: 40,  // Set width
-    height: 40, // Set height
-    resizeMode: 'contain', // Make sure it scales properly
-    marginRight: 10, // Add spacing between icon and text
-},
-noResultsText: {
-    textAlign: 'center',
-    color: 'gray',
-    marginTop: 20,
-    fontSize: 16,
-},
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    container: {
+        flex: 1,
+        paddingTop: height * 0.04,
+    },
+    topSection: {
+        position: 'relative',
+        width: '100%',
+    },
+    bg: {
+        width: '100%',
+        height: height * 1.3,
+        position: 'absolute',
+        top: 0,
+    },
+    topBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: width * 0.025,
+        backgroundColor: 'transparent',
+        zIndex: 1,
+    },
+    imageContainer: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    image: {
+        width: width * 0.4,
+        height: height * 0.06,
+        resizeMode: 'contain',
+    },
+    searchBarContainer: {
+        marginHorizontal: width * 0.025,
+        paddingTop: height * 0.012,
+        marginTop: height * 0.022,
+        zIndex: 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: width * 0.015,
+        paddingHorizontal: width * 0.025,
+    },
+    searchBar: {
+        flex: 1,
+        padding: width * 0.025,
+        fontSize: width * 0.04,
+    },
+    searchButton: {
+        padding: width * 0.025,
+        backgroundColor: 'green',
+        borderRadius: width * 0.015,
+        marginLeft: width * 0.012,
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: height * 0.012,
+        paddingHorizontal: width * 0.06,
+    },
+    filterText: {
+        fontSize: width * 0.05,
+        color: 'green',
+    },
+    filterButton: {
+        padding: width * 0.02,
+        borderRadius: width * 0.015,
+        backgroundColor: '#fff',
+    },
+    divider: {
+        height: 2,
+        backgroundColor: 'green',
+        marginBottom: height * 0.025,
+        marginTop: -height * 0.006,
+    },
+    content: {
+        flex: 1,
+        top: '5%',
+        paddingHorizontal: width * 0.04,
+        backgroundColor: 'white',
+        paddingTop: height * 0.012,
+    },
+    card: {
+        flexDirection: 'row',
+        backgroundColor: 'white',
+        borderRadius: width * 0.025,
+        marginBottom: height * 0.012,
+        padding: width * 0.025,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    cardImage: {
+        width: width * 0.18,
+        height: width * 0.18,
+        borderRadius: width * 0.025,
+        marginRight: width * 0.025,
+    },
+    cardContent: {
+        flex: 1,
+    },
+    cardTitle: {
+        fontSize: width * 0.045,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    cardDates: {
+        fontSize: width * 0.038,
+        color: '#666',
+    },
+    cardLocation: {
+        fontSize: width * 0.032,
+        color: '#999',
+    },
+    cardAction: {
+        backgroundColor: 'green',
+        padding: width * 0.02,
+        borderRadius: width * 0.02,
+    },
+    buttonRow: {
+        bottom: height * 0.04,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: width * 0.05,
+        marginBottom: height * 0.012,
+        height: height * 0.06,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: width * 0.025,
+        borderRadius: width * 0.015,
+        flex: 1,
+        justifyContent: 'center',
+        marginHorizontal: width * 0.012,
+    },
+    buttonImage: {
+        width: width * 0.05,
+        height: width * 0.05,
+        resizeMode: 'contain',
+    },
+    IconDivider: {
+        height: height * 0.06,
+        width: 0.5,
+        backgroundColor: 'gray',
+    },
+    divider3: {
+        height: 0.5,
+        width: '85%',
+        backgroundColor: 'gray',
+        marginHorizontal: width * 0.09,
+        bottom: height * 0.035,
+    },
+    drawerContainer: {
+        flex: 1,
+        padding: width * 0.05,
+        backgroundColor: '#fff',
+        borderTopRightRadius: width * 0.25,
+        borderBottomRightRadius: width * 0.25,
+    },
+    profileSection: {
+        alignItems: 'center',
+        marginBottom: height * 0.025,
+    },
+    profileImage: {
+        width: width * 0.21,
+        height: width * 0.21,
+        borderRadius: width * 0.105,
+    },
+    profileName: {
+        fontSize: width * 0.048,
+        fontWeight: 'bold',
+        marginTop: height * 0.012,
+    },
+    profileLocation: {
+        fontSize: width * 0.038,
+        color: '#555',
+    },
+    editProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: height * 0.006,
+    },
+    editProfileText: {
+        fontSize: width * 0.038,
+        color: 'green',
+        marginLeft: width * 0.012,
+    },
+    menuSection: {
+        marginVertical: height * 0.012,
+    },
+    drawerItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: height * 0.012,
+        paddingHorizontal: width * 0.04,
+        borderRadius: width * 0.025,
+    },
+    drawerTextGreen: {
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
+        color: '#12894f',
+    },
+    drawerTextYellow: {
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
+        color: '#cb9717',
+    },
+    drawerTextBlue: {
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
+        color: '#1580c2',
+    },
+    signOutSection: {
+        marginTop: 'auto',
+        borderTopWidth: 1,
+        borderColor: '#ccc',
+        paddingTop: height * 0.012,
+        paddingBottom: height * 0.05,
+    },
+    signOutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: height * 0.018,
+    },
+    signOutText: {
+        fontSize: width * 0.045,
+        marginLeft: width * 0.025,
+        color: '#333',
+    },
+    drawerIcon: {
+        width: width * 0.11,
+        height: width * 0.11,
+        resizeMode: 'contain',
+        marginRight: width * 0.025,
+    },
 });
 
 export default Bookmarks;

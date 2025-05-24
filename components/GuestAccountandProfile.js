@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet } from 'react-native';
+import { View, Text, Dimensions, TouchableOpacity, ScrollView, ImageBackground, StyleSheet } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 const AccountandProfile = () => {
   const navigation = useNavigation();
@@ -55,40 +57,44 @@ const AccountandProfile = () => {
 };
 
 const styles = StyleSheet.create({
-  background: { flex: 1, resizeMode: 'cover' },
+  background: { 
+    flex: 1, 
+    resizeMode: 'cover' 
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    marginTop: 140,
+    paddingHorizontal: width * 0.05,
+    marginTop: height * 0.2,
   },
   backButton: {
     position: 'absolute',
-    top: 15,
-    left: 10,
+    top: height * 0.018,
+    left: width * 0.025,
     zIndex: 10,
     backgroundColor: '#fcbd21',
-    padding: 10,
-    borderRadius: 40,
+    padding: width * 0.03,
+    borderRadius: width * 0.12,
   },
   header: {
-    fontSize: 22,
+    fontSize: width * 0.065,
     fontWeight: 'bold',
-    marginBottom: 10,
-    marginLeft: 60,
+    marginBottom: height * 0.012,
+    marginLeft: width * 0.15,
   },
   subHeader: {
     color: 'gray',
-    marginBottom: 20,
-    marginLeft: 60,
+    marginBottom: height * 0.025,
+    marginLeft: width * 0.15,
+    fontSize: width * 0.045,
   },
   faqContainer: {
-    marginTop: 10,
+    marginTop: height * 0.012,
   },
   faqItem: {
     backgroundColor: 'white',
-    borderRadius: 10,
-    marginBottom: 10,
-    padding: 15,
+    borderRadius: width * 0.025,
+    marginBottom: height * 0.012,
+    padding: width * 0.045,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -103,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   faqQuestion: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: 'bold',
     color: '#12894f',
   },
@@ -111,8 +117,9 @@ const styles = StyleSheet.create({
     color: '#00796B',
   },
   faqAnswer: {
-    marginTop: 10,
+    marginTop: height * 0.012,
     color: '#555',
+    fontSize: width * 0.04,
   },
 });
 
