@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ImageBackground, Alert } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Dimensions, ImageBackground, Alert } from "react-native";
 import RNModal from "react-native-modal";  // Renamed import
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 
-
+const { width, height } = Dimensions.get('window');
 
 // Services data
 const services = [
@@ -115,7 +115,12 @@ const ServicesScreen = () => {
     >
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Ionicons name="menu" size={24} color="black" />
+        <Ionicons
+          name="menu"
+          size={24}
+          color="black"
+          style={{ marginLeft: width * 0.02, paddingTop: height * 0.03 }}
+        />
         </TouchableOpacity>
       </View>
 
@@ -291,7 +296,7 @@ const CustomDrawerContent = (props) => {
                         // Navigate to the SignIn screen
                         navigation.reset({
                             index: 0, // Reset stack to the SignIn screen
-                            routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                            routes: [{ name: 'SignIn' }], // Navigate to SignIn
                         });
                     } catch (error) {
                         console.error("Error during sign out:", error);
@@ -382,65 +387,67 @@ const ServicesScreenWithDrawer = () => (
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   container: {
     flex: 1,
     backgroundColor: "#F8F9FA",
   },
   header: {
-    padding: 20, 
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginTop: 60,
-    marginBottom: 10,
+    padding: width * 0.05,
+    borderBottomLeftRadius: width * 0.05,
+    borderBottomRightRadius: width * 0.05,
+    marginTop: height * 0.07,
+    marginBottom: height * 0.01,
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: width * 0.09,
     fontWeight: "bold",
     color: "#2D6A4F",
+    marginTop: height * 0.03,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#555",
-    marginTop: 5,
+    marginTop: height * 0.005,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: width * 0.04,
     color: "#a6a6a6",
-    marginTop: 60,
-    marginLeft: 20,
+    marginTop: height * 0.03,
+    marginLeft: width * 0.05,
   },
   sectionTitle1: {
-    fontSize: 15,
+    fontSize: width * 0.04,
     color: "#a6a6a6",
-    marginLeft: 20,
+    marginLeft: width * 0.05,
+    marginTop: height * 0.03,
   },
   horizontalScroll: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: width * 0.025,
+    paddingVertical: height * 0.012,
   },
   serviceCard: {
     alignItems: "center",
-    borderRadius: 10,
-    marginHorizontal: 10,
+    borderRadius: width * 0.04,
+    marginHorizontal: width * 0.02,
     shadowColor: "#000",
     shadowOpacity: 0.2,
-    shadowRadius: 10,
+    shadowRadius: width * 0.025,
     elevation: 5,
-    backgroundColor: "white",
-    width: 114,    // Adjust width as needed
-    height: 105,
+    backgroundColor: "transparent",
   },
   serviceImage: {
-    width: 124,
-    height: 105,
-    marginRight: 5,
+    width: width * 0.32,
+    height: width * 0.26,
+    marginBottom: height * 0.005,
+    marginRight: width * 0.01,
+    resizeMode: "contain",
   },
   serviceText: {
-    fontSize: 12,
+    fontSize: width * 0.03,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -448,50 +455,52 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF",
-    margin: 5,
-    padding: 10,
-    marginHorizontal: 20,
-    borderRadius: 10,
-    position: "relative",  // Needed for absolute positioning inside
-    minHeight: 100,        // Ensures enough space for proper alignment
+    margin: width * 0.012,
+    padding: width * 0.025,
+    marginHorizontal: width * 0.05,
+    borderRadius: width * 0.025,
+    position: "relative",
+    minHeight: height * 0.12,
   },
   burialImage: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
+    width: width * 0.13,
+    height: width * 0.13,
+    marginRight: width * 0.025,
+    resizeMode: "contain",
   },
   burialInfo: {
     flex: 1,
     justifyContent: "space-between",
   },
   burialTitle: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#2D6A4F",
   },
   burialDescription: {
-    fontSize: 12,
+    fontSize: width * 0.032,
     color: "#555",
   },
   buttonContainer: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#fff",  // Change this for different background
-    padding: 10,
-    borderTopLeftRadius: 10,
+    backgroundColor: "#fff",
+    padding: width * 0.025,
+    borderTopLeftRadius: width * 0.025,
   },
   button: {
     backgroundColor: "#2D6A4F",
-    padding: 8,
-    borderRadius: 5,
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.04,
+    borderRadius: width * 0.025,
     position: "relative",
-    bottom: 0,  // Pushes button to the bottom
-    right: 0,   // Pushes button to the right
+    bottom: 0,
+    right: 0,
   },
   buttonText: {
     color: "#FFF",
-    fontSize: 12,
+    fontSize: width * 0.032,
     fontWeight: "bold",
   },
   modal: {
@@ -500,62 +509,65 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    padding: width * 0.06,
+    borderTopLeftRadius: width * 0.05,
+    borderTopRightRadius: width * 0.05,
     alignItems: "center",
+    height: height * 0.4,
   },
   divider: {
-    width: "13%", // Thin vertical line
-    height: "0.8%", // Adjust height as needed
-    backgroundColor: "#d9d9d9", // Color of the divider
+    width: "25%",
+    height: height * 0.006,
+    backgroundColor: "#d9d9d9",
     bottom: 5,
-    borderRadius: 10
+    borderRadius: 10,
   },
   modalImage: {
-    width: 70,
-    height: 70,
-    marginBottom: 10,
-    marginTop: 20
+    width: width * 0.18,
+    height: width * 0.18,
+    marginBottom: height * 0.012,
+    marginTop: height * 0.025,
+    resizeMode: "contain",
   },
   modalTitle: {
-    fontSize: 26,
+    fontSize: width * 0.065,
     fontWeight: "bold",
     color: "#333333",
+    textAlign: "center",
   },
   modalPricing: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     fontWeight: "bold",
-    color: "#333333", // Highlight pricing
-    marginTop: 5,
+    color: "#333333",
+    marginTop: height * 0.008,
   },
   modalDescription: {
-    fontSize: 14,
+    fontSize: width * 0.037,
     color: "#555",
     textAlign: "left",
-    marginTop: 10,
+    marginTop: height * 0.012,
   },
   requestButton: {
-    borderRadius: 5,
-    marginTop: 15,
+    borderRadius: width * 0.025,
+    marginTop: height * 0.018,
     width: "80%",
     alignItems: "center",
-    marginVertical: 15
+    marginVertical: height * 0.018,
   },
   requestButtonText: {
     color: "#1a5242",
-    fontSize: 14,
+    fontSize: width * 0.04,
     fontWeight: "bold",
   },
-  requestServiceGradient: { 
+  requestServiceGradient: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10, 
-    paddingVertical: 10,
+    borderRadius: width * 0.025,
+    paddingVertical: height * 0.015,
   },
   mainScrollViewContent: {
-    paddingBottom: 20, // Add padding to ensure the content isn't cut off at the bottom
+    paddingBottom: height * 0.025,
   },
   topBar: {
     flexDirection: 'row',

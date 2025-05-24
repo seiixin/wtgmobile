@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, ImageBackground, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 const GetStarted = () => {
     const navigation = useNavigation(); // Add this line to use navigation
@@ -46,57 +49,67 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   container1: {
-    top: 90,
+    marginTop: height * 0.2,
   },
   container: {
     justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    top: 10,
+    paddingHorizontal: width * 0.09,
+    paddingVertical: height * 0.02,
+    marginTop: height * 0.01,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '900', // ✅ Extra bold for emphasis
+    fontSize: width * 0.08, // Responsive font size
+    fontWeight: '900',
     textAlign: 'center',
     color: '#12894f',
+    marginBottom: height * 0.01,
   },
-description: {
-    fontSize: 13,
+  description: {
+    fontSize: width * 0.035,
     color: '#333',
-    marginBottom: 20,
-    marginHorizontal: 10,
+    marginBottom: height * 0.025,
+    marginHorizontal: width * 0.02,
     textAlign: 'center',
-    lineHeight: 21, // ✅ Adjusted line height to reduce gap
+    lineHeight: width * 0.05,
   },
-
-
   buttonContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
-    top: 80,
+    paddingVertical: height * 0.025,
+    marginTop: height * 0.09,
   },
   tourButton: {
-    width: '60%',
+    width: width * 0.6,
     backgroundColor: '#00aa13',
-    paddingVertical: 15,
-    borderRadius: 30,
+    paddingVertical: height * 0.02,
+    borderRadius: width * 0.08,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: height * 0.012,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   tourButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: '600',
   },
   signInText: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: width * 0.037,
     color: '#555',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: height * 0.01,
   },
   signInLink: {
     color: '#1b5343',
     fontWeight: 'bold',
-    top: 4,
+    marginLeft: 2,
+    fontSize: width * 0.037,
+    textDecorationLine: 'underline',
+    top: 2,
   },
 });
 

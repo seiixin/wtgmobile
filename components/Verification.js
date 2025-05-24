@@ -3,11 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, A
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { Dimensions } from 'react-native';
+import { RFValue } from "react-native-responsive-fontsize";
+
+const { width, height } = Dimensions.get('window');
+
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
 const Verification = () => {
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState(Array(6).fill(''));
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
   const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
@@ -77,14 +82,25 @@ const Verification = () => {
   const handleInputChange = (text, index) => {
     if (!/^\d*$/.test(text)) return;
 
-    let codeArray = verificationCode.split('');
+    let codeArray = [...verificationCode];
     codeArray[index] = text;
-    setVerificationCode(codeArray.join(''));
+    setVerificationCode(codeArray);
 
     if (text && index < 5) {
-      const nextInput = index + 1;
-      const nextInputRef = inputRefs[nextInput];
+      const nextInputRef = inputRefs[index + 1];
       if (nextInputRef && nextInputRef.current) nextInputRef.current.focus();
+    }
+
+    // Auto-trigger verify when last digit is entered
+    if (text && index === 5 && codeArray.every((digit) => digit !== '')) {
+      handleVerifyCode(codeArray.join('')); // Pass the latest code
+    }
+  };
+
+  const handleKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      const prevInputRef = inputRefs[index - 1];
+      if (prevInputRef && prevInputRef.current) prevInputRef.current.focus();
     }
   };
 
@@ -106,6 +122,9 @@ const Verification = () => {
       if (response.ok) {
         Alert.alert("OTP resent successfully!");
         setTimeLeft(60); // Reset the timer to 60 seconds
+        setVerificationCode(Array(6).fill('')); // Reset input fields
+        // Optionally, focus the first input
+        if (inputRefs[0] && inputRefs[0].current) inputRefs[0].current.focus();
       } else {
         Alert.alert("Failed to resend OTP. Please try again.");
         console.error("Resend OTP error:", data.message);
@@ -116,12 +135,13 @@ const Verification = () => {
     }
   };
 
-  const handleVerifyCode = async () => {
+  const handleVerifyCode = async (code) => {
     try {
+      const otp = code || verificationCode.join('');
       const response = await fetch(`${BASE_URL}/api/otp/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: verificationCode }),
+        body: JSON.stringify({ email, otp }),
       });
 
       const data = await response.json();
@@ -169,10 +189,11 @@ const Verification = () => {
           {Array.from({ length: 6 }).map((_, index) => (
             <TextInput
               key={index}
-              ref={(ref) => (inputRefs[index] = ref)}
+              ref={inputRefs[index]}
               style={styles.inputBox}
-              value={verificationCode[index] || ''}
+              value={verificationCode[index]}
               onChangeText={(text) => handleInputChange(text, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
               maxLength={1}
               keyboardType="number-pad"
               textAlign="center"
@@ -221,87 +242,98 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: '100%',
-    height: '104%',
-    justifyContent: 'center', 
+    height: height * 1.05,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#f6f6f6", 
+    backgroundColor: "#f6f6f6",
   },
   card: {
     backgroundColor: '#fff',
-    padding: 30,  
-    borderRadius: 50,  
+    padding: width * 0.08,
+    borderRadius: width * 0.1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 }, 
-    shadowOpacity: 0.2,  
-    shadowRadius: 12,  
-    elevation: 6, 
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
     top: 20,
-    width: '85%',
-    alignItems: 'center', 
+    width: width * 0.88,
+    alignItems: 'center',
     marginVertical: 20,
     marginBottom: 50,
   },
   title: {
-    fontSize: 28,  
+    fontSize: RFValue(22),
     fontWeight: 'bold',
     color: '#000',
   },
   subtitle: {
-    fontSize: 16,  
+    fontSize: RFValue(15),
     color: '#777',
-    marginVertical: 15,  
+    marginVertical: 15,
     textAlign: 'center',
+  },
+  email: {
+    color: 'green',
+    fontSize: RFValue(15),
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 20, 
+    marginVertical: 20,
   },
   inputBox: {
-    width: 50,  
-    height: 50,    
+    width: width * 0.11,
+    height: width * 0.11,
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,  
+    borderRadius: 10,
     textAlign: 'center',
-    fontSize: 24,  
+    fontSize: RFValue(16),
     borderWidth: 1,
     borderColor: '#ccc',
   },
+  timer: {
+    fontSize: RFValue(13),
+    color: '#555',
+  },
   click: {
-    marginTop: 15,  
+    marginTop: 15,
     color: '#6d6d6d',
-    fontSize: 16,  
+    fontSize: RFValue(13),
   },
   resendButton: {
-    marginTop: 5,  
+    marginTop: 5,
   },
   resendButtonText: {
     color: 'green',
-    fontSize: 14,  
+    fontSize: RFValue(12),
     textDecorationLine: 'underline',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: 'gray',
   },
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: 8,  
-    borderRadius: 50,  
-    marginTop: 25,  
+    paddingVertical: height * 0.015,
+    borderRadius: 50,
+    marginTop: 25,
     alignItems: 'center',
-  }, 
+  },
   verifyButtonText: {
     color: '#fff',
-    fontSize: 18,  
+    fontSize: RFValue(16),
     fontWeight: 'bold',
-  },
-  email: {
-    color: 'green',
-    bottom: 10
   },
   backButton: {
     position: 'absolute',
-    top: 40,
-    left: 20,
+    top: height * 0.05,
+    left: width * 0.05,
     backgroundColor: 'transparent',
     padding: 0,
     zIndex: 10,
@@ -322,41 +354,41 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 20,
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: '#fff',
+    padding: width * 0.08,
+    borderRadius: width * 0.06,
     alignItems: 'center',
+    width: '90%',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: RFValue(20),
     fontWeight: 'bold',
-    color: '#1e1e1e',
-    marginVertical: 10,
+    marginTop: 10,
+    color: '#000',
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#555',
+    fontSize: RFValue(15),
     textAlign: 'center',
+    marginTop: 10,
     marginBottom: 20,
+    color: '#555',
   },
   confirmButton: {
-    backgroundColor: '#38b6ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    backgroundColor: '#00aa13',
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.1,
+    borderRadius: 30,
   },
   confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: RFValue(16),
     fontWeight: 'bold',
   },
-  timer: { fontSize: 14, color: 'red', marginBottom: 0},
-  disabledButton: { opacity: 0.5 },
-  disabledText: { color: 'gray' },
 });
+
 
 export default Verification;

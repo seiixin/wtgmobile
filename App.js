@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -174,7 +174,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           >
             <Icon
               name={iconName}
-              size={24}
+              size={18}
               color={isFocused ? "#12894f" : "#a6a6a6"}
             />
             <Text style={[styles.tabText, isFocused && styles.activeText]}>
@@ -220,7 +220,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     elevation: 5,
-  },
+    paddingBottom: Platform.OS === 'android' ? 36 : 0, // Add this for Android nav bar spacing
+},
   tabButton: {
     alignItems: 'center',
     padding: 10,

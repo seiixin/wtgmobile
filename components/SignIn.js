@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image, Dimensions} from "react-native";
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { useNavigation } from '@react-navigation/native'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -85,34 +87,33 @@ const SignIn = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require("../assets/SignInBg.jpg")} 
+    <ImageBackground
+      source={require("../assets/SignInBg.jpg")}
       style={styles.backgroundImage}
-      resizeMode="cover"
     >
       <View style={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.title}>Sign in</Text>
-          <Text style={styles.subtitle}>Hello! Welcome back, you’ve been missed</Text>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Welcome back! Please sign in.</Text>
 
-          <Text style={styles.label}>Email *</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Enter your email"
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your username"
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
           />
 
-          <Text style={styles.label}>Password *</Text>
+          <Text style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
-            <TextInput 
-              style={styles.input} 
+            <TextInput
+              style={styles.input}
               placeholder="Enter your password"
               placeholderTextColor="#999"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible} // Toggle between visible and hidden password
+              secureTextEntry={!isPasswordVisible}
             />
             <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
               <Ionicons 
@@ -123,46 +124,75 @@ const SignIn = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate("ChangePassFind")}>
-            <Text style={styles.forgotPassword}>Forgot Password?</Text>
-          </TouchableOpacity>
+          <View style={{ width: "100%", alignItems: "flex-end" }}>
+            <TouchableOpacity onPress={() => navigation.navigate("ChangePassFind")}>
+              <Text style={styles.forgotPassword}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.signInButton}
+              onPress={handleSignIn}
+            >
               <Text style={styles.signInText}>Sign in</Text>
             </TouchableOpacity>
-          
-            <TouchableOpacity style={styles.guestButton} onPress={() => navigation.navigate("GuestScreen")}>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.guestButton}
+              onPress={() => navigation.navigate("GuestScreen")}
+            >
               <Text style={styles.guestText}>Continue As Guest</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.orContainer}>
             <View style={styles.line} />
-            <Text style={styles.orText}>Or sign in with</Text>
+            <Text style={styles.orText}>OR</Text>
             <View style={styles.line} />
           </View>
 
           <View style={styles.socialContainer}>
             <TouchableOpacity>
-              <Image source={require("../assets/apple.png")} style={styles.socialIcon} />
+              <Image
+                source={require("../assets/google.png")}
+                style={styles.socialIcon}
+              />
             </TouchableOpacity>
+
             <TouchableOpacity>
-              <Image source={require("../assets/google.png")} style={styles.socialIcon} />
+              <Image
+                source={require("../assets/facebook.png")}
+                style={styles.socialIcon}
+              />
             </TouchableOpacity>
+
             <TouchableOpacity>
-              <Image source={require("../assets/facebook.png")} style={styles.socialIcon} />
+              <Image
+                source={require("../assets/twitter.png")}
+                style={styles.socialIcon}
+              />
             </TouchableOpacity>
           </View>
+
+          <View style={styles.registerContainer}>
+        <Text style={styles.registerText}>
+          <Text style={styles.blackText}>Don't have an account? </Text>
+          <Text 
+            style={styles.registerLink}
+            onPress={() => navigation.navigate('Register')}
+          >
+            Register
+          </Text>
+        </Text>
+      </View>
         </View>
       </View>
 
-      <Text style={styles.registerText}>
-            <Text style={styles.blackText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.Text}>Register</Text>
-            </TouchableOpacity>
-          </Text>
+      
     </ImageBackground>
   );
 };
@@ -179,10 +209,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   card: {
-    width: "80%",
+    width: SCREEN_WIDTH * 0.9,
+    maxWidth: 400,
     backgroundColor: "#fff",
-    borderRadius: 60,
-    padding: 20,
+    borderRadius: 80,
+    padding: 25,
     paddingHorizontal: 30,
     top: 40,
     alignItems: "center",
@@ -193,19 +224,19 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: SCREEN_WIDTH * 0.06, // ~24px at 400px width
     fontWeight: "bold",
     color: "#000",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: SCREEN_WIDTH * 0.035, // ~14px
     color: "#777",
     marginVertical: 10,
     textAlign: "center",
   },
   label: {
     width: "100%",
-    fontSize: 14,
+    fontSize: SCREEN_WIDTH * 0.035,
     color: "#000",
     marginTop: 10,
     fontWeight: "bold",
@@ -220,8 +251,7 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     color: "#00aa13",
-    left: 70,
-    fontSize: 12,
+    fontSize: SCREEN_WIDTH * 0.03, // ~12px
     marginTop: 5,
     textDecorationLine: "underline",
   },
@@ -235,15 +265,16 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   signInButton: {
-    width: "100%",
+    flex: 1,
     backgroundColor: "#00aa13",
-    paddingVertical: 10,
-    borderRadius: 50,
-    marginTop: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: "center",
+    marginRight: 10,
   },
   signInText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: SCREEN_WIDTH * 0.04, // ~16px
     fontWeight: "bold",
   },
   orContainer: {
@@ -259,7 +290,7 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 10,
     color: "#777",
-    fontSize: 14,
+    fontSize: SCREEN_WIDTH * 0.035,
   },
   socialContainer: {
     flexDirection: "row",
@@ -273,34 +304,11 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
-  registerText: {
-    position: "absolute",
-    fontSize: 14,
-    left: 100,
-    bottom: 130,
-  },
-  blackText: {
-    color: "white",
-  },
-  Text: {
-    color: "#fde245",
-    fontWeight: "bold",
-    alignItems: "center",
-    top: 4,
-  },
   buttonContainer: {
     flexDirection: "row",
     width: "100%",
     justifyContent: "space-between",
     marginTop: 20,
-  },
-  signInButton: {
-    flex: 1,
-    backgroundColor: "#00aa13",
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignItems: "center",
-    marginRight: 10,
   },
   guestButton: {
     flex: 1,
@@ -308,13 +316,34 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#00aa13",
     paddingVertical: 8,
-    color: 'green',
     borderRadius: 10,
     alignItems: "center",
   },
   guestText: {
-    color: 'green',
-  }
+    color: "green",
+    fontSize: SCREEN_WIDTH * 0.035,
+  },
+  registerContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  registerText: {
+    fontSize: SCREEN_WIDTH * 0.038,
+    color: "#333",
+    flexDirection: "row",
+  },
+  blackText: {
+    color: "#333",
+    fontSize: SCREEN_WIDTH * 0.038,
+  },
+  registerLink: {
+    color: "#00aa13",
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    fontSize: SCREEN_WIDTH * 0.038,
+  },
 });
+
 
 export default SignIn;

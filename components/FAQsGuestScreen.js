@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, FlatList, ImageBackground, StyleSheet, Image } from 'react-native';
+import { View, Text, Dimensions, TouchableOpacity, FlatList, ImageBackground, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 
+const { width, height } = Dimensions.get('window');
 // FAQ Categories
 const faqCategories = [
   { id: "1", title: "General Questions", icon: "help-circle-outline" },
@@ -114,42 +115,48 @@ const FAQsGuestScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  background: { flex: 1, resizeMode: 'cover' },
+  background: { 
+    flex: 1, 
+    resizeMode: 'cover' 
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingHorizontal: width * 0.05,
+    paddingTop: height * 0.04,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    marginTop: 50,
+    marginBottom: height * 0.012,
+    marginTop: height * 0.06,
   },
   drawerToggle: {
-    marginRight: 15,
-    marginBottom:40
+    marginRight: width * 0.04,
+    marginBottom: height * 0.05,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: width * 0.08,
     fontWeight: "bold",
+    marginTop: height * 0.01,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     color: "#666",
-    marginBottom: 20,
-    marginHorizontal: 20,
+    marginBottom: height * 0.025,
+    marginHorizontal: width * 0.05,
+    textAlign: "center",
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingBottom: height * 0.03,
   },
   categoryItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    padding: width * 0.04,
+    borderRadius: width * 0.03,
+    marginBottom: height * 0.012,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -158,40 +165,40 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "500",
-    marginLeft: 10,
+    marginLeft: width * 0.03,
   },
   drawerContainer: {
     flex: 1,
-    padding: 20,
+    padding: width * 0.05,
     backgroundColor: '#fff',
   },
   menuSection: {
-    marginVertical: 10,
+    marginVertical: height * 0.012,
   },
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
+    paddingVertical: height * 0.012,
+    paddingHorizontal: width * 0.04,
+    borderRadius: width * 0.025,
   },
   drawerTextBlue: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: width * 0.045,
+    marginLeft: width * 0.04,
     color: '#1580c2',
   },
   drawerTextYellow: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: width * 0.045,
+    marginLeft: width * 0.04,
     color: '#cb9717',
   },
   drawerIcon: {
-    width: 40,
-    height: 40,
+    width: width * 0.11,
+    height: width * 0.11,
     resizeMode: 'contain',
-    marginRight: 10,
+    marginRight: width * 0.025,
   },
 });
 

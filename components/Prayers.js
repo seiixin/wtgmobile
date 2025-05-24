@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Dimensions, ScrollView, ImageBackground, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Dimensions, ScrollView, ImageBackground, Alert, SectionList } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import WaveCurve from '../components/WaveCurve';
@@ -8,6 +8,8 @@ import { useNavigation, useFocusEffect  } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
+const { width, height } = Dimensions.get('window');
 
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
@@ -33,7 +35,7 @@ const handleSignOut = () => {
                         // Navigate to the SignIn screen
                         navigation.reset({
                             index: 0, // Reset stack to the SignIn screen
-                            routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                            routes: [{ name: 'SignIn' }], // Navigate to SignIn
                         });
                     } catch (error) {
                         console.error("Error during sign out:", error);
@@ -122,12 +124,64 @@ const handleSignOut = () => {
 
 const PrayersScreen = () => {
     const navigation = useNavigation();
-    const [selectedTab, setSelectedTab] = useState('Prayers'); // Default selected tab
+    const [selectedTab, setSelectedTab] = useState('Prayers');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [hasSearched, setHasSearched] = useState(false);
+
+    const handleSearch = async () => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            setHasSearched(false); // No search performed
+            return;
+        }
+        try {
+            const response = await fetch(`${BASE_URL}/api/graves/search?query=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json();
+            setSearchResults(data);
+            setHasSearched(true); // Search performed
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            setHasSearched(true); // Even on error, mark as searched to show "No results"
+        }
+    };
+
+    // Clear searchResults when searchQuery is empty
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+        }
+    }, [searchQuery]);
+
+    const handleResultCardClick = async (grave) => {
+        try {
+            // Get current history list from AsyncStorage
+            const data = await AsyncStorage.getItem('historyList');
+            let historyList = data ? JSON.parse(data) : [];
+
+            // Remove if already exists, then add to top
+            historyList = historyList.filter(item => item._id !== grave._id);
+            historyList = [grave, ...historyList];
+
+            // Save updated history list
+            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
+        } catch (error) {
+            console.error('Error updating history list:', error);
+        }
+
+        // Reset search state
+        setSearchQuery('');
+        setSearchResults([]);
+        setHasSearched(false);
+
+        // Navigate to GraveInformation
+        navigation.navigate('GraveInformation', { grave });
+    };
 
     return (
 
         <ImageBackground
-              source={require('../assets/HistoryBg.png')} 
+              source={require('../assets/HistoryBgg.png')} 
               style={styles.background}
                >
 
@@ -137,51 +191,58 @@ const PrayersScreen = () => {
                 {/* <Image source={require('../assets/11BG.png')} style={styles.bg} /> */}
                  <View style={styles.topBar}>
                         <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                            <Ionicons name="menu" size={24} color="black" />
+                            <Ionicons
+                                name="menu"
+                                size={24}
+                                color="black"
+                                style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                            />
                         </TouchableOpacity>
                         <View style={styles.imageContainer}></View>
                 </View>
 
                 {/* Search Bar */}
-                <View style={styles.searchBarContainer}>
-                    <View style={styles.searchWrapper}>
-                        <TextInput 
-                            style={styles.searchBar} 
-                            placeholder="Deceased Search" 
-                            placeholderTextColor="gray" 
+                <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
+                    <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+                        <TextInput
+                            style={styles.searchBar}
+                            placeholder="Search by Fullname or Nickname"
+                            placeholderTextColor="gray"
+                            value={searchQuery}
+                            onChangeText={text => {
+                                setSearchQuery(text);
+                                if (text.trim() === '') {
+                                    setSearchResults([]);
+                                    setHasSearched(false);
+                                }
+                            }}
                         />
-                        <TouchableOpacity style={styles.searchIcon}>
-                            <Ionicons name="search" size={20} color="gray" />
+                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+                            <Ionicons name="search" size={20} color="white" />
+                        </TouchableOpacity>
+                    </View>
+
+
+                    {/* Four Buttons */}
+                    <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+                        </TouchableOpacity>
+                        <View style={styles.IconDivider} />
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+                        </TouchableOpacity>
+                        <View style={styles.IconDivider} />
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+                        </TouchableOpacity>
+                        <View style={styles.IconDivider} />
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                <View style={styles.divider3} />
-            </View>
-
-            {/* Four Buttons */}
-            <View style={styles.buttonRow}>
-                    <TouchableOpacity style={styles.actionButton}>
-                    <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
-                </TouchableOpacity>
-
-                <View style={styles.IconDivider} />
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
-                </TouchableOpacity>
-
-                <View style={styles.IconDivider} />
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
-                </TouchableOpacity>
-
-                <View style={styles.IconDivider} />
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
-                </TouchableOpacity>
             </View>
 
             {/* Wave Background */}
@@ -191,77 +252,102 @@ const PrayersScreen = () => {
 
             {/* Content Area */}
             <View style={styles.content}>
-                <View style={styles.filterContainer}>
-                    <Text style={styles.filterText}>Prayers for the Deceased</Text>
-                </View>
+                {/* Only show this block if NOT searching */}
+                {searchQuery.trim().length === 0 && (
+                    <>
+                        <View style={styles.filterContainer}>
+                            <Text style={styles.filterText}>Prayers for the Deceased</Text>
+                        </View>
+                        <View style={styles.divider} />
 
-                <View style={styles.divider} />
+                        <View style={{ flex: 1, marginBottom: height * 0.07 }}>
+                            <ScrollView
+                                contentContainerStyle={styles.scrollContent}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                <View style={styles.contentRow}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('RosaryPrayer')} style={styles.touchableImage}>
+                                        <Image source={require('../assets/RosaryImg.png')} style={styles.contentImage} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => navigation.navigate('NovenaPrayer')} style={styles.touchableImage}>
+                                        <Image source={require('../assets/NovenaImg.png')} style={styles.contentImage} />
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={styles.contentRow}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('MassIntention')} style={styles.touchableImage}>
+                                        <Image source={require('../assets/MassImg.png')} style={styles.contentImage} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => navigation.navigate('PsalmReading')} style={styles.touchableImage}>
+                                        <Image source={require('../assets/ReadingsImg.png')} style={styles.contentImage} />
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={styles.contentRow}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('SpecialIntention')} style={styles.touchableImage}>
+                                        <Image source={require('../assets/SpecialImg.png')} style={styles.contentImage} />
+                                    </TouchableOpacity>
+                                </View>
+                            </ScrollView>
+                        </View>
+                    </>
+                )}
 
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-    <View style={styles.contentRow}>
-        <TouchableOpacity onPress={() => navigation.navigate('RosaryPrayer')} style={styles.touchableImage}>
-            <Image source={require('../assets/RosaryImg.png')} style={styles.contentImage} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('NovenaPrayer')} style={styles.touchableImage}>
-            <Image source={require('../assets/NovenaImg.png')} style={styles.contentImage} />
-        </TouchableOpacity>
-    </View>
-    <View style={styles.contentRow}>
-        <TouchableOpacity onPress={() => navigation.navigate('MassIntention')} style={styles.touchableImage}>
-            <Image source={require('../assets/MassImg.png')} style={styles.contentImage} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('PsalmReading')} style={styles.touchableImage}>
-            <Image source={require('../assets/ReadingsImg.png')} style={styles.contentImage} />
-        </TouchableOpacity>
-    </View>
-    <View style={styles.contentRow}>
-        <TouchableOpacity onPress={() => navigation.navigate('SpecialIntention')} style={styles.touchableImage}>
-            <Image source={require('../assets/SpecialImg.png')} style={styles.contentImage} />
-        </TouchableOpacity>
-    </View>
-</ScrollView>
+                {/* Show SectionList ONLY when searching */}
+                {searchQuery.trim().length > 0 && hasSearched && (
+                    <SectionList
+                        style={{ marginTop: -height * 0.06 }}
+                        sections={[
+                            { title: '', data: searchResults, type: 'searchResults' }
+                        ]}
+                        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+                        renderSectionHeader={({ section }) => (
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
+                        )}
+                        renderItem={({ item, section }) => {
+                            const formattedDateOfBirth = item.dateOfBirth
+                                ? new Intl.DateTimeFormat('en-US', {
+                                    month: 'long',
+                                    day: '2-digit',
+                                    year: 'numeric',
+                                }).format(new Date(item.dateOfBirth))
+                                : 'Unknown';
 
+                            const formattedBurialDate = item.burial
+                                ? new Intl.DateTimeFormat('en-US', {
+                                    month: 'long',
+                                    day: '2-digit',
+                                    year: 'numeric',
+                                }).format(new Date(item.burial))
+                                : 'Unknown';
 
-            </View>
-            
-            {/* Bottom Navigation */}
-            <View style={styles.bottomNav}>
-                <TouchableOpacity style={styles.navItem} onPress={() => {
-                    setSelectedTab('History');
-                    navigation.navigate('History');}} >
-                    <Ionicons 
-                        name="time" 
-                        size={24} 
-                        color={selectedTab === 'History' ? 'green' : 'gray'} 
+                            return (
+                                <TouchableOpacity
+                                    style={styles.card}
+                                    onPress={() => handleResultCardClick(item)}
+                                >
+                                    <Image
+                                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                        style={styles.cardImage}
+                                    />
+                                    <View style={styles.cardContent}>
+                                        <Text style={styles.cardTitle}>
+                                            {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
+                                        </Text>
+                                        <Text style={styles.cardDates}>
+                                            {formattedDateOfBirth} - {formattedBurialDate}
+                                        </Text>
+                                        <Text style={styles.cardLocation}>
+                                            {item.phase}, Apartment {item.aptNo}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        }}
+                        contentContainerStyle={{ paddingBottom: 100 }}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.noResultsText}>No results found.</Text>
+                        )}
                     />
-                    <Text style={{ color: selectedTab === 'History' ? 'green' : 'gray' }}>History</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navItem} onPress={() => {
-                    setSelectedTab('MainTabs', { screen: 'BookmarksTab' });
-                    navigation.navigate('MainTabs', { screen: 'BookmarksTab' });} }>
-                    <Ionicons 
-                        name="bookmark" 
-                        size={24} 
-                        color={selectedTab === 'Bookmarks' ? 'green' : 'gray'} 
-                    />
-                    <Text style={{ color: selectedTab === 'Bookmarks' ? 'green' : 'gray' }}>Bookmarks</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                        style={styles.navItem} 
-                        onPress={() => {
-                        setSelectedTab('MainTabs', { screen: 'PrayersTab' });
-                        navigation.navigate('MainTabs', { screen: 'PrayersTab' });
-                    }}
-                >
-                    <Ionicons 
-                        name="heart" 
-                        size={24} 
-                        color={selectedTab === 'Prayers' ? 'green' : 'gray'} 
-                    />
-                    <Text style={{ color: selectedTab === 'Prayers' ? 'green' : 'gray' }}>Prayers</Text>
-                </TouchableOpacity>
+                )}
             </View>
         </View>
     </ImageBackground>
@@ -280,14 +366,14 @@ const Prayers = () => {
 
 const styles = StyleSheet.create({
     background: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',  // Ensure it stretches properly
-},
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
     container: {
         flex: 1,
-        paddingTop: 40,
+        paddingTop: height * 0.04,
     },
     topSection: {
         position: 'relative',
@@ -295,7 +381,7 @@ const styles = StyleSheet.create({
     },
     bg: {
         width: '100%',
-        height: '130%',
+        height: height * 1.3,
         position: 'absolute',
         top: 0,
     },
@@ -303,7 +389,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 10,
+        padding: width * 0.025,
         backgroundColor: 'transparent',
         zIndex: 1,
     },
@@ -312,235 +398,251 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: 150,
-        height: 50,
+        width: width * 0.4,
+        height: height * 0.06,
         resizeMode: 'contain',
     },
     searchBarContainer: {
-        marginHorizontal: 20,
-        paddingTop: 10,
-        marginBottom: 40,
+        marginHorizontal: width * 0.025,
+        paddingTop: height * 0.012,
+        marginTop: height * 0.022,
         zIndex: 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: width * 0.015,
+        paddingHorizontal: width * 0.025,
     },
     searchBar: {
-        padding: 10,
-        borderWidth: 1,
-        borderColor: '#fff',
-        borderRadius: 5,
-        top:12,
-        backgroundColor: '',
+        flex: 1,
+        padding: width * 0.025,
+        fontSize: width * 0.04,
+    },
+    searchButton: {
+        padding: width * 0.025,
+        backgroundColor: 'green',
+        borderRadius: width * 0.015,
+        marginLeft: width * 0.012,
     },
     waveContainer: {
         position: 'absolute',
-        top: '35%', // Adjust to align with the background
-        width: screenWidth, // Full width
+        top: '35%',
+        width: width,
         left: 0,
         right: 0,
     },
     content: {
         flex: 1,
         backgroundColor: 'white',
-        top:'7%',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        top: '5%',
+        borderTopLeftRadius: width * 0.05,
+        borderTopRightRadius: width * 0.05,
         overflow: 'hidden',
     },
     filterContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
-        paddingHorizontal: 25,
+        marginBottom: height * 0.012,
+        paddingHorizontal: width * 0.06,
     },
     filterText: {
-        fontSize: 20,
+        fontSize: width * 0.05,
         color: 'gray',
-        marginHorizontal: 10,
+        marginHorizontal: width * 0.025,
     },
     filterButton: {
-        padding: 8,
-        borderRadius: 5,
+        padding: width * 0.02,
+        borderRadius: width * 0.015,
         backgroundColor: '#fff',
     },
     divider: {
         height: 2,
         backgroundColor: 'gray',
-        marginBottom: 10,
-        marginTop: -5,
-        marginHorizontal: 30,
+        marginBottom: height * 0.025,
+        marginTop: -height * 0.006,
+        marginHorizontal: width * 0.09,
     },
     scrollContent: {
-        paddingHorizontal: 15,
-        paddingVertical: 20,
-    },
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.025,
+    paddingBottom: height * 0.12, // ADD this line for extra space at the bottom
+},
     contentRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 15,
+        marginBottom: height * 0.018,
     },
     contentImage: {
-        width: '100%', // Adjusted to fit inside TouchableOpacity
-        height: 150,
+        width: '100%',
+        height: height * 0.18,
         resizeMode: 'contain',
     },
-
-    bottomNav: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        padding: 10,
-        backgroundColor: '#f8f8f8',
-        elevation: 10, // Shadow for Android
-        shadowColor: '#000', // Shadow color
-        shadowOffset: { width: 0, height: -8 }, // Shadow above the nav bar
-        shadowOpacity: 0.4,
-        shadowRadius: 4,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 60,
-    },
-    navItem: {
+    touchableImage: {
+        flex: 1,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonRow: {
-        bottom:30,
+        bottom: height * 0.04,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 10,
-    
+        paddingHorizontal: width * 0.05,
+        marginBottom: height * 0.012,
+        height: height * 0.06,
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
-        borderRadius: 5,
+        padding: width * 0.025,
+        borderRadius: width * 0.015,
         flex: 1,
         justifyContent: 'center',
-        marginHorizontal: 5,
+        marginHorizontal: width * 0.012,
     },
     buttonImage: {
-        width: 20,
-        height: 20,
+        width: width * 0.05,
+        height: width * 0.05,
         resizeMode: 'contain',
     },
     IconDivider: {
-        height: 45,
+        height: height * 0.06,
         width: 0.5,
         backgroundColor: 'gray',
     },
-    divider3: {
-        height: 0.5,
-        width: '85%',
-        backgroundColor: 'gray',
-        marginHorizontal: 35,
-        bottom: 28,
-    },
-    searchWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#fff',
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        top:12,
-        backgroundColor: 'white',
-    },
-    searchBar: {
-        flex: 1,
-        padding: 10,
-    },
-    searchIcon: {
-        padding: 10,
-    },
-    touchableImage: {
-        flex: 1, // Ensures images don't shrink
-        alignItems: 'center', // Centers the image inside TouchableOpacity
-        justifyContent: 'center',
-    },
     drawerContainer: {
         flex: 1,
-        padding: 20,
+        padding: width * 0.05,
         backgroundColor: '#fff',
     },
     profileSection: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: height * 0.025,
     },
     profileImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: width * 0.21,
+        height: width * 0.21,
+        borderRadius: width * 0.105,
     },
     profileName: {
-        fontSize: 18,
+        fontSize: width * 0.048,
         fontWeight: 'bold',
-        marginTop: 10,
+        marginTop: height * 0.012,
     },
     profileLocation: {
-        fontSize: 14,
+        fontSize: width * 0.038,
         color: '#555',
     },
     editProfileButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 5,
+        marginTop: height * 0.006,
     },
     editProfileText: {
-        fontSize: 14,
+        fontSize: width * 0.038,
         color: 'green',
-        marginLeft: 5,
+        marginLeft: width * 0.012,
     },
     menuSection: {
-        marginVertical: 10,
+        marginVertical: height * 0.012,
     },
     drawerItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 10,
+        paddingVertical: height * 0.012,
+        paddingHorizontal: width * 0.04,
+        borderRadius: width * 0.025,
     },
     drawerTextGreen: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#12894f',
     },
     drawerTextYellow: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#cb9717',
     },
     drawerTextBlue: {
-        fontSize: 16,
-        marginLeft: 15,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.04,
         color: '#1580c2',
     },
     signOutSection: {
         marginTop: 'auto',
         borderTopWidth: 1,
         borderColor: '#ccc',
-        paddingTop: 10,
-        paddingBottom:40
+        paddingTop: height * 0.012,
+        paddingBottom: height * 0.05,
     },
     signOutButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 15,
+        paddingVertical: height * 0.018,
     },
     signOutText: {
-        fontSize: 16,
-        marginLeft: 10,
+        fontSize: width * 0.045,
+        marginLeft: width * 0.025,
         color: '#333',
     },
     drawerIcon: {
-        width: 40,  // Set width
-        height: 40, // Set height
-        resizeMode: 'contain', // Make sure it scales properly
-        marginRight: 10, // Add spacing between icon and text
+        width: width * 0.11,
+        height: width * 0.11,
+        resizeMode: 'contain',
+        marginRight: width * 0.025,
     },
-
+    sectionTitle: {
+        fontSize: width * 0.045,
+        fontWeight: 'bold',
+        paddingVertical: height * 0.015,
+        paddingHorizontal: width * 0.04,
+        backgroundColor: '#f9f9f9',
+    },
+    card: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: width * 0.04,
+        borderRadius: width * 0.015,
+        backgroundColor: '#fff',
+        marginBottom: height * 0.015,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    cardImage: {
+        width: width * 0.15,
+        height: width * 0.15,
+        borderRadius: width * 0.075,
+        marginRight: width * 0.03,
+    },
+    cardContent: {
+        flex: 1,
+    },
+    cardTitle: {
+        fontSize: width * 0.04,
+        fontWeight: '500',
+        marginBottom: height * 0.005,
+    },
+    cardDates: {
+        fontSize: width * 0.035,
+        color: 'gray',
+        marginBottom: height * 0.005,
+    },
+    cardLocation: {
+        fontSize: width * 0.035,
+        color: '#333',
+    },
+    noResultsText: {
+        textAlign: 'center',
+        color: 'gray',
+        padding: height * 0.02,
+        fontSize: width * 0.04,
+    },
 });
 
 export default Prayers;
