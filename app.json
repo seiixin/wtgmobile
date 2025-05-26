@@ -16,10 +16,9 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
-          "recordAudioAndroid": true
+          "recordAudioPermission": "Allow $(PRODUCT_NAME) to record audio"
         }
-      ],
-      "expo-barcode-scanner"
+      ]
     ],
     "android": {
       "permissions": [
@@ -32,9 +31,6 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan QR codes."
       }
-    },
-    "splash": {
-      "image": "./assets/splashscreen.png"
     }
   }
 }
