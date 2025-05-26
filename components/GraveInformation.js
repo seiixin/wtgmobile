@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ViewShot from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+
+const { width, height } = Dimensions.get('window');
 
 const GraveInformation = () => {
     const route = useRoute();
@@ -204,19 +206,22 @@ const GraveInformation = () => {
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.scanMemoryButton}>
-                        <LinearGradient
-                            colors={["#ffef5d", "#7ed957"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.scanMemoryGradient}
-                        >
-                            <View style={styles.buttonContent}>
-                                <Image source={require("../assets/scanning.png")} style={styles.ScanningImage} />
-                                <Text style={styles.buttonText2}> Scan memory</Text>
-                            </View>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                    <TouchableOpacity
+    style={styles.scanMemoryButton}
+    onPress={() => navigation.navigate('QRScanner')}
+>
+    <LinearGradient
+        colors={["#ffef5d", "#7ed957"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.scanMemoryGradient}
+    >
+        <View style={styles.buttonContent}>
+            <Image source={require("../assets/scanning.png")} style={styles.ScanningImage} />
+            <Text style={styles.buttonText2}> Scan memory</Text>
+        </View>
+    </LinearGradient>
+</TouchableOpacity>
                 </View>
 
                 {/* Bottom Buttons */}
@@ -242,12 +247,16 @@ const GraveInformation = () => {
                     </View>
 
                     {/* Bottom Container with Touchable Area */}
-                    <TouchableOpacity style={styles.bottomContainer2} activeOpacity={0.8}>
-                        <View style={styles.navigateButtonContainer}>
-                            <Text style={styles.navigateButtonText}>
-                                <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
-                            </Text>
-                        </View>
+                    <TouchableOpacity
+                      style={styles.bottomContainer2}
+                      activeOpacity={0.8}
+                      onPress={() => navigation.navigate('Map', { grave })} // Pass grave as param
+                    >
+                      <View style={styles.navigateButtonContainer}>
+                        <Text style={styles.navigateButtonText}>
+                          <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                 </View>
 
@@ -350,322 +359,329 @@ const GraveInformation = () => {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: "#fff" },
   headerContainer: { position: "relative" },
-  headerImage: { width: "100%", height: 385 },
+  headerImage: { width: "100%", height: height * 0.45 },
+
   backButton: {
     position: 'absolute',
-    top: 40,
-    left: 25,
+    top: height * 0.05,
+    left: width * 0.06,
     backgroundColor: 'rgb(252, 189, 33)',
-    padding: 10,
-    borderRadius: 50,
-    zIndex: 10, // Ensure it stays on top
-},
-topRightButtons: {
+    padding: width * 0.025,
+    borderRadius: width * 0.12,
+    zIndex: 10,
+  },
+  topRightButtons: {
     position: 'absolute',
-    top: 40,
-    right: 20,
+    top: height * 0.05,
+    right: width * 0.05,
     flexDirection: 'row',
-    zIndex: 10, // Ensure it stays on top
-},
-shareButton: {
+    zIndex: 10,
+  },
+  shareButton: {
     backgroundColor: 'rgba(54, 38, 38, 0.5)',
-    padding: 10,
-    borderRadius: 50,
-    marginRight: 10,
-},
-bookmarkButton: {
+    padding: width * 0.025,
+    borderRadius: width * 0.12,
+    marginRight: width * 0.025,
+  },
+  bookmarkButton: {
     backgroundColor: 'rgba(54, 38, 38, 0.5)',
-    padding: 10,
-    borderRadius: 50,
-},
-  profileContainer: { flexDirection: "row", alignItems: "center", padding: 20, position: "relative" },
-
+    padding: width * 0.025,
+    borderRadius: width * 0.12,
+  },
+  profileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: width * 0.05,
+    position: "relative"
+  },
   profileImageContainer: {
-  top: -65, // Negative value to overlap the image
-  width: 93, // Outer border size
-  height: 93,
-  borderRadius: 50,
-  borderWidth: 2, // Outer border thickness
-  borderColor: "#94b143", // Gold outer border
-  alignItems: "center",
-  justifyContent: "center",
-},
-profileImage: {
-  width: 90,
-  height: 90,
-  borderRadius: 45,
-  borderWidth: 2,
-  borderColor: "white", // Inner border (dark color)
-},
-
+    top: -height * 0.08,
+    width: width * 0.25,
+    height: width * 0.25,
+    borderRadius: width * 0.125,
+    borderWidth: 2,
+    borderColor: "#94b143",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileImage: {
+    width: width * 0.23,
+    height: width * 0.23,
+    borderRadius: width * 0.115,
+    borderWidth: 2,
+    borderColor: "white",
+  },
   profileInfo: { flex: 1 },
-  profileBottomLeftImage: { position: "absolute", bottom: 10, left: 30, width: 70, height: 70, borderRadius: 10 },
-  profileBottomRightImage: { position: "absolute", bottom: 10, right: 20, width: 50, height: 50, borderRadius: 10 },
-  name: { fontSize: 22, fontWeight: "bold", marginBottom: 5 },
-  dates: { fontSize: 14, color: "gray" },
-  location: { fontSize: 11, color: "gray", marginTop: 5 },
-  description: { marginHorizontal: 20, marginVertical: 10, textAlign: "center", width: "90%", height: 200, lineHeight: 20 },
+  profileBottomLeftImage: {
+    position: "absolute",
+    bottom: height * 0.01,
+    left: width * 0.08,
+    width: width * 0.18,
+    height: width * 0.18,
+    borderRadius: width * 0.03,
+  },
+  profileBottomRightImage: {
+    position: "absolute",
+    bottom: height * 0.01,
+    right: width * 0.05,
+    width: width * 0.13,
+    height: width * 0.13,
+    borderRadius: width * 0.03,
+  },
+  name: { fontSize: width * 0.06, fontWeight: "bold", marginBottom: height * 0.005 },
+  dates: { fontSize: width * 0.037, color: "gray" },
+  location: { fontSize: width * 0.03, color: "gray", marginTop: height * 0.005 },
+  description: {
+    marginHorizontal: width * 0.05,
+    marginVertical: height * 0.012,
+    textAlign: "center",
+    width: "90%",
+    height: height * 0.13,
+    lineHeight: width * 0.045,
+  },
 
-
-
-  actionButtons: { flexDirection: "row", justifyContent: "space-evenly", marginTop: 10 },
-
-  lightCandleButton: { 
-  borderRadius: 10, 
-  overflow: "hidden",
-  backgroundColor: "orange",
-  width: 150,  // Adjust as needed
-  height: 50,  // Fixed height to avoid shifting
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-noBackground: {
-  backgroundColor: "transparent",
-},
-
-lightCandleGradient: { 
-  width: "100%",
-  height: "100%",
-  alignItems: "center", 
-  justifyContent: "center", 
-  borderRadius: 10,
-},
-
-buttonContent: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  paddingHorizontal: 10, // Keeps spacing consistent
-},
-
-
-  CandleImage: { 
-  width: 12, height: 26, resizeMode: "contain"
-},
-
-
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginTop: height * 0.012,
+  },
+  lightCandleButton: {
+    borderRadius: width * 0.025,
+    overflow: "hidden",
+    backgroundColor: "orange",
+    width: width * 0.38,
+    height: height * 0.065,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noBackground: { backgroundColor: "transparent" },
+  lightCandleGradient: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: width * 0.025,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: width * 0.025,
+  },
+  CandleImage: {
+    width: width * 0.045,
+    height: height * 0.035,
+    resizeMode: "contain"
+  },
   ScanningImage: {
-  width: 20, height: 26, resizeMode: "contain"
-},
+    width: width * 0.06,
+    height: height * 0.035,
+    resizeMode: "contain"
+  },
+  scanMemoryButton: {
+    borderRadius: width * 0.025,
+    overflow: "hidden",
+    width: width * 0.38,
+    height: height * 0.065,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scanMemoryGradient: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: width * 0.025,
+  },
+  buttonText: { color: "white", fontWeight: "bold", fontSize: width * 0.045 },
+  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: width * 0.045 },
+  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: width * 0.045 },
 
-scanMemoryButton: { 
-  borderRadius: 10, 
-  overflow: "hidden",
-  width: 150,  // Match Light Candle Button
-  height: 50,  // Fixed height
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-scanMemoryGradient: { 
-  width: "100%",
-  height: "100%",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 10, 
-},
-
-
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16},
-  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: 16},
-  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: 16},
-
-  bottomContainer: { 
-  justifyContent: "space-evenly", 
-  backgroundColor: "white", 
-  marginTop: 10,
-  paddingTop: 0, // Adds space above buttons
-  shadowColor: "#000", // Shadow color
-  shadowOpacity: 0.3, 
-  shadowRadius: 6,
-  elevation: 10, // For Android shadow
-},
-bottomContainer2: { 
-  marginBottom: -10, // Adds space below the button
-  paddingBottom: -10, // Adds space below the button
-},
+  bottomContainer: {
+    justifyContent: "space-evenly",
+    backgroundColor: "white",
+    marginTop: height * 0.012,
+    paddingTop: 0,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 10,
+  },
+  bottomContainer2: {
+    marginBottom: -height * 0.012,
+    paddingBottom: -height * 0.012,
+  },
   bottomButtons: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-bottomButton: {
-  flexDirection: "column", // Stack icon & text vertically
-  alignItems: "center",
-  padding: 10,
-  paddingHorizontal: 20,
-  flex: 1, // Makes both buttons take equal width
-},
-modalBackgroundImage: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bottomButton: {
+    flexDirection: "column",
+    alignItems: "center",
+    padding: width * 0.025,
+    paddingHorizontal: width * 0.05,
+    flex: 1,
+  },
+  modalBackgroundImage: {
     width: '100%',
-    minHeight: 500, // Adjust as needed for your modal size
-    borderRadius: 20,
+    minHeight: height * 0.6,
+    borderRadius: width * 0.05,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-},
-modalBackgroundOverlay: {
+  },
+  modalBackgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)', // Black with opacity
+    backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 1,
-},
-modalContentAbsolute: {
+  },
+  modalContentAbsolute: {
     zIndex: 2,
     alignItems: 'center',
     width: '100%',
-    padding: 20,
-},
-
-bottomButtonText: {
-  marginTop: 5, // Adds space between icon & text
-  textAlign: "center",
-  color: "#4d4c4c",
-  fontSize: 12,
-},
-
-divider: {
-  width: 1.5, // Thin vertical line
-  height: "40%", // Adjust height as needed
-  backgroundColor: "gray", // Color of the divider
-},
-prayerImage: { 
-  width: 16, 
-  height: 20, 
-  resizeMode: "contain" // Ensures the image maintains aspect ratio
-},
-updateImage: { 
-  width: 18, 
-  height: 20, 
-  resizeMode: "contain"
-},
-
-
-navigateButtonContainer: { 
-  backgroundColor: "#2E8B57", 
-  padding: 15, 
-  alignItems: "center", 
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  width: "100%", 
-  height: 60,
-  alignSelf: "center"
-},
-
-navigateButtonText: { 
-  color: "white", 
-  fontWeight: "bold", 
-  fontSize: 16 
-},
-
-modalOverlay: {
+    padding: width * 0.05,
+  },
+  bottomButtonText: {
+    marginTop: height * 0.005,
+    textAlign: "center",
+    color: "#4d4c4c",
+    fontSize: width * 0.032,
+  },
+  divider: {
+    width: 1.5,
+    height: "40%",
+    backgroundColor: "gray",
+  },
+  prayerImage: {
+    width: width * 0.045,
+    height: height * 0.03,
+    resizeMode: "contain"
+  },
+  updateImage: {
+    width: width * 0.05,
+    height: height * 0.03,
+    resizeMode: "contain"
+  },
+  navigateButtonContainer: {
+    backgroundColor: "#2E8B57",
+    padding: width * 0.04,
+    alignItems: "center",
+    borderTopLeftRadius: width * 0.05,
+    borderTopRightRadius: width * 0.05,
+    width: "100%",
+    height: height * 0.08,
+    alignSelf: "center"
+  },
+  navigateButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: width * 0.045
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.9)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: width * 0.05,
   },
   modalContent: {
     width: "90%",
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: width * 0.05,
+    padding: width * 0.05,
     alignItems: "center",
   },
   wtg2logo: {
-    width: 70,
-    height: 70,
-    top: -20, 
+    width: width * 0.18,
+    height: width * 0.18,
+    top: -height * 0.025,
   },
   WtG2: {
-    width: 85,
-    height: 85,
-    marginBottom: 15,
+    width: width * 0.23,
+    height: width * 0.23,
+    marginBottom: height * 0.018,
     resizeMode: "contain",
   },
   modalProfileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 100,
-    borderWidth: .1,
+    width: width * 0.27,
+    height: width * 0.27,
+    borderRadius: width * 0.135,
+    borderWidth: 0.1,
     borderColor: "white",
   },
   imageBorderOuter: {
-    width: 108, // Outer border size
-    height: 108,
-    borderRadius: 100,
-    backgroundColor: "#94b143", // Outer border color
+    width: width * 0.29,
+    height: width * 0.29,
+    borderRadius: width * 0.145,
+    backgroundColor: "#94b143",
     justifyContent: "center",
     alignItems: "center",
   },
   imageBorderInner: {
-    width: 105, // Inner border size
-    height: 105,
-    borderRadius: 100,
-    backgroundColor: "white", // Inner border color
+    width: width * 0.28,
+    height: width * 0.28,
+    borderRadius: width * 0.14,
+    backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
   },
   memorialHeader: {
-    fontSize: 36,
+    fontSize: width * 0.09,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: height * 0.012,
     color: "white",
     textAlign: "center",
   },
   memorialSubtext: {
-    fontSize: 20,
+    fontSize: width * 0.05,
     fontStyle: "italic",
-    marginBottom: 30,
+    marginBottom: height * 0.018,
     textAlign: "center",
     color: "white",
   },
-  
   candleCount: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     textAlign: "center",
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: height * 0.018,
+    marginBottom: height * 0.03,
     color: "white",
   },
   boldText: {
     fontWeight: "bold",
-
   },
   encourageText: {
-    fontSize: 20,
+    fontSize: width * 0.05,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
-    marginBottom: 50,
+    marginBottom: height * 0.06,
   },
   socialIcons: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 15,
+    gap: width * 0.04,
   },
   icon: {
-    width: 55,
-    height: 55,
+    width: width * 0.15,
+    height: width * 0.15,
   },
   candleCountContainer: {
     position: 'absolute',
-    top: 10, // Move it slightly inside the image
-    right: 40, // Move it slightly inside the image
-    backgroundColor: 'red', // Red background
-    borderRadius: 10, // Circular shape
-    width: 15, // Fixed width for the circle
-    height: 15, // Fixed height for the circle
+    top: height * 0.012,
+    right: width * 0.11,
+    backgroundColor: 'red',
+    borderRadius: width * 0.025,
+    width: width * 0.045,
+    height: width * 0.045,
     alignItems: 'center',
     justifyContent: 'center',
-},
-candleCountText: {
-    color: 'white', // White text
-    fontSize: 8, // Smaller font size
+  },
+  candleCountText: {
+    color: 'white',
+    fontSize: width * 0.025,
     fontWeight: 'bold',
-},
-
+  },
 });
 
 export default GraveInformation;

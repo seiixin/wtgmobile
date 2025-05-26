@@ -1,4 +1,4 @@
-package com.walktograve
+package com.jairamsan.WalkToGrave
 
 import android.os.Build
 import android.os.Bundle
