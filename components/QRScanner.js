@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 
 const { width, height } = Dimensions.get('window');
 const BOX_SIZE = 250;
-const BOX_TOP = (height - BOX_SIZE) / 1.738; // Adjusted to center the box vertically
+const BOX_TOP = (height - BOX_SIZE) / 2; // Adjusted to center the box vertically
 const BOX_LEFT = (width - BOX_SIZE) / 2;
 
 export default function QRScanner() {
@@ -45,8 +45,13 @@ export default function QRScanner() {
                 onBarCodeScanned={({ data }) => {
                     if (data && !qrLock.current) {
                         qrLock.current = true;
+                        console.log("Scanned data:", data); // Add this line
                         setTimeout(async () => {
-                            await Linking.openURL(data);
+                            try {
+                                await Linking.openURL(data);
+                            } catch (e) {
+                                console.warn("Failed to open URL:", e);
+                            }
                         }, 500);
                     }
                 }}
