@@ -46,7 +46,8 @@ import RequestedServices from './components/RequestedServices';
 import ServicesScreenWithDrawer from './components/Services';
 import VerificationRegister from './components/VerificationRegister';
 import VerificationForgotPass from './components/VerificationForgotPass';
-
+import QRScanner from './components/QRScanner';
+import Map from './components/Map';
 
 import FAQs from './components/FAQs';
 import GeneralQuestions from './components/GeneralQuestions';
@@ -114,8 +115,8 @@ const MainStack = () => (
     <Stack.Screen name="ServicesScreenWithDrawer" component={ServicesScreenWithDrawer} />
     <Stack.Screen name="VerificationRegister" component={VerificationRegister} />
     <Stack.Screen name="VerificationForgotPass" component={VerificationForgotPass} />
-
-
+    <Stack.Screen name="QRScanner" component={QRScanner} options={{ headerShown: false }} />
+    <Stack.Screen name="Map" component={Map} />
     
     <Stack.Screen name="FAQs" component={FAQs} />
     <Stack.Screen name="GeneralQuestions" component={GeneralQuestions} />
