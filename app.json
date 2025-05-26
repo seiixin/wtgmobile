@@ -31,6 +31,9 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan QR codes."
       }
+    },
+    "splash": {
+      "image": "./assets/splashscreen.png"
     }
   }
 }
