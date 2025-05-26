@@ -42,6 +42,16 @@ const CustomDrawerContent = (props) => {
           <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Sign In Button at the bottom */}
+      <View style={{ flex: 1, justifyContent: 'flex-end', marginTop: 40 }}>
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={() => props.navigation.navigate('SignIn')}
+        >
+          <Text style={styles.signInButtonText}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
     </DrawerContentScrollView>
   );
 };
@@ -199,6 +209,19 @@ const styles = StyleSheet.create({
     height: width * 0.11,
     resizeMode: 'contain',
     marginRight: width * 0.025,
+  },
+  signInButton: {
+    backgroundColor: "#00aa13",
+    paddingVertical: height * 0.018,
+    borderRadius: width * 0.025,
+    alignItems: "center",
+    marginHorizontal: width * 0.04,
+    marginTop: height * 0.025,
+  },
+  signInButtonText: {
+    color: "#fff",
+    fontSize: width * 0.045,
+    fontWeight: "bold",
   },
 });
 
