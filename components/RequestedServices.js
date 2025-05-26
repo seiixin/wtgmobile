@@ -176,6 +176,7 @@ const GradientNextButton = ({ onPress }) => (
     "Construction Permit": require("../assets/PerrmitIcon.png"),
     "Niche Demolition": require("../assets/DemolitionIcon.png"),
     "Lot for Lease Existing Fee": require("../assets/LotIcon.png"),
+    "Gravestone QR": require("../assets/GravestoneQRIcon.png"),
   };
 
   useEffect(() => {
