@@ -48,18 +48,30 @@ const CustomDrawerContent = (props) => {
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-                    {/* Profile Section */}
-                    <View style={styles.profileSection}>
-                        <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-                        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                        <TouchableOpacity 
-                            style={styles.editProfileButton} 
-                            onPress={() => navigation.navigate('EditProfile')} // Navigate to ProfileScreen
-                        >
-                            <MaterialIcons name="edit" size={16} color="green" />
-                            <Text style={styles.editProfileText}>Edit Profile</Text>
-                        </TouchableOpacity>
-                    </View>
+                     {/* Profile Section */}
+                                           <View style={styles.profileSection}>
+                                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                   <Image
+                                                       source={{
+                                                           uri: user?.profileImage
+                                                               ? user.profileImage
+                                                               : 'https://via.placeholder.com/150'
+                                                       }}
+                                                       style={styles.profileImage}
+                                                   />
+                                                   <View style={{ marginLeft: 16 }}>
+                                                       <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                                                       <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                                                       <TouchableOpacity
+                                                           style={styles.editProfileButton}
+                                                           onPress={() => navigation.navigate('EditProfile')}
+                                                       >
+                                                           <MaterialIcons name="edit" size={16} color="green" />
+                                                           <Text style={styles.editProfileText}>Edit Profile</Text>
+                                                       </TouchableOpacity>
+                                                   </View>
+                                               </View>
+                                           </View>
         
                     {/* Drawer Items */}
                     <View style={styles.menuSection}>

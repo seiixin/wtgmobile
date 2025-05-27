@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Dimensions, ImageBackground, Alert } from "react-native";
-import RNModal from "react-native-modal";  // Renamed import
+import RNModal from "react-native-modal";  
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
@@ -359,14 +359,30 @@ const CustomDrawerContent = (props) => {
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-      <View style={styles.profileSection}>
-        <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-        <TouchableOpacity style={styles.editProfileButton} onPress={() => navigation.navigate('EditProfile')}>
-          <MaterialIcons name="edit" size={16} color="green" />
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
+       {/* Profile Section */}
+                             <View style={styles.profileSection}>
+                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                     <Image
+                                         source={{
+                                             uri: user?.profileImage
+                                                 ? user.profileImage
+                                                 : 'https://via.placeholder.com/150'
+                                         }}
+                                         style={styles.profileImage}
+                                     />
+                                     <View style={{ marginLeft: 16 }}>
+                                         <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                                         <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                                         <TouchableOpacity
+                                             style={styles.editProfileButton}
+                                             onPress={() => navigation.navigate('EditProfile')}
+                                         >
+                                             <MaterialIcons name="edit" size={16} color="green" />
+                                             <Text style={styles.editProfileText}>Edit Profile</Text>
+                                         </TouchableOpacity>
+                                     </View>
+                                 </View>
+                             </View>
 
       <View style={styles.menuSection}>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>

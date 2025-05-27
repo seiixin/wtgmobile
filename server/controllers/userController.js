@@ -149,22 +149,18 @@ const updatePassword = async (req, res) => {
 const uploadProfileImage = async (req, res) => {
     const userId = req.params.id;
 
-    // ✅ Handle missing file
     if (!req.file) {
         return res.status(400).json({ message: "No image uploaded" });
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = req.file.path; // Cloudinary URL
 
     try {
         const user = await User.findById(userId);
         if (!user) {
-            // ✅ Delete uploaded file if user not found
-            fs.unlinkSync(req.file.path);
             return res.status(404).json({ message: "User not found" });
         }
 
-        // ✅ Save image URL to user profile
         user.profileImage = imageUrl;
         await user.save();
 
