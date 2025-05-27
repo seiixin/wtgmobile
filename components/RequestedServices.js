@@ -712,6 +712,19 @@ const GradientNextButton = ({ onPress }) => (
                 alert("Please select at least one service in your cart before proceeding.");
                 return;
               }
+              // Require all grave details fields
+              const { deceasedName, dateOfBurial, dateOfDeath, phaseBlk, category, apartmentNo } = graveDetails;
+              if (
+                !deceasedName.trim() ||
+                !dateOfBurial.trim() ||
+                !dateOfDeath.trim() ||
+                !phaseBlk.trim() ||
+                !category ||
+                !apartmentNo.trim()
+              ) {
+                alert("Please fill in all grave details before proceeding.");
+                return;
+              }
               setIsModalVisible(false);           // Hide Edit Grave Details modal
               setIsPaymentModalVisible(true);     // Show Payment Method modal
             }} />
@@ -793,7 +806,15 @@ const GradientNextButton = ({ onPress }) => (
                 overflow: 'hidden',
                 marginTop: 10,
               }}
-              onPress={async () => {
+             onPress={async () => {
+                if (!selectedPayment) {
+                  alert('Please select a payment method before proceeding.');
+                  return;
+                }
+                if (selectedPayment !== 'cash') {
+                  alert('Only "Pay in Cash" is available at this time. Please select "Pay in Cash" to proceed.');
+                  return;
+                }
                 setIsPaymentModalVisible(false);
                 const userId = await AsyncStorage.getItem('userId');
                 if (!userInfo.name) {
