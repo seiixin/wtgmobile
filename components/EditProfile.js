@@ -41,8 +41,8 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
       .then(data => {
         setUser(data);
         setFormData(data);
-        setNewValue(data.name); // Initialize with user's current name
-        setImage(`${BASE_URL}${data.profileImage}`);  // Initialize image state
+        setNewValue(data.name);
+        setImage(data.profileImage); // Use Cloudinary URL directly
       })
       .catch(error => console.error("Error fetching user:", error))
       .finally(() => setLoading(false));
@@ -162,10 +162,10 @@ const uploadImage = async (imageUri) => {
     console.log("Server response:", text);
 
     const data = JSON.parse(text);
-    if (data.success) {
+    if (data.imageUrl) {
       alert("Profile image updated successfully!");
-      setImage(imageUri); // ✅ Update image in state after successful upload
-      setUser((prevUser) => ({ ...prevUser, profileImage: imageUri }));
+      setImage(data.imageUrl); // Use Cloudinary URL from backend
+      setUser((prevUser) => ({ ...prevUser, profileImage: data.imageUrl }));
     } else {
       alert("Failed to update profile image.");
     }
