@@ -65,17 +65,29 @@ const CustomDrawerContent = (props) => {
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
             {/* Profile Section */}
-            <View style={styles.profileSection}>
-                <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-                <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                <TouchableOpacity
-                    style={styles.editProfileButton}
-                    onPress={() => navigation.navigate('EditProfile')} // Navigate to ProfileScreen
-                >
-                    <MaterialIcons name="edit" size={16} color="green" />
-                    <Text style={styles.editProfileText}>Edit Profile</Text>
-                </TouchableOpacity>
-            </View>
+                                  <View style={styles.profileSection}>
+                                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                          <Image
+                                              source={{
+                                                  uri: user?.profileImage
+                                                      ? user.profileImage
+                                                      : 'https://via.placeholder.com/150'
+                                              }}
+                                              style={styles.profileImage}
+                                          />
+                                          <View style={{ marginLeft: 16 }}>
+                                              <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                                              <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                                              <TouchableOpacity
+                                                  style={styles.editProfileButton}
+                                                  onPress={() => navigation.navigate('EditProfile')}
+                                              >
+                                                  <MaterialIcons name="edit" size={16} color="green" />
+                                                  <Text style={styles.editProfileText}>Edit Profile</Text>
+                                              </TouchableOpacity>
+                                          </View>
+                                      </View>
+                                  </View>
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
@@ -176,6 +188,7 @@ const GradientNextButton = ({ onPress }) => (
     "Construction Permit": require("../assets/PerrmitIcon.png"),
     "Niche Demolition": require("../assets/DemolitionIcon.png"),
     "Lot for Lease Existing Fee": require("../assets/LotIcon.png"),
+    "Gravestone QR": require("../assets/GravestoneQRIcon.png"),
   };
 
   useEffect(() => {
@@ -699,6 +712,19 @@ const GradientNextButton = ({ onPress }) => (
                 alert("Please select at least one service in your cart before proceeding.");
                 return;
               }
+              // Require all grave details fields
+              const { deceasedName, dateOfBurial, dateOfDeath, phaseBlk, category, apartmentNo } = graveDetails;
+              if (
+                !deceasedName.trim() ||
+                !dateOfBurial.trim() ||
+                !dateOfDeath.trim() ||
+                !phaseBlk.trim() ||
+                !category ||
+                !apartmentNo.trim()
+              ) {
+                alert("Please fill in all grave details before proceeding.");
+                return;
+              }
               setIsModalVisible(false);           // Hide Edit Grave Details modal
               setIsPaymentModalVisible(true);     // Show Payment Method modal
             }} />
@@ -780,7 +806,15 @@ const GradientNextButton = ({ onPress }) => (
                 overflow: 'hidden',
                 marginTop: 10,
               }}
-              onPress={async () => {
+             onPress={async () => {
+                if (!selectedPayment) {
+                  alert('Please select a payment method before proceeding.');
+                  return;
+                }
+                if (selectedPayment !== 'cash') {
+                  alert('Only "Pay in Cash" is available at this time. Please select "Pay in Cash" to proceed.');
+                  return;
+                }
                 setIsPaymentModalVisible(false);
                 const userId = await AsyncStorage.getItem('userId');
                 if (!userInfo.name) {

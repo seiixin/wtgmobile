@@ -6,8 +6,8 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'shanegregg.cereno@gmail.com', // Your Gmail address
-        pass: 'rfxu emkd opoc ripv', // Sir bali dito yung sa otp tanggalin ko na lang po yung pass kasi nilagay ko po yung app specific password ko po
+        user: 'walktograve@gmail.com', // Your Gmail address
+        pass: 'asys iqgr tmyj uwgd', // Sir bali dito yung sa otp tanggalin ko na lang po yung pass kasi nilagay ko po yung app specific password ko po
     },
     tls: {
         rejectUnauthorized: false,
@@ -29,10 +29,21 @@ exports.sendOtp = async (req, res) => {
 
         // Email configuration
         const mailOptions = {
-            from: 'shanegregg.cereno@gmail.com',
+            from: 'walktograve@gmail.com',
             to: email,
-            subject: 'Your OTP Code',
-            text: `Your OTP is ${otp}. It will expire in 1 minute.`,
+            subject: 'WalkToGrave: Your One-Time Password (OTP)',
+            text: `Hello,
+
+We received a request to verify your email address for WalkToGrave.
+
+Your One-Time Password (OTP) is: ${otp}
+
+This code will expire in 1 minute. Please do not share this code with anyone.
+
+If you did not request this, you can safely ignore this email.
+
+Thank you,
+The WalkToGrave Team`,
         };
 
         console.log('Sending email with options:', mailOptions);

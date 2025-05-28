@@ -14,6 +14,7 @@ const services = [
   { id: 3, name: "Construction Permit", image: require("../assets/PermitIMG.png") },
   { id: 4, name: "Niche Demolition", image: require("../assets/DemolitionIMG.png") },
   { id: 5, name: "Lot for Lease Existing Fee", image: require("../assets/LotIMG.png") },
+  { id: 6, name: "Gravestone QR", image: require("../assets/GravestoneQrIMG.png") }, // Added new service
 ];
 
 const burialOptions = [
@@ -86,6 +87,13 @@ const MaintenanceDetails = [
     title: "Lot for Lease Existing Fee", 
     pricing: "₱5,000.00 (per sqm)",
     description: "• Families can lease a burial lot instead of purchasing it permanently.\n• It may apply to pre-owned or previously used lots that are being re-leased.", 
+  },
+  { 
+    id: 6, 
+    image: require("../assets/GravestoneQRIcon.png"),
+    title: "Gravestone QR", 
+    pricing: "₱450.00",
+    description: "• QR code for gravestone to digitally memorialize your loved one.", 
   }
 ];
 

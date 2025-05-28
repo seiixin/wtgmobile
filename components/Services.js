@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Dimensions, ImageBackground, Alert } from "react-native";
-import RNModal from "react-native-modal";  // Renamed import
+import RNModal from "react-native-modal";  
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
@@ -18,6 +18,7 @@ const services = [
   { id: 3, name: "Construction Permit", image: require("../assets/PermitIMG.png") },
   { id: 4, name: "Niche Demolition", image: require("../assets/DemolitionIMG.png") },
   { id: 5, name: "Lot for Lease Existing Fee", image: require("../assets/LotIMG.png") },
+  { id: 6, name: "Gravestone QR", image: require("../assets/GravestoneQrIMG.png") }, // Added new service
 ];
 
 const burialOptions = [
@@ -90,6 +91,13 @@ const MaintenanceDetails = [
     title: "Lot for Lease Existing Fee", 
     pricing: "₱5,000.00 (per sqm)",
     description: "• Families can lease a burial lot instead of purchasing it permanently.\n• It may apply to pre-owned or previously used lots that are being re-leased.", 
+  },
+  { 
+    id: 6, 
+    image: require("../assets/GravestoneQRIcon.png"),
+    title: "Gravestone QR", 
+    pricing: "₱450.00",
+    description: "• QR code for gravestone to digitally memorialize your loved one.", 
   }
 ];
 
@@ -97,9 +105,30 @@ const ServicesScreen = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmationVisible, setConfirmationVisible] = useState(false);
+  const [requestedServices, setRequestedServices] = useState([]);
   const navigation = useNavigation();
 
-  const handleServicePress = (service) => {
+  // Fetch requested services for the logged-in user in real-time
+  const fetchRequestedServices = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+      const response = await fetch(`https://walktogravemobile-backendserver.onrender.com/api/service-requests/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRequestedServices(data.data.map(req => req.serviceName));
+      }
+    } catch (error) {
+      console.error("Error fetching requested services:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequestedServices();
+  }, [modalVisible, confirmationVisible]);
+
+  const handleServicePress = async (service) => {
+    await fetchRequestedServices(); // Always get latest before showing modal
     const selectedDetail = MaintenanceDetails.find((detail) => detail.title === service.name);
     if (selectedDetail) {
       setSelectedService(selectedDetail);
@@ -173,12 +202,18 @@ const ServicesScreen = () => {
               <TouchableOpacity 
                 onPress={async () => {
                   try {
-                    const userId = await AsyncStorage.getItem('userId'); // Get the logged-in user's ID
+                    const userId = await AsyncStorage.getItem('userId');
                     if (!userId) {
                       Alert.alert("Error", "You must be logged in to request a service.");
                       return;
                     }
-
+                    // Always check latest from DB before submitting
+                    await fetchRequestedServices();
+                    if (requestedServices.includes(selectedService.title)) {
+                      Alert.alert("Already Requested", "You have already requested this service.");
+                      setModalVisible(false);
+                      return;
+                    }
                     // API call to add the service request to the database
                     const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/service-requests', {
                       method: 'POST',
@@ -188,7 +223,7 @@ const ServicesScreen = () => {
                       body: JSON.stringify({
                         userId,
                         serviceName: selectedService.title,
-                        price: parseFloat(selectedService.pricing.replace(/[^0-9.]/g, '')), // Extract numeric price
+                        price: parseFloat(selectedService.pricing.replace(/[^0-9.]/g, '')),
                       }),
                     });
 
@@ -196,6 +231,7 @@ const ServicesScreen = () => {
 
                     if (response.ok) {
                       Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
+                      await fetchRequestedServices(); // Refresh after submit
                     } else {
                       console.error("Error submitting request:", data.message);
                       Alert.alert("Error", data.message || "Failed to submit the service request.");
@@ -205,7 +241,7 @@ const ServicesScreen = () => {
                     Alert.alert("Error", "An error occurred while submitting the service request.");
                   }
 
-                  setModalVisible(false); // Close the service details modal
+                  setModalVisible(false);
                 }} 
                 style={styles.requestButton}
               >
@@ -323,14 +359,30 @@ const CustomDrawerContent = (props) => {
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-      <View style={styles.profileSection}>
-        <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-        <TouchableOpacity style={styles.editProfileButton} onPress={() => navigation.navigate('EditProfile')}>
-          <MaterialIcons name="edit" size={16} color="green" />
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
+       {/* Profile Section */}
+                             <View style={styles.profileSection}>
+                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                     <Image
+                                         source={{
+                                             uri: user?.profileImage
+                                                 ? user.profileImage
+                                                 : 'https://via.placeholder.com/150'
+                                         }}
+                                         style={styles.profileImage}
+                                     />
+                                     <View style={{ marginLeft: 16 }}>
+                                         <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                                         <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                                         <TouchableOpacity
+                                             style={styles.editProfileButton}
+                                             onPress={() => navigation.navigate('EditProfile')}
+                                         >
+                                             <MaterialIcons name="edit" size={16} color="green" />
+                                             <Text style={styles.editProfileText}>Edit Profile</Text>
+                                         </TouchableOpacity>
+                                     </View>
+                                 </View>
+                             </View>
 
       <View style={styles.menuSection}>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
