@@ -10,7 +10,7 @@ const AccountAndProfile = () => {
   const faqs = [
     { question: "How do I create an account?", answer: "You can sign up using your email and password or continue as a guest with limited access." },
     { question: "What if I forget my password?", answer: "You can reset your password by selecting 'Forgot Password?' on the login page and following the OTP verification process." },
-    { question: "Can I edit my profile information?", answer: "Yes, you can update your details in the Relative Profile Page under the settings menu." },
+    { question: "Can I edit my profile information?", answer: "Yes, you can update your details in Edit Profile section under the settings menu." },
   ];
 
   const toggleFAQ = (index) => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ImageBackground, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, Dimensions, StyleSheet, ImageBackground, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width, height } = Dimensions.get('window');
 
 const ChangePassFinds = () => {
   const [email, setEmail] = useState('');
@@ -106,17 +108,74 @@ const ChangePassFinds = () => {
 };
 
 const styles = StyleSheet.create({
-  background: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  backButton: { position: 'absolute', top: 50, left: 20 },
-  backIcon: { width: 40, height: 40 },
-  container: { width: '80%', padding: 20, backgroundColor: 'white', borderRadius: 20, alignItems: 'center' },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  subHeader: { fontSize: 16, color: 'gray', marginBottom: 20 },
-  input: { width: '100%', height: 45, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingLeft: 10, marginBottom: 15 },
-  button: { marginTop: 15, backgroundColor: '#00aa13', padding: 9, borderRadius: 50, width: '80%', alignItems: 'center' },
-  button2: { marginTop: 10, backgroundColor: 'white', padding: 9, borderRadius: 50, borderColor: '#00aa13', borderWidth: 1, width: '80%', alignItems: 'center' },
-  buttonText: { color: 'white', fontSize: 16 },
-  buttonText2: { color: '#00aa13', fontSize: 16 },
+  background: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  backButton: { 
+    position: 'absolute', 
+    top: height * 0.06, 
+    left: width * 0.05 
+  },
+  backIcon: { 
+    width: width * 0.11, 
+    height: width * 0.11 
+  },
+  container: { 
+    width: '85%', 
+    padding: width * 0.06, 
+    backgroundColor: 'white', 
+    borderRadius: width * 0.06, 
+    alignItems: 'center' 
+  },
+  header: { 
+    fontSize: width * 0.07, 
+    fontWeight: 'bold', 
+    marginBottom: height * 0.012 
+  },
+  subHeader: { 
+    fontSize: width * 0.040, 
+    color: 'gray', 
+    marginBottom: height * 0.025, 
+    textAlign: 'center'
+  },
+  input: { 
+    width: '100%', 
+    height: height * 0.06, 
+    borderColor: '#ccc', 
+    borderWidth: 1, 
+    borderRadius: width * 0.025, 
+    paddingLeft: width * 0.03, 
+    marginBottom: height * 0.018, 
+    fontSize: width * 0.045
+  },
+  button: { 
+    marginTop: height * 0.018, 
+    backgroundColor: '#00aa13', 
+    padding: height * 0.015, 
+    borderRadius: width * 0.13, 
+    width: '80%', 
+    alignItems: 'center' 
+  },
+  button2: { 
+    marginTop: height * 0.012, 
+    backgroundColor: 'white', 
+    padding: height * 0.015, 
+    borderRadius: width * 0.13, 
+    borderColor: '#00aa13', 
+    borderWidth: 1, 
+    width: '80%', 
+    alignItems: 'center' 
+  },
+  buttonText: { 
+    color: 'white', 
+    fontSize: width * 0.045 
+  },
+  buttonText2: { 
+    color: '#00aa13', 
+    fontSize: width * 0.045 
+  },
 });
 
 export default ChangePassFinds;

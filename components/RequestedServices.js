@@ -36,7 +36,7 @@ const CustomDrawerContent = (props) => {
                             // Navigate to the SignIn screen
                             navigation.reset({
                                 index: 0, // Reset stack to the SignIn screen
-                                routes: [{ name: 'GetStarted' }], // Navigate to SignIn
+                                routes: [{ name: 'SignIn' }], // Navigate to SignIn
                             });
                         } catch (error) {
                             console.error("Error during sign out:", error);

@@ -1,24 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ImageBackground,
-  ActivityIndicator,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
+import { View, Text, TextInput, Image, TouchableOpacity, Dimensions, ScrollView, StyleSheet, ImageBackground, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+
+const { width, height } = Dimensions.get('window');
 
 const EditProfile = () => {
   const [user, setUser] = useState(null);
@@ -90,8 +78,14 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
             disabled={!editable} // Disable touch for non-editable fields
           >
             <Text style={[styles.value, !editable && styles.disabledText]}>
-              {formData[field] || "Add"}
-            </Text>
+              {field === "email" && formData[field]
+                ? (() => {
+                    const [name, domain] = formData[field].split("@");
+                    if (!domain) return formData[field];
+                    return `${name}@${domain.slice(0, 2)}...`;
+                  })()
+                : formData[field] || "Add"}
+            </Text> 
              {/* Add green checkmark for verified email */}
           {field === "email" && (
             <Ionicons name="checkmark-circle" size={20} color="green" style={styles.verifiedIcon} />
@@ -187,14 +181,14 @@ const uploadImage = async (imageUri) => {
 
         </View>
         <View style={styles.container}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: `${image}?t=${new Date().getTime()}` }} style={styles.profileImage} />
-
-            <TouchableOpacity style={styles.cameraButton} onPress={handlePickImage}>
-              <Ionicons name="camera" size={40} color="black" />
-            </TouchableOpacity>
-
-          </View>
+        <View style={styles.imageContainer}>
+  <View style={{ position: 'relative' }}>
+    <Image source={{ uri: `${image}?t=${new Date().getTime()}` }} style={styles.profileImage} />
+    <TouchableOpacity style={styles.cameraButton} onPress={handlePickImage}>
+      <Ionicons name="camera" size={40} color="black" />
+    </TouchableOpacity>
+  </View>
+</View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
@@ -262,56 +256,121 @@ const uploadImage = async (imageUri) => {
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%', resizeMode: 'cover' },
   outerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { width: '80%', backgroundColor: 'white', borderRadius: 50, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 3, alignSelf: 'center', maxHeight: '80%', top: 30 },
-  imageContainer: { position: 'absolute', top: -50, left: '50%', transform: [{ translateX: -30 }], alignItems: 'center' },
-  profileImage: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: '#00aa13' },
-  cameraButton: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#fff', borderRadius: 15, padding: 5 },
-  header: { alignItems: 'center', marginTop: 60 },
-  name: { fontSize: 25, fontWeight: 'bold', marginTop: 10 },
-  location: { fontSize: 16, color: '#6d6d6d' },
-  sectionContainer: { padding: 20 },
-  sectionHeader: { fontSize: 16, fontWeight: 'bold', marginBottom: 10, color: '#00aa13' },
-  infoItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  label: { color: 'gray' },
+  container: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: width * 0.08,
+    padding: width * 0.045,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+    alignSelf: 'center',
+    maxHeight: '80%',
+    top: height * 0.04,
+  },
+  imageContainer: {
+  position: 'absolute',
+  top: -height * 0.07,
+  left: 0,
+  right: 0,
+  alignItems: 'center',
+  zIndex: 2,
+},
+  profileImage: {
+    width: width * 0.3,
+    height: width * 0.3,
+    borderRadius: width * 0.15,
+    borderWidth: 2,
+    borderColor: '#00aa13',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: width * 0.06,
+    padding: width * 0.015,
+  },
+  header: { alignItems: 'center', marginTop: height * 0.09 },
+  name: { fontSize: width * 0.065, fontWeight: 'bold', marginTop: height * 0.012 },
+  location: { fontSize: width * 0.045, color: '#6d6d6d' },
+  sectionContainer: { padding: width * 0.05 },
+  sectionHeader: { fontSize: width * 0.045, fontWeight: 'bold', marginBottom: height * 0.012, color: '#00aa13' },
+  infoItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: height * 0.012 },
+  label: { color: 'gray', fontSize: width * 0.04 },
   infoRow: { flexDirection: 'row', alignItems: 'center' },
-  value: { color: 'black' },
+  value: { color: 'black', fontSize: width * 0.045 },
   input: {
     borderBottomWidth: 1,
     borderColor: 'gray',
-    paddingVertical: 5,
+    paddingVertical: height * 0.012,
     width: '100%',
-    height: '20%',
-    fontSize: 18,
-    borderWidth: 1,               // Add border width
-    borderColor: '#ccc',          // Set border color (light gray in this case)
-    borderRadius: 8,              // Set rounded corners
-    padding: 10,                  // Optional: Add some padding for better appearance
+    fontSize: width * 0.045,
+    borderWidth: 1,
+    borderRadius: width * 0.025,
+    padding: width * 0.03,
+    marginBottom: height * 0.012,
+    backgroundColor: '#fff',
   },
-  icon: { marginLeft: 5 },
-  arrowIcon: { marginLeft: 5 },
-  separator: { marginTop: 15, height: 1, width: '80%', alignSelf: 'center', backgroundColor: '#ddd' },
-  modalContainer: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: 'white', padding: 30, width: '100%', borderTopLeftRadius: 30, borderTopRightRadius: 30, alignItems: 'center' },
-  modalHeader: { fontSize: 18, marginBottom: 2, color: 'gray', alignSelf: 'flex-start' },
-  updateButton: { backgroundColor: '#fab636', padding: 15, borderRadius: 10, width: '100%', marginBottom: 5,marginTop: 20 },
-  updateText: { color: 'white', textAlign: 'center', fontSize: 16 },
-  closeButton: { padding: 10, alignItems: 'center' },
-  closeButtonText: { color: 'gray', fontSize: 16 },
-  back:{alignSelf:'flex-start',
-    marginBottom:30, 
-    bottom:100,
-    left:20
+  icon: { marginLeft: width * 0.012 },
+  arrowIcon: { marginLeft: width * 0.012 },
+  separator: {
+    marginTop: height * 0.018,
+    height: 1,
+    width: '80%',
+    alignSelf: 'center',
+    backgroundColor: '#ddd',
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: width * 0.07,
+    width: '100%',
+    borderTopLeftRadius: width * 0.08,
+    borderTopRightRadius: width * 0.08,
+    alignItems: 'center',
+  },
+  modalHeader: {
+    fontSize: width * 0.05,
+    marginBottom: height * 0.012,
+    color: 'gray',
+    alignSelf: 'flex-start',
+  },
+  updateButton: {
+    backgroundColor: '#fab636',
+    padding: height * 0.018,
+    borderRadius: width * 0.045,
+    width: '100%',
+    marginBottom: height * 0.008,
+    marginTop: height * 0.025,
+  },
+  updateText: { color: 'white', textAlign: 'center', fontSize: width * 0.045 },
+  closeButton: { padding: height * 0.012, alignItems: 'center' },
+  closeButtonText: { color: 'gray', fontSize: width * 0.045 },
+  back: {
+    alignSelf: 'flex-start',
+    marginBottom: height * 0.04,
+    bottom: height * 0.13,
+    left: width * 0.05,
+  },
+  backButton: {},
   backImage: {
-    width: 35, // Set the size of the back button
-    height: 35,
+    width: width * 0.09,
+    height: width * 0.09,
   },
   disabledText: {
-    color: "gray", // Gray out non-editable fields
+    color: "gray",
   },
   verifiedIcon: {
-    marginLeft: 5, // Add spacing for the verified icon
-    marginRight:-10,
+    marginLeft: width * 0.012,
+    marginRight: -width * 0.025,
   },
 });
 

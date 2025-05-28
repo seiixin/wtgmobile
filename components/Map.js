@@ -76,7 +76,7 @@ const Map = () => {
         />
 
         {/* Apartment Box 1 near 14.471146, 120.975215 */}
-  <Polygon
+  {/* <Polygon
     coordinates={[
       { latitude: 14.471084, longitude: 120.975068 },
       { latitude: 14.471138, longitude: 120.975127 },
@@ -86,10 +86,10 @@ const Map = () => {
     strokeColor="#FF9900"
     fillColor="rgba(255,153,0,0.4)"
     strokeWidth={1}
-  />
+  /> */}
 
   {/* Apartment Box 2 near 14.471146, 120.975215 */}
-  <Polygon
+  {/* <Polygon
     coordinates={[
       { latitude: 14.471062, longitude: 120.975093 },
       { latitude: 14.471110, longitude: 120.975148 },
@@ -99,7 +99,45 @@ const Map = () => {
     strokeColor="#3366FF"
     fillColor="rgba(51,102,255,0.4)"
     strokeWidth={2}
+  /> */}
+
+{/* <Polygon
+    coordinates={[
+      { latitude: 14.4711872, longitude: 120.9752189 },
+      { latitude: 14.4711866, longitude: 120.9752635 },
+      { latitude: 14.4710074, longitude: 120.9751019 },
+      { latitude: 14.4710376, longitude: 120.9750543 },
+    ]}
+    strokeColor="#3366FF"
+    fillColor="rgba(255, 51, 51, 0.4)"
+    strokeWidth={2}
   />
+
+<Polygon
+    coordinates={[
+      { latitude: 14.4711590, longitude: 120.9752695 },
+      { latitude: 14.4711311, longitude: 120.9753134 },
+      { latitude: 14.4709704, longitude: 120.9751518 },
+      { latitude: 14.4709567, longitude: 120.9751351 },
+    ]}
+    strokeColor="#3366FF"
+    fillColor="rgba(229, 255, 0, 0.4)"
+    strokeWidth={2}
+  />
+
+<Polygon
+    coordinates={[
+      { latitude: 14.4709782, longitude: 120.9755029 },
+      { latitude: 14.4709421, longitude: 120.9754888 },
+      { latitude: 14.4707837, longitude: 120.9752544 },
+      { latitude: 14.4708204, longitude: 120.9753906 },
+    ]}
+    strokeColor="#3366FF"
+    fillColor="rgba(229, 255, 0, 0.4)"
+    strokeWidth={2}
+  /> */}
+
+  
 
         {/* You can add more Polygon components for more apartment boxes */}
       </MapView>

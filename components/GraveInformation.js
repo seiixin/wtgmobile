@@ -49,8 +49,8 @@ const GraveInformation = () => {
             const now = new Date().getTime();
 
             // Check if the user can light a candle (1-day interval)
-            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 5 * 1000) {
-            Alert.alert('Candle Already Lit', 'You can light another candle in 5 seconds.');
+            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
+              Alert.alert('Candle Already Lit', 'You can light another candle after 24 hours.');
               return;
             }
 

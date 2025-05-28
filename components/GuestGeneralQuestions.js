@@ -11,10 +11,12 @@ const GeneralQuestionsGuest = () => {
 
   const faqs = [
     { question: "What is Walk to Grave?", answer: "Walk to Grave is a mobile application that helps users locate graves, navigate cemeteries, and pay virtual tributes to their loved ones." },
-    { question: "Who can use the app?", answer: "Guests can use the app to explore cemetery services and locate graves." },
-    { question: "What are the visiting hours?", answer: "Visiting hours are from 7:00 AM to 7:00 PM daily." },
-    { question: "Are there any fees for guests?", answer: "Guests may be charged for certain services, such as grave cleaning or maintenance." },
-    { question: "How can I contact the cemetery office?", answer: "You can contact the cemetery office via phone at (123) 456-7890 or email at office@cemetery.com." },
+        { question: "Who can use the app?", answer: "Anyone can use the app, including family members of the deceased, and visitors." },
+        { question: "What are the office hours of the cemetery?", answer: "The cemetery office is open from 8:00 AM to 4:00 PM, Tuesday to Sunday." },
+        { question: "When is the cemetery open for visiting?", answer: "Visiting hours are from 6:00 AM to 6:00 PM daily." },
+        { question: "Who is the Office Head of the cemetery?", answer: "The cemetery office head is Mr. Conrado B. Torres." },
+        { question: "Who can I contact for technical assistance?", answer: "For technical support, you can reach out to walktograve@gmail.com." },
+        { question: "How can I contact the cemetery office?", answer: "You can contact the cemetery office via phone at +63 9694204497 or email at walktograve@gmail.com." },
   ];
 
   const toggleFAQ = (index) => {

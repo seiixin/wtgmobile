@@ -1,22 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    View, Text, TextInput, ImageBackground, StyleSheet, Image, ScrollView, Animated
+    View, Text, TextInput, ImageBackground, Dimensions, StyleSheet, Image, ScrollView, Animated
 } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+const { width, height } = Dimensions.get('window');
+const scale = size => (width / 375) * size;
+const verticalScale = size => (height / 812) * size;
+
 const PsalmReadingOffer = () => {
     const [deceasedName, setDeceasedName] = useState('');
     const [languageOpen, setLanguageOpen] = useState(false);
-    const [language, setLanguage] = useState('Choose Language'); // Default to English
+    const [language, setLanguage] = useState('Choose Language');
     const [languageItems, setLanguageItems] = useState([
         { label: 'English', value: 'english' },
         { label: 'Tagalog', value: 'tagalog' }
     ]);
 
-    const slideAnim = useRef(new Animated.Value(600)).current; // Start fully hidden off-screen
+    const slideAnim = useRef(new Animated.Value(600)).current;
     const navigation = useNavigation();
 
     const prayers = {
@@ -45,17 +49,16 @@ const PsalmReadingOffer = () => {
             Tatawagin Niya ako, at sasagutin Ko siya; ako'y magiging kasama niya sa kapighatian, aking ililigtas siya at bibigyan siya ng karangalan. Sa mahabang buhay, bibigyan ko siya ng kasiyahan at ipapakita ko sa kanya ang aking kaligtasan.`
         }
     };
-    
-    
 
-    // Effect to slide only when input is entered or cleared
+    // Effect to slide only when input is entered and language is chosen
     useEffect(() => {
+        const shouldShowPanel = deceasedName.trim() && language !== 'Choose Language';
         Animated.timing(slideAnim, {
-            toValue: deceasedName.trim() ? 0 : 600, // Slide up if there's input, slide off-screen if empty
+            toValue: shouldShowPanel ? 0 : 600,
             duration: 300,
             useNativeDriver: true
         }).start();
-    }, [deceasedName]);
+    }, [deceasedName, language]);
 
     return (
         <ImageBackground source={require('../assets/OfferBg.png')} style={styles.background}>
@@ -76,65 +79,62 @@ const PsalmReadingOffer = () => {
             </View>
 
             {/* ✅ Input Section */}
-<View style={styles.inputContainer}>
-<View style={styles.labelInputWrapper}>
-    <Text style={styles.label}>For</Text>
-    <TextInput
-        style={styles.input}
-        placeholder="Name of the Deceased"
-        placeholderTextColor="#aaa"
-        value={deceasedName}
-        onChangeText={setDeceasedName}
-    />
-</View>
+            <View style={styles.inputContainer}>
+                <View style={styles.labelInputWrapper}>
+                    <Text style={styles.label}>For</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Name of the Deceased"
+                        placeholderTextColor="#aaa"
+                        value={deceasedName}
+                        onChangeText={setDeceasedName}
+                    />
+                </View>
 
-<View style={styles.languageAndIconsContainer}>
-<DropDownPicker
-open={languageOpen}
-value={language}
-items={languageItems}
-setOpen={setLanguageOpen}
-setValue={setLanguage}
-setItems={setLanguageItems}
-placeholder="Choose Language"
-style={styles.dropdown} // Styling for the dropdown box
-dropDownContainerStyle={styles.dropDownContainer} // Dropdown container styling
-labelStyle={{ color: 'gray' }} // Set the color of items in the dropdown
-placeholderStyle={{ color: 'gray' }} // Set the color of the placeholder text
-textStyle={{ color: 'gray' }} // Set the color of selected text
-arrowIconStyle={{ tintColor: 'gray' }} // Set the color of the dropdown arrow to gray
-/>
+                <View style={styles.languageAndIconsContainer}>
+                    <DropDownPicker
+                        open={languageOpen}
+                        value={language}
+                        items={languageItems}
+                        setOpen={setLanguageOpen}
+                        setValue={setLanguage}
+                        setItems={setLanguageItems}
+                        placeholder="Choose Language"
+                        style={styles.dropdown}
+                        dropDownContainerStyle={styles.dropDownContainer}
+                        labelStyle={{ color: 'gray' }}
+                        placeholderStyle={{ color: 'gray' }}
+                        textStyle={{ color: 'gray' }}
+                        arrowIconStyle={{ tintColor: 'gray' }}
+                    />
 
-
-
-    {/* Icons Section */}
-    <View style={styles.iconsContainer}>
-        <Image source={require('../assets/church_icon.png')} style={styles.icon} />
-        <Image source={require('../assets/walk_to_grave_logo.png')} style={styles.icon} />
-    </View>
-</View>
-</View>
-
-
-       
+                    {/* Icons Section */}
+                    <View style={styles.iconsContainer}>
+                        <Image source={require('../assets/church_icon.png')} style={styles.icon} />
+                        <Image source={require('../assets/walk_to_grave_logo.png')} style={styles.icon} />
+                    </View>
+                </View>
+            </View>
 
             {/* ✅ Prayers Section */}
-            <Animated.View style={[styles.prayersContainer, { transform: [{ translateY: slideAnim }] }]}>
-                <ImageBackground source={require('../assets/prayer_bg.png')} style={styles.prayerBackground}>
-                    <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-                        <View style={styles.prayers}>
-                            <Text style={styles.prayerTitle}>The Sign of the Cross</Text>
-                            <Text style={styles.prayerText}>{prayers[language]?.signOfTheCross ?? 'Choose Language'}</Text>
+            {deceasedName.trim() && language !== 'Choose Language' && (
+                <Animated.View style={[styles.prayersContainer, { transform: [{ translateY: slideAnim }] }]}>
+                    <ImageBackground source={require('../assets/prayer_bg.png')} style={styles.prayerBackground}>
+                        <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+                            <View style={styles.prayers}>
+                                <Text style={styles.prayerTitle}>The Sign of the Cross</Text>
+                                <Text style={styles.prayerText}>{prayers[language]?.signOfTheCross ?? 'Choose Language'}</Text>
 
-                            <Text style={styles.prayerTitle}>Psalms 23</Text>
-                            <Text style={styles.prayerText}>{prayers[language]?.prayer ?? ''}</Text>
+                                <Text style={styles.prayerTitle}>Psalms 23</Text>
+                                <Text style={styles.prayerText}>{prayers[language]?.prayer ?? ''}</Text>
 
-                            <Text style={styles.prayerTitle}>Psalms 91</Text>
-                            <Text style={styles.prayerText}>{prayers[language]?.prayer1 ?? ''}</Text>
-                        </View>
-                    </ScrollView>
-                </ImageBackground>
-            </Animated.View>
+                                <Text style={styles.prayerTitle}>Psalms 91</Text>
+                                <Text style={styles.prayerText}>{prayers[language]?.prayer1 ?? ''}</Text>
+                            </View>
+                        </ScrollView>
+                    </ImageBackground>
+                </Animated.View>
+            )}
 
         </ImageBackground>
     );
@@ -143,88 +143,86 @@ arrowIconStyle={{ tintColor: 'gray' }} // Set the color of the dropdown arrow to
 const styles = StyleSheet.create({
     background: {
         flex: 1,
-        paddingTop: 40
+        paddingTop: verticalScale(40)
     },
     header: {
         flexDirection: 'row', 
         alignItems: 'center', 
         justifyContent: 'center',
-        paddingVertical: 15,
-        marginTop:15
-        
+        paddingVertical: verticalScale(15),
+        marginTop: verticalScale(15)
     },
     backButton: {
         position: 'absolute',
-        left: 15, 
-        padding: 10, 
+        left: scale(15), 
+        padding: scale(10), 
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: scale(18),
         fontWeight: 'bold',
         color: '#333',
     },
     instructionBox: {
         backgroundColor: '#f0f5da',
-        padding: 20,
-        marginHorizontal: 20,
-        height:100,
-        marginTop: 30,
+        padding: scale(20),
+        marginHorizontal: scale(20),
+        height: verticalScale(100),
+        marginTop: verticalScale(30),
     },
     instructionText: {
-        fontSize: 16,
+        fontSize: scale(16),
         color: '#006400',
         textAlign: 'justify',
     },
     inputContainer: {
-        marginHorizontal: 20,
-        marginTop: 20,
-        padding: 20,
+        marginHorizontal: scale(20),
+        marginTop: verticalScale(20),
+        padding: scale(20),
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: 40,
+        borderRadius: scale(40),
         backgroundColor: '#fff',
     },
     labelInputWrapper: {
-        flexDirection: 'row', // Align "For" and input horizontally
-        alignItems: 'center', // Vertically align label and input
-        justifyContent: 'flex-start', // Align elements to the left
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
     },
     label: {
-        fontSize: 16,
+        fontSize: scale(16),
         color: '#333',
-        marginRight: 10, // Add space between the label and the input
+        marginRight: scale(10),
     },
     input: {
-        fontSize: 16,
+        fontSize: scale(16),
         color: '#333',
-        borderBottomWidth: 1, // Add underline
-        borderBottomColor: '#ccc', // Underline color
-        paddingVertical: 5, // Adjust padding to give it some space
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        paddingVertical: verticalScale(5),
     },
     languageAndIconsContainer: {
-        flexDirection: 'row', // Align dropdown and icons horizontally
-        
-        alignItems: 'center', // Vertically center the items
-        width: '100%', // Ensure the container takes the full width
-        paddingHorizontal: 20,
-        right:30
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        paddingHorizontal: scale(20),
+        right: scale(30)
     },
     iconsContainer: {
-        flexDirection: 'row', // Align icons horizontally
-        right:40
+        flexDirection: 'row',
+        right: scale(40)
     },
     icon: {
-        width: 40, // Adjust icon size
-        height: 40,
-        marginLeft: 10, // Space between the icons
+        width: scale(40),
+        height: scale(40),
+        marginLeft: scale(10),
     },
     dropdown: {
-        width:'40%',
+        width: '40%',
         borderWidth: 0,
         backgroundColor: 'transparent',
         color: '#333',
-        borderBottomWidth: 1, // Add underline
-        borderBottomColor: '#ccc', // Underline color
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
     },
     dropDownContainer: {
         borderColor: '#ccc',
@@ -235,42 +233,42 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        height: 500, // Set a height for the sliding container
+        height: verticalScale(450),
         backgroundColor: 'white',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        paddingTop: 30,
+        borderTopLeftRadius: scale(30),
+        borderTopRightRadius: scale(30),
+        paddingTop: verticalScale(30),
         elevation: 10,
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowOffset: { width: 0, height: -5 },
     },
     prayerBackground: {
-        flex: 1, // Ensure the background fills the container
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
+        flex: 1,
+        borderTopLeftRadius: scale(30),
+        borderTopRightRadius: scale(30),
         overflow: 'hidden',
     },
     scrollViewContent: {
-        flexGrow: 1, // Ensure ScrollView content grows with space
+        flexGrow: 1,
     },
     prayers: {
-        padding: 20,
-        flex: 1, // Allow prayers content to grow and fill space
+        padding: scale(20),
+        flex: 1,
     },
     prayerTitle: {
-        fontSize: 18,
+        fontSize: scale(18),
         fontWeight: 'bold',
         color: '#006400',
         textAlign: 'center',
-        marginBottom: 5,
+        marginBottom: verticalScale(5),
     },
     prayerText: {
-        fontSize: 16,
+        fontSize: scale(16),
         color: '#333',
         textAlign: 'justify',
-        lineHeight: 22,
-        marginBottom: 15,
+        lineHeight: scale(22),
+        marginBottom: verticalScale(15),
     },
 });
 

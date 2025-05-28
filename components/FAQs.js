@@ -22,7 +22,7 @@ const CustomDrawerContent = (props) => {
                     text: "Confirm", onPress: async () => {
                         try {
                             await AsyncStorage.removeItem("userId");
-                            navigation.reset({ index: 0, routes: [{ name: 'GetStarted' }] });
+                            navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
                         } catch (error) {
                             console.error("Error during sign out:", error);
                         }
