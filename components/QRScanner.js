@@ -1,137 +1,125 @@
-import React, { useRef, useEffect } from "react";
-import { AppState, Text, Linking, Platform, SafeAreaView, StatusBar, StyleSheet, Pressable, View, Dimensions } from "react-native";
+import React, {useState} from "react";
+import {View, Text, Button, StyleSheet, TouchableOpacity, Alert, Linking} from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
-const { width, height } = Dimensions.get('window');
-const BOX_SIZE = 250;
-const BOX_TOP = (height - BOX_SIZE) / 2; // Adjusted to center the box vertically
-const BOX_LEFT = (width - BOX_SIZE) / 2;
+const QRScanner = () => {
+  const [facing, setFacing] = useState("back");
+  const [permission,requestPermission] = useCameraPermissions();
+  const [scanned,setScanned] = useState(false);
 
-export default function QRScanner() {
-    const qrLock = useRef(false);
-    const appState = useRef(AppState.currentState);
-    const [permission, requestPermission] = useCameraPermissions();
+  if(!permission) return <View />;
 
-    useEffect(() => {
-        const subscription = AppState.addEventListener("change", nextAppState => {
-            if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-                qrLock.current = false;
-            }
-            appState.current = nextAppState;
-        });
-
-        return () => {
-            subscription.remove();
-        };
-    }, []);
-
-    if (!permission || !permission.granted) {
-        return (
-            <SafeAreaView style={styles.centered}>
-                <Text style={{ color: "white", marginBottom: 16 }}>Camera permission is required to scan QR codes.</Text>
-                <Pressable onPress={requestPermission} style={styles.button}>
-                    <Text style={{ color: "white" }}>Grant Permission</Text>
-                </Pressable>
-            </SafeAreaView>
-        );
-    }
-
+  if(!permission.granted) {
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'black' }}>
-            {Platform.OS === "android" ? <StatusBar hidden /> : null}
-            <CameraView
-                style={StyleSheet.absoluteFillObject}
-                facing="back"
-                onBarCodeScanned={({ data }) => {
-                    if (data && !qrLock.current) {
-                        qrLock.current = true;
-                        console.log("Scanned data:", data); // Add this line
-                        setTimeout(async () => {
-                            try {
-                                await Linking.openURL(data);
-                            } catch (e) {
-                                console.warn("Failed to open URL:", e);
-                            }
-                        }, 500);
-                    }
-                }}
-            />
-            {/* Overlay square box */}
-            <View style={styles.overlayContainer} pointerEvents="none">
-                {/* Top overlay */}
-                <View style={styles.overlayTop} />
-                {/* Left overlay */}
-                <View style={styles.overlayLeft} />
-                {/* The scanning box */}
-                <View style={styles.overlayBox} />
-                {/* Right overlay */}
-                <View style={styles.overlayRight} />
-                {/* Bottom overlay */}
-                <View style={styles.overlayBottom} />
-            </View>
-        </SafeAreaView>
+      <View style={styles.container} >
+        <Text style={styles.message}>We need your permission to access the camera</Text>
+        <Button title="Grant Permission" onPress={requestPermission} />
+      </View>
     );
-}
+  }
+
+  const handleScan = ({data, type}) => {
+    if (!scanned) {
+      setScanned(true);
+      let url = data;
+      if (typeof data === "string" && !data.startsWith("http://") && !data.startsWith("https://") && data.includes(".")) {
+        url = "https://" + data;
+      }
+      if (typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://"))) {
+        Linking.openURL(url).catch(err => {
+          Alert.alert("Error", "Could not open URL: " + err.message);
+        });
+      } else {
+        Alert.alert("Scanned Data", `${data}`);
+      }
+      setTimeout(() => setScanned(false), 3000);
+    }
+  };
+
+  const toggleCameraFacing = () => {
+    setFacing(prev => (prev === "back" ? "front" : "back"));
+  };
+
+  return (
+    <View style={styles.container}>
+      <CameraView
+        style={styles.camera}
+        facing={facing}
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr", "ean13", "ean8", "upc_a","upc_e","code39","code128"]
+        }}
+        onBarcodeScanned={scanned ? undefined : handleScan}
+      />
+      {/* Centered square overlay */}
+      <View pointerEvents="none" style={styles.squareOverlay}>
+        <View style={styles.square} />
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+          <Text style={styles.buttonText}>Flip Camera</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-    centered: {
-        flex: 1,
-        backgroundColor: "black",
-        justifyContent: "center",
-        alignItems: "center"
-    },
-    button: {
-        backgroundColor: "#333",
-        padding: 12,
-        borderRadius: 8
-    },
-    overlayContainer: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    overlayBox: {
-        width: BOX_SIZE,
-        height: BOX_SIZE,
-        borderWidth: 2,
-        borderColor: '#fff',
-        backgroundColor: 'rgba(0,0,0,0.1)',
-        zIndex: 2,
-    },
-    overlayTop: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: BOX_TOP,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 1,
-    },
-    overlayBottom: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: BOX_TOP,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 1,
-    },
-    overlayLeft: {
-        position: 'absolute',
-        top: BOX_TOP,
-        left: 0,
-        width: BOX_LEFT,
-        height: BOX_SIZE,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 1,
-    },
-    overlayRight: {
-        position: 'absolute',
-        top: BOX_TOP,
-        right: 0,
-        width: BOX_LEFT,
-        height: BOX_SIZE,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 1,
-    },
+  container: {flex:1},
+  message: {textAlign: "center", marginTop:20},
+  camera: {flex:1},
+  buttonContainer: {
+    position: "absolute",
+    bottom: 30,
+    alignSelf: "center"
+  },
+  button: {
+    backgroundColor: "black",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  squareOverlay: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  square: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: "white",
+    borderRadius: 10,
+    backgroundColor: "transparent",
+  },
 });
+
+export default QRScanner;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
