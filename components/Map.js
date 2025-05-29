@@ -9,8 +9,8 @@ const Map = () => {
   const { grave } = route.params || {};
 
   // Default coordinates if grave is missing or incomplete
-  const latitude = grave?.latitude || 14.472243;
-  const longitude = grave?.longitude || 120.976246;
+  const latitude = grave?.latitude || 14.471161;
+  const longitude = grave?.longitude || 120.975398;
 
   // State for user location
   const [userLocation, setUserLocation] = useState(null);
@@ -65,77 +65,106 @@ const Map = () => {
         {/* Apartment Box Polygon Example */}
         <Polygon
           coordinates={[
-            { latitude: 14.472623, longitude: 120.976221 },
-            { latitude: 14.472573, longitude: 120.976271 },
-            { latitude: 14.472213, longitude: 120.975911 },
-            { latitude: 14.472263, longitude: 120.975846 },
+            { latitude: 14.472631, longitude: 120.976238 },
+            { latitude: 14.472241, longitude: 120.975821 },
+            { latitude: 14.472212, longitude: 120.975855},
+            { latitude: 14.472600, longitude: 120.976277 },
           ]}
-          strokeColor="#00FF00"
-          fillColor="rgba(102, 102, 102, 0.5)"
+          strokeColor="rgb(237, 237, 237)"
+          fillColor="rgb(237, 237, 237)"
           strokeWidth={1}
         />
 
+
+        {/* Apartment Box Polygon Example */}
+        <Polygon
+          coordinates={[
+            { latitude: 14.472172, longitude: 120.975773 },
+            { latitude: 14.472172, longitude: 120.975813 },
+            { latitude: 14.471590, longitude: 120.975545},
+            { latitude: 14.471620, longitude: 120.975507 },
+            
+          ]}
+          strokeColor="rgb(237, 237, 237)"
+          fillColor="rgb(237, 237, 237)"
+          strokeWidth={1}
+        />
+
+        <Polygon
+          coordinates={[
+            { latitude: 14.471570, longitude: 120.975481 },
+            { latitude: 14.471549, longitude: 120.975515 },
+            { latitude: 14.471336, longitude: 120.975333 },
+            { latitude: 14.471367, longitude: 120.975303 },
+            
+          ]}
+          strokeColor="rgb(237, 237, 237)"
+          fillColor="rgb(237, 237, 237)"
+          strokeWidth={1}
+        />
+
+
         {/* Apartment Box 1 near 14.471146, 120.975215 */}
-  {/* <Polygon
+  <Polygon
     coordinates={[
       { latitude: 14.471084, longitude: 120.975068 },
       { latitude: 14.471138, longitude: 120.975127 },
-      { latitude: 14.471125, longitude: 120.975142 },
-      { latitude: 14.471073, longitude: 120.975082 },
+      { latitude: 14.471125, longitude: 120.975140 },
+      { latitude: 14.471071, longitude: 120.975082 },
     ]}
-    strokeColor="#FF9900"
-    fillColor="rgba(255,153,0,0.4)"
+    strokeColor="rgb(237, 237, 237)"
+    fillColor="rgb(237, 237, 237)"
     strokeWidth={1}
-  /> */}
+  />
 
   {/* Apartment Box 2 near 14.471146, 120.975215 */}
-  {/* <Polygon
+  <Polygon
     coordinates={[
       { latitude: 14.471062, longitude: 120.975093 },
-      { latitude: 14.471110, longitude: 120.975148 },
-      { latitude: 14.471103, longitude: 120.975158 },
-      { latitude: 14.471055, longitude: 120.975107 },
+      { latitude: 14.471117, longitude: 120.975148 },
+      { latitude: 14.471103, longitude: 120.975163 },
+      { latitude: 14.471049, longitude: 120.975107 },
     ]}
-    strokeColor="#3366FF"
-    fillColor="rgba(51,102,255,0.4)"
-    strokeWidth={2}
-  /> */}
-
-{/* <Polygon
-    coordinates={[
-      { latitude: 14.4711872, longitude: 120.9752189 },
-      { latitude: 14.4711866, longitude: 120.9752635 },
-      { latitude: 14.4710074, longitude: 120.9751019 },
-      { latitude: 14.4710376, longitude: 120.9750543 },
-    ]}
-    strokeColor="#3366FF"
-    fillColor="rgba(255, 51, 51, 0.4)"
-    strokeWidth={2}
+    strokeColor="rgb(237, 237, 237)"
+    fillColor="rgb(237, 237, 237)"
+    strokeWidth={1}
   />
 
 <Polygon
     coordinates={[
-      { latitude: 14.4711590, longitude: 120.9752695 },
-      { latitude: 14.4711311, longitude: 120.9753134 },
-      { latitude: 14.4709704, longitude: 120.9751518 },
-      { latitude: 14.4709567, longitude: 120.9751351 },
+      { latitude: 14.471277, longitude: 120.975304 },
+      { latitude: 14.471240, longitude: 120.975338 },
+      { latitude: 14.471127, longitude: 120.975214 },
+      { latitude: 14.471157, longitude: 120.975174 },
     ]}
-    strokeColor="#3366FF"
-    fillColor="rgba(229, 255, 0, 0.4)"
-    strokeWidth={2}
+    strokeColor="rgb(237, 237, 237)"
+    fillColor="rgb(237, 237, 237)"
+    strokeWidth={1}
   />
 
 <Polygon
     coordinates={[
-      { latitude: 14.4709782, longitude: 120.9755029 },
-      { latitude: 14.4709421, longitude: 120.9754888 },
-      { latitude: 14.4707837, longitude: 120.9752544 },
-      { latitude: 14.4708204, longitude: 120.9753906 },
+      { latitude: 14.471223, longitude: 120.975358 },
+      { latitude: 14.471188, longitude: 120.975319 },
+      { latitude: 14.471073, longitude: 120.975482 },
+      { latitude: 14.471110, longitude: 120.975502 },
     ]}
-    strokeColor="#3366FF"
-    fillColor="rgba(229, 255, 0, 0.4)"
-    strokeWidth={2}
-  /> */}
+    strokeColor="rgb(67, 209, 1)"
+    fillColor="rgb(67, 209, 1)"
+    strokeWidth={1}
+  />
+
+<Polygon
+    coordinates={[
+      { latitude: 14.471048, longitude: 120.975431 },
+      { latitude: 14.470878, longitude: 120.975287 },
+      { latitude: 14.470854, longitude: 120.975318 },
+      { latitude: 14.471022, longitude: 120.975459 },
+    ]}
+    strokeColor="rgb(237, 237, 237)"
+    fillColor="rgb(237, 237, 237)"
+    strokeWidth={1}
+  />
 
   
 
