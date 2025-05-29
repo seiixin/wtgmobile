@@ -99,7 +99,7 @@ const SignIn = () => {
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your username"
+            placeholder="Enter your email"
             placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
