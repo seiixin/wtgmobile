@@ -157,11 +157,12 @@ const RequestedServicesScreen = () => {
   const [graveDetails, setGraveDetails] = useState({
     deceasedName: '',
     dateOfBurial: '',
-    dateOfDeath: '',
+    dateOfBirth: '',
     phaseBlk: '',
     category: '',
     apartmentNo: '',
   });
+  const [isFetchingGrave, setIsFetchingGrave] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', avatar: '' });
   const [expandedTransactionId, setExpandedTransactionId] = useState(null);
   const [burialPickerVisible, setBurialPickerVisible] = useState(false);
@@ -326,6 +327,58 @@ const GradientNextButton = ({ onPress }) => (
   const toggleExpand = (transactionId) => {
     setExpandedTransactionId(expandedTransactionId === transactionId ? null : transactionId);
   };
+
+  // Fetch grave details when deceasedName is set and has a space (Firstname Lastname)
+  useEffect(() => {
+    const fetchGraveDetails = async () => {
+      if (!graveDetails.deceasedName.trim() || !graveDetails.deceasedName.includes(' ')) {
+        return;
+      }
+      setIsFetchingGrave(true);
+      try {
+        const response = await fetch(
+          `${BASE_URL}/api/graves/search?query=${encodeURIComponent(graveDetails.deceasedName.trim())}`
+        );
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const grave = data[0];
+          // Extract year from burial (handles both "2024" and "2024-01-01T00:00:00.000Z")
+          let burialYear = '';
+          if (grave.burial) {
+            // If burial is a date string, extract the year
+            const match = grave.burial.match(/^\d{4}/);
+            burialYear = match ? match[0] : grave.burial;
+          }
+          let dateOfBurial = '';
+          if (grave.month && grave.day && burialYear) {
+            dateOfBurial = `${grave.month}/${grave.day}/${burialYear}`;
+          }
+          setGraveDetails(prev => ({
+            ...prev,
+            dateOfBurial,
+            dateOfBirth: formatDateMMDDYYYY(grave.dateOfBirth),
+            phaseBlk: grave.phase || '',
+            category: grave.category || '',
+            apartmentNo: grave.aptNo || '',
+          }));
+        } else {
+          setGraveDetails(prev => ({
+            ...prev,
+            dateOfBurial: '',
+            dateOfBirth: '',
+            phaseBlk: '',
+            category: '',
+            apartmentNo: '',
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching grave details:', error);
+      }
+      setIsFetchingGrave(false);
+    };
+  
+    fetchGraveDetails();
+  }, [graveDetails.deceasedName]);
 
   return (
     <View style={styles.container}>
@@ -598,103 +651,66 @@ const GradientNextButton = ({ onPress }) => (
                   style={modalStyles.input}
                   value={graveDetails.deceasedName}
                   onChangeText={text => setGraveDetails({ ...graveDetails, deceasedName: text })}
+                  editable={true}
+                  selectTextOnFocus={true}
                 />
               </View>
-              <View style={[modalStyles.inputContainer, { flex: 0.7 }]}>
-                <Text style={modalStyles.label}>Date of Burial *</Text>
-                <TouchableOpacity onPress={() => setBurialPickerVisible(true)}>
-                  <TextInput
-                    style={modalStyles.input}
-                    value={graveDetails.dateOfBurial}
-                    placeholder="Select Date"
-                    editable={false}
-                    pointerEvents="none"
-                  />
-                </TouchableOpacity>
-                {burialPickerVisible && (
-                  <DateTimePicker
-                    value={graveDetails.dateOfBurial ? new Date(graveDetails.dateOfBurial) : new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setBurialPickerVisible(false);
-                      if (selectedDate) {
-                        const d = selectedDate;
-                        const formatted = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
-                        setGraveDetails({ ...graveDetails, dateOfBurial: formatted });
-                      }
-                    }}
-                    maximumDate={new Date()}
-                  />
-                )}
-              </View>
+              <View style={[modalStyles.inputContainer]}>
+    <Text style={modalStyles.label}>Date of Burial</Text>
+    <View style={modalStyles.input}>
+      <Text style={{ color: graveDetails.dateOfBurial ? '#222' : '#aaa', fontSize: 15 }}>
+        {graveDetails.dateOfBurial || 'No date available'}
+      </Text>
+    </View>
+  </View>
             </View>
             <View style={modalStyles.row}>
               <View style={[modalStyles.inputContainer, { flex: 0.9 }]}>
-                <Text style={modalStyles.label}>Date of Death *</Text>
-                <TouchableOpacity onPress={() => setDeathPickerVisible(true)}>
-                  <TextInput
-                    style={modalStyles.input}
-                    value={graveDetails.dateOfDeath}
-                    placeholder="Select Date"
-                    editable={false}
-                    pointerEvents="none"
-                  />
-                </TouchableOpacity>
-                {deathPickerVisible && (
-                  <DateTimePicker
-                    value={graveDetails.dateOfDeath ? new Date(graveDetails.dateOfDeath) : new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setDeathPickerVisible(false);
-                      if (selectedDate) {
-                        // Format as MM/DD/YYYY
-                        const d = selectedDate;
-                        const formatted = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
-                        setGraveDetails({ ...graveDetails, dateOfDeath: formatted });
-                      }
-                    }}
-                    maximumDate={new Date()}
-                  />
-                )}
+                <Text style={modalStyles.label}>Date of Birth</Text>
+                <TextInput
+                  style={modalStyles.input}
+                  value={graveDetails.dateOfBirth}
+                  editable={false}
+                  selectTextOnFocus={false}
+                  placeholder="Select Date"
+                />
               </View>
               <View style={modalStyles.inputContainer}>
-                <Text style={modalStyles.label}>Phase / Blk *</Text>
+                <Text style={modalStyles.label}>Phase / Blk</Text>
                 <TextInput
                   style={modalStyles.input}
                   value={graveDetails.phaseBlk}
-                  onChangeText={text => setGraveDetails({ ...graveDetails, phaseBlk: text })}
+                  editable={false}
+                  selectTextOnFocus={false}
                 />
               </View>
             </View>
             <View style={modalStyles.row}>
               <View style={[modalStyles.inputContainer, { flex: 1.4 }]}>
-                <Text style={modalStyles.label}>Select Category *</Text>
+                <Text style={modalStyles.label}>Category</Text>
                 <DropDownPicker
                   open={apartmentOpen}
                   value={graveDetails.category}
                   setValue={val => setGraveDetails({ ...graveDetails, category: val() })}
                   items={apartments}
                   setOpen={setApartmentOpen}
-                  
                   setItems={setApartments}
                   placeholder="Select Apartment"
                   style={{
-                    height: 38, // Set your desired height here
+                    height: 38,
                     borderColor: '#ccc',
                     backgroundColor: '#f9f9f9',
-                    minHeight: 38, // Ensures minimum height
-                    paddingVertical: 0, // Remove extra padding
+                    minHeight: 38,
+                    paddingVertical: 0,
                   }}
                   containerStyle={{
-                    height: 38, // Match the height here as well
+                    height: 38,
                   }}
                   dropDownContainerStyle={{
                     borderColor: '#ccc',
                   }}
                   zIndex={1000}
-                  
+                  disabled={true} // <-- Make dropdown uneditable
                 />
               </View>
               <View style={modalStyles.inputContainer}>
@@ -702,7 +718,8 @@ const GradientNextButton = ({ onPress }) => (
                 <TextInput
                   style={modalStyles.input}
                   value={graveDetails.apartmentNo}
-                  onChangeText={text => setGraveDetails({ ...graveDetails, apartmentNo: text })}
+                  editable={false}
+                  selectTextOnFocus={false}
                 />
               </View>
             </View>
@@ -713,11 +730,11 @@ const GradientNextButton = ({ onPress }) => (
                 return;
               }
               // Require all grave details fields
-              const { deceasedName, dateOfBurial, dateOfDeath, phaseBlk, category, apartmentNo } = graveDetails;
+              const { deceasedName, dateOfBurial, dateOfBirth, phaseBlk, category, apartmentNo } = graveDetails;
               if (
                 !deceasedName.trim() ||
                 !dateOfBurial.trim() ||
-                !dateOfDeath.trim() ||
+                !dateOfBirth.trim() ||
                 !phaseBlk.trim() ||
                 !category ||
                 !apartmentNo.trim()
@@ -850,7 +867,7 @@ const GradientNextButton = ({ onPress }) => (
   setGraveDetails({
     deceasedName: '',
     dateOfBurial: '',
-    dateOfDeath: '',
+    dateOfBirth: '',
     phaseBlk: '',
     category: '',
     apartmentNo: '',
@@ -1338,6 +1355,13 @@ const modalStyles = StyleSheet.create({
     fontSize: 18,
   },
 });
+
+function formatDateMMDDYYYY(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d)) return '';
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
 
 const Drawer = createDrawerNavigator();
 
