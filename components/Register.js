@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Modal, Platform, Pressable, Dimensions, ScrollView, StatusBar } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Modal, Platform, Pressable, Dimensions, ScrollView, StatusBar, KeyboardAvoidingView } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Checkbox } from 'react-native-paper';
@@ -252,12 +252,362 @@ const Register = () => {
         backgroundColor="transparent"
         translucent={true}
       />
-      <ImageBackground source={require('../assets/RegisterBg.png')} style={styles.background}>
-        <SafeAreaView style={{ flex: 1 }}>
+      {/* Fixed background image */}
+      <ImageBackground
+        source={require('../assets/RegisterBg.png')}
+        style={styles.fixedBackground}
+        resizeMode="cover"
+      />
+      {/* Overlay content */}
+      <SafeAreaView style={{ flex: 1 }}>
+        {Platform.OS === 'ios' ? (
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior="padding"
+            keyboardVerticalOffset={0}
+          >
+            <ScrollView
+              contentContainerStyle={{ alignItems: 'center', paddingBottom: hp('5%') }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            >
+              <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
+              <View style={styles.container}>
+                <Text style={styles.header}>Register Account</Text>
+                <Text style={styles.subheader}>Register as a <Text style={{ fontWeight: 'bold', color: 'black' }}>relative user</Text> by filling out your information below.</Text>
+
+                {/* Name */}
+                <Text style={styles.label}>Name*</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Name"
+                  placeholderTextColor="#D3D3D3"
+                  value={formData.name}
+                  onChangeText={(text) => handleInputChange('name', text)}
+                  maxLength={50} // Limit to 50 characters
+                />
+
+                {/* Gender, Date of Birth, and Nationality - Horizontally Aligned */}
+                <View style={styles.horizontalContainer}>
+                  <View style={{ zIndex: 3000, width: '33%' }}>
+                    <Text style={styles.label}>Gender*</Text>
+                    <DropDownPicker
+                      open={genderOpen}
+                      value={formData.gender}
+                      items={genderItems}
+                      setOpen={setGenderOpen}
+                      setValue={(callback) => handleDropdownChange('gender', callback(formData.gender))}
+                      placeholder="Gender"
+                      style={[
+                        styles.input,
+                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
+                      ]}
+                      containerStyle={{
+                        height: hp('5%'),
+                        minHeight: hp('5%'),
+                        maxHeight: hp('5%'),
+                        marginBottom: hp('1%'),
+                      }}
+                      dropDownContainerStyle={{
+                        borderColor: 'gray',
+                        minHeight: hp('5%'),
+                        maxHeight: hp('20%'),
+                      }}
+                      listItemContainerStyle={{
+                        height: hp('5%'),
+                        justifyContent: 'center',
+                      }}
+                      labelStyle={{
+                        fontSize: wp('3.8%'),
+                        fontFamily: 'Inter_400Regular',
+                        color: '#333',
+                      }}
+                    />
+                  </View>
+
+                  <View style={{ zIndex: 2000, width: '30%' }}>
+                    <Text style={styles.label}>Date of Birth*</Text>
+                    <Pressable onPress={toggleDatepicker}>
+                      <TextInput
+                        style={styles.inputDate}
+                        placeholder="Select Date"
+                        value={dateOfBirth}
+                        editable={false}
+                        onPressIn={toggleDatepicker}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <View style={{ zIndex: 1000, width: '35%' }}>
+                    <Text style={styles.label}>Nationality*</Text>
+                    <DropDownPicker
+                      open={nationalityOpen}
+                      value={formData.nationality}
+                      items={nationalityItems}
+                      setOpen={setNationalityOpen}
+                      setValue={(callback) => handleDropdownChange('nationality', callback(formData.nationality))}
+                      placeholder="Nationality"
+                      style={[
+                        styles.input,
+                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
+                      ]}
+                      containerStyle={{
+                        height: hp('5%'),
+                        minHeight: hp('5%'),
+                        maxHeight: hp('5%'),
+                        marginBottom: hp('1%'),
+                      }}
+                      dropDownContainerStyle={{
+                        borderColor: 'gray',
+                        minHeight: hp('5%'),
+                        maxHeight: hp('20%'),
+                      }}
+                      listItemContainerStyle={{
+                        height: hp('5%'),
+                        justifyContent: 'center',
+                      }}
+                      labelStyle={{
+                        fontSize: wp('3.8%'),
+                        fontFamily: 'Inter_400Regular',
+                        color: '#333',
+                      }}
+                      listMode="SCROLLVIEW"
+                    />
+                  </View>
+                </View>
+
+                {/* Email, Mobile, Address, and Password */}
+                <View style={styles.row}>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Email*</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email"
+                      placeholderTextColor="#D3D3D3"
+                      value={formData.email}
+                      onChangeText={(text) => handleInputChange('email', text)}
+                      maxLength={100} // Limit to 100 characters
+                    />
+                  </View>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Mobile number*</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Mobile number"
+                      placeholderTextColor="#D3D3D3"
+                      value={formData.mobile}
+                      onChangeText={(text) => handleInputChange('mobile', text)}
+                      keyboardType="numeric"
+                      maxLength={11} // Limit to 11 digits
+                    />
+                  </View>
+                </View>
+
+                {/* Province, City, District - Horizontally Aligned */}
+                <View style={styles.horizontalContainer}>
+                  <View style={{ zIndex: 3000, width: '33%' }}>
+                    <Text style={styles.label}>Province*</Text>
+                    <DropDownPicker
+                      open={provinceOpen}
+                      value={formData.province}
+                      items={provinceItems}
+                      setOpen={setProvinceOpen}
+                      setValue={(callback) => handleDropdownChange('province', callback(formData.province))}
+                      placeholder="Province"
+                      style={[
+                        styles.input,
+                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
+                      ]}
+                      containerStyle={{
+                        height: hp('5%'),
+                        minHeight: hp('5%'),
+                        maxHeight: hp('5%'),
+                        marginBottom: hp('1%'),
+                      }}
+                      dropDownContainerStyle={{
+                        borderColor: 'gray',
+                        minHeight: hp('5%'),
+                        maxHeight: hp('20%'),
+                      }}
+                      listItemContainerStyle={{
+                        height: hp('5%'),
+                        justifyContent: 'center',
+                      }}
+                      labelStyle={{
+                        fontSize: wp('3.8%'),
+                        fontFamily: 'Inter_400Regular',
+                        color: '#333',
+                      }}
+                      listMode="SCROLLVIEW"
+                    />
+                  </View>
+
+                  <View style={{ zIndex: 2000, width: '36%' }}>
+                    <Text style={styles.label}>City*</Text>
+                    <DropDownPicker
+                      open={cityOpen}
+                      value={formData.city}
+                      items={cityItems}
+                      setOpen={setCityOpen}
+                      setValue={(callback) => handleDropdownChange('city', callback(formData.city))}
+                      placeholder="City"
+                      style={[
+                        styles.input,
+                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
+                      ]}
+                      containerStyle={{
+                        height: hp('5%'),
+                        minHeight: hp('5%'),
+                        maxHeight: hp('5%'),
+                        marginBottom: hp('1%'),
+                      }}
+                      dropDownContainerStyle={{
+                        borderColor: 'gray',
+                        minHeight: hp('5%'),
+                        maxHeight: hp('20%'),
+                      }}
+                      listItemContainerStyle={{
+                        height: hp('5%'),
+                        justifyContent: 'center',
+                      }}
+                      labelStyle={{
+                        fontSize: wp('3.8%'),
+                        fontFamily: 'Inter_400Regular',
+                        color: '#333',
+                      }}
+                      listMode="SCROLLVIEW"
+                    />
+                  </View>
+
+                  <View style={{ zIndex: 1000, width: '30%' }}>
+                    <Text style={styles.label}>District*</Text>
+                    <DropDownPicker
+                      open={districtOpen}
+                      value={formData.district}
+                      items={districtItems}
+                      setOpen={setDistrictOpen}
+                      setValue={(callback) => handleDropdownChange('district', callback(formData.district))}
+                      placeholder="District"
+                      style={[
+                        styles.input,
+                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
+                      ]}
+                      containerStyle={{
+                        height: hp('5%'),
+                        minHeight: hp('5%'),
+                        maxHeight: hp('5%'),
+                        marginBottom: hp('1%'),
+                      }}
+                      dropDownContainerStyle={{
+                        borderColor: 'gray',
+                        minHeight: hp('5%'),
+                        maxHeight: hp('20%'),
+                      }}
+                      listItemContainerStyle={{
+                        height: hp('5%'),
+                        justifyContent: 'center',
+                      }}
+                      labelStyle={{
+                        fontSize: wp('3.8%'),
+                        fontFamily: 'Inter_400Regular',
+                        color: '#333',
+                      }}
+                      listMode="SCROLLVIEW"
+                    />
+                  </View>
+                </View>
+
+                {/* Password */}
+                <Text style={styles.label}>Password*</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="#D3D3D3"
+                    secureTextEntry={!isPasswordVisible} // Toggle visibility for Password
+                    value={formData.password}
+                    onChangeText={(text) => handleInputChange('password', text)}
+                    maxLength={20} // Limit to 20 characters
+                  />
+                  <TouchableOpacity
+                    onPress={() => setIsPasswordVisible(!isPasswordVisible)} // Toggle Password visibility
+                    style={styles.eyeIcon}
+                  >
+                    <Ionicons
+                      name={isPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
+                      size={24}
+                      color="gray"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Confirm Password */}
+                <Text style={styles.label}>Confirm Password*</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="#D3D3D3"
+                    secureTextEntry={!isConfirmPasswordVisible} // Toggle visibility for Confirm Password
+                    value={formData.confirmPassword}
+                    onChangeText={(text) => handleInputChange('confirmPassword', text)}
+                    maxLength={20} // Limit to 20 characters
+                  />
+                  <TouchableOpacity
+                    onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} // Toggle Confirm Password visibility
+                    style={styles.eyeIcon}
+                  >
+                    <Ionicons
+                      name={isConfirmPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
+                      size={24}
+                      color="gray"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {!passwordMatch && <Text style={styles.errorText}>Passwords do not match!</Text>}
+
+                {/* Terms & Conditions */}
+                <View style={styles.checkboxContainer}>
+                  <View style={styles.checkboxWrapper}>
+                    <Checkbox
+                      status={checked ? 'checked' : 'unchecked'}
+                      onPress={() => setChecked(!checked)}
+                    />
+                  </View>
+                  <Text>
+                    Agree with{' '}
+                    <Text
+                      style={{ color: 'green', textDecorationLine: 'underline' }}
+                      onPress={() => setTermsVisible(true)}
+                    >
+                      Terms & Conditions
+                    </Text>
+                  </Text>
+                </View>
+
+                {/* Register Button */}
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={() => setModalVisible(true)} // Show confirmation modal
+                >
+                  <Text style={styles.registerButtonText}>Register</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Move this inside the ScrollView */}
+              <Text style={styles.signInLink}>
+                <Text style={styles.blackText}>Already have an account? </Text>
+                <Text style={styles.redText} onPress={() => navigation.navigate('SignIn')}>Sign In</Text>
+              </Text>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        ) : (
           <ScrollView
             contentContainerStyle={{ alignItems: 'center', paddingBottom: hp('5%') }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
           >
             <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
             <View style={styles.container}>
@@ -359,6 +709,7 @@ const Register = () => {
                       fontFamily: 'Inter_400Regular',
                       color: '#333',
                     }}
+                    listMode="SCROLLVIEW"
                   />
                 </View>
               </View>
@@ -425,6 +776,7 @@ const Register = () => {
                       fontFamily: 'Inter_400Regular',
                       color: '#333',
                     }}
+                    listMode="SCROLLVIEW"
                   />
                 </View>
 
@@ -461,6 +813,7 @@ const Register = () => {
                       fontFamily: 'Inter_400Regular',
                       color: '#333',
                     }}
+                    listMode="SCROLLVIEW"
                   />
                 </View>
 
@@ -497,6 +850,7 @@ const Register = () => {
                       fontFamily: 'Inter_400Regular',
                       color: '#333',
                     }}
+                    listMode="SCROLLVIEW"
                   />
                 </View>
               </View>
@@ -584,69 +938,79 @@ const Register = () => {
               <Text style={styles.redText} onPress={() => navigation.navigate('SignIn')}>Sign In</Text>
             </Text>
           </ScrollView>
-        </SafeAreaView>
+        )}
+      </SafeAreaView>
 
-        {/* Confirmation Modal */}
-        <ConfirmationModal
-          visible={isModalVisible}
-          message="Are you sure you want to submit the registration form?"
-          onConfirm={() => {
-            setModalVisible(false); // Close the modal
-            handleRegister(); // Proceed with registration
-          }}
-          onCancel={() => setModalVisible(false)} // Close the modal
-        />
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={isModalVisible}
+        message="Are you sure you want to submit the registration form?"
+        onConfirm={() => {
+          setModalVisible(false); // Close the modal
+          handleRegister(); // Proceed with registration
+        }}
+        onCancel={() => setModalVisible(false)} // Close the modal
+      />
 
-        {/* Terms Modal */}
-        <Modal
-          visible={termsVisible}
-          transparent={false}
-          animationType="slide"
-          onRequestClose={() => setTermsVisible(false)}
-        >
-          <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
-            <View style={[styles.modalContent, { maxHeight: '80%', backgroundColor: '#fff' }]}>
-              <Text style={[styles.header, { fontSize: 18 }]}>Terms & Conditions</Text>
-              <View style={{ marginVertical: 10 }}>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13 }}>
-                  Welcome to Walk to Grave Mobile. By creating an account, you agree to the following terms:
-                  {"\n\n"}
-                  1. You will provide accurate and truthful information during registration.
-                  {"\n\n"}
-                  2. Your personal data will be handled securely and used only for app functionality.
-                  {"\n\n"}
-                  3. You will not use the app for any unlawful, abusive, or fraudulent purposes.
-                  {"\n\n"}
-                  4. You are responsible for maintaining the confidentiality of your account credentials.
-                  {"\n\n"}
-                  5. We may update these terms from time to time. Continued use of the app means you accept any changes.
-                  {"\n\n"}
-                  6. We reserve the right to suspend or terminate accounts that violate these terms or engage in suspicious activity.
-                  {"\n\n"}
-                  7.You must be at least 18 years old to create an account. If you are under 18, you must have parental consent.
-                  {"\n\n"}
-                  8. You agree not to misuse any features or attempt to disrupt the normal operation of the app.
-                  {"\n\n"}
-                  9. You must be a relative of the deceased to use this app and access its features.
-                  {"\n\n"}
-                  10. For more questions, please check our FAQs.
-                  {"\n\n"}
-                  11. By clicking "Close", you acknowledge that you have read and understood these terms.
-                  {"\n\n"}
-                </Text>
-              </View>
-              <TouchableOpacity style={[styles.registerButton, { marginTop: 10 }]} onPress={() => setTermsVisible(false)}>
-                <Text style={styles.registerButtonText}>Close</Text>
-              </TouchableOpacity>
+      {/* Terms Modal */}
+      <Modal
+        visible={termsVisible}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setTermsVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={[styles.modalContent, { maxHeight: '80%', backgroundColor: '#fff' }]}>
+            <Text style={[styles.header, { fontSize: 18 }]}>Terms & Conditions</Text>
+            <View style={{ marginVertical: 10 }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13 }}>
+                Welcome to Walk to Grave Mobile. By creating an account, you agree to the following terms:
+                {"\n\n"}
+                1. You will provide accurate and truthful information during registration.
+                {"\n\n"}
+                2. Your personal data will be handled securely and used only for app functionality.
+                {"\n\n"}
+                3. You will not use the app for any unlawful, abusive, or fraudulent purposes.
+                {"\n\n"}
+                4. You are responsible for maintaining the confidentiality of your account credentials.
+                {"\n\n"}
+                5. We may update these terms from time to time. Continued use of the app means you accept any changes.
+                {"\n\n"}
+                6. We reserve the right to suspend or terminate accounts that violate these terms or engage in suspicious activity.
+                {"\n\n"}
+                7.You must be at least 18 years old to create an account. If you are under 18, you must have parental consent.
+                {"\n\n"}
+                8. You agree not to misuse any features or attempt to disrupt the normal operation of the app.
+                {"\n\n"}
+                9. You must be a relative of the deceased to use this app and access its features.
+                {"\n\n"}
+                10. For more questions, please check our FAQs.
+                {"\n\n"}
+                11. By clicking "Close", you acknowledge that you have read and understood these terms.
+                {"\n\n"}
+              </Text>
             </View>
+            <TouchableOpacity style={[styles.registerButton, { marginTop: 10 }]} onPress={() => setTermsVisible(false)}>
+              <Text style={styles.registerButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      </ImageBackground>
+        </View>
+      </Modal>
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  fixedBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
+  },
   background: {
     flex: 1,
     backgroundColor: '#f6f6f6',

@@ -17,6 +17,7 @@ const GraveInformation = () => {
     const [isCandleLit, setIsCandleLit] = useState(false);
     const [hasCandleBeenLit, setHasCandleBeenLit] = useState(false);
     const [candleCount, setCandleCount] = useState(0);
+    const [isBookmarked, setIsBookmarked] = useState(false);
     const modalContentRef = useRef(null); // Reference to the modal content
 
     const saveModalAsImage = async () => {
@@ -80,19 +81,25 @@ const GraveInformation = () => {
     const handleBookmark = async () => {
         try {
             const existingBookmarks = await AsyncStorage.getItem('bookmarks');
-            const bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
+            let bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
 
-            // Check if the grave is already bookmarked
-            if (bookmarks.some((item) => item._id === grave._id)) {
-                Alert.alert('Already Bookmarked', 'This grave is already in your bookmarks.');
-                return;
+            if (isBookmarked) {
+                // Remove from bookmarks
+                bookmarks = bookmarks.filter((item) => item._id !== grave._id);
+                await AsyncStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+                setIsBookmarked(false);
+                Alert.alert('Removed', 'This grave has been removed from your bookmarks.');
+            } else {
+                // Add to bookmarks
+                if (!bookmarks.some((item) => item._id === grave._id)) {
+                    bookmarks.push(grave);
+                    await AsyncStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+                    setIsBookmarked(true);
+                    Alert.alert('Bookmarked', 'This grave has been added to your bookmarks.');
+                }
             }
-
-            const updatedBookmarks = [...bookmarks, grave];
-            await AsyncStorage.setItem('bookmarks', JSON.stringify(updatedBookmarks));
-            Alert.alert('Bookmarked', 'This grave has been added to your bookmarks.');
         } catch (error) {
-            console.error('Error bookmarking grave:', error);
+            console.error('Error toggling bookmark:', error);
         }
     };
 
@@ -113,7 +120,18 @@ const GraveInformation = () => {
             }
         };
 
+        const checkBookmark = async () => {
+            try {
+                const existingBookmarks = await AsyncStorage.getItem('bookmarks');
+                const bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
+                setIsBookmarked(bookmarks.some((item) => item._id === grave._id));
+            } catch (error) {
+                console.error('Error checking bookmark:', error);
+            }
+        };
+
         loadCandleData();
+        checkBookmark();
     }, [grave._id]);
 
     return (
@@ -130,7 +148,11 @@ const GraveInformation = () => {
                     <Ionicons name="share-social-outline" size={26} color="white" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
-                    <Ionicons name="bookmark-outline" size={26} color="white" />
+                    <Ionicons
+                        name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                        size={26}
+                        color="white"
+                    />
                 </TouchableOpacity>
             </View>
 

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RFValue } from "react-native-responsive-fontsize";
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
+const { width, height } = Dimensions.get('window');
+
 const VerificationRegister = () => {
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState(Array(6).fill(''));
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false); // State to track verification status
   const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
@@ -53,15 +56,26 @@ const VerificationRegister = () => {
   const handleInputChange = (text, index) => {
     if (!/^\d*$/.test(text)) return; // Only allow numeric input
 
-    let codeArray = verificationCode.split('');
+    let codeArray = [...verificationCode];
     codeArray[index] = text;
-    setVerificationCode(codeArray.join(''));
+    setVerificationCode(codeArray);
 
-    // Automatically focus the next input box
+    // Auto-focus next input
     if (text && index < 5) {
-      const nextInput = index + 1;
-      const nextInputRef = inputRefs[nextInput];
+      const nextInputRef = inputRefs[index + 1];
       if (nextInputRef && nextInputRef.current) nextInputRef.current.focus();
+    }
+
+    // Auto-submit when last digit is entered
+    if (text && index === 5 && codeArray.every((digit) => digit !== '')) {
+      handleVerifyCode(codeArray.join(''));
+    }
+  };
+
+  const handleKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      const prevInputRef = inputRefs[index - 1];
+      if (prevInputRef && prevInputRef.current) prevInputRef.current.focus();
     }
   };
 
@@ -94,12 +108,13 @@ const VerificationRegister = () => {
     }
   };
 
-  const handleVerifyCode = async () => {
+  const handleVerifyCode = async (code) => {
     try {
+      const otp = code || verificationCode.join('');
       const response = await fetch(`${BASE_URL}/api/otp/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: verificationCode }),
+        body: JSON.stringify({ email, otp }),
       });
 
       const data = await response.json();
@@ -156,19 +171,21 @@ const VerificationRegister = () => {
         </View>
       </TouchableOpacity>
 
+      {/* Main Card */}
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>Please enter the code we just sent to
-</Text>
+        <Text style={styles.subtitle}>Please enter the code we just sent to</Text>
         <Text style={styles.email}>{email}</Text>
+        {/* OTP Input Fields */}
         <View style={styles.inputContainer}>
           {Array.from({ length: 6 }).map((_, index) => (
             <TextInput
               key={index}
-              ref={(ref) => (inputRefs[index] = ref)}
+              ref={inputRefs[index]}
               style={styles.inputBox}
-              value={verificationCode[index] || ''}
+              value={verificationCode[index]}
               onChangeText={(text) => handleInputChange(text, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
               maxLength={1}
               keyboardType="number-pad"
               textAlign="center"
@@ -178,12 +195,11 @@ const VerificationRegister = () => {
 
         {/* Countdown Timer */}
         <Text style={styles.timer}>Time left: {formatTime(timeLeft)}</Text>
-
         <Text style={styles.click}>Don't receive OTP?</Text>
         <TouchableOpacity
           style={[styles.resendButton, timeLeft > 0 && styles.disabledButton]}
           onPress={handleResendCode}
-          disabled={timeLeft > 0} // Disable button if countdown is ongoing
+          disabled={timeLeft > 0}
         >
           <Text style={[styles.resendButtonText, timeLeft > 0 && styles.disabledText]}>
             Resend Code
@@ -219,38 +235,41 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: '100%',
-    height: '104%',
+    height: height * 1.05,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: "#f6f6f6",
   },
   card: {
     backgroundColor: '#fff',
-    padding: 30,
-    borderRadius: 50,
+    padding: width * 0.08,
+    borderRadius: width * 0.1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
     top: 20,
-    width: '85%',
+    width: width * 0.88,
     alignItems: 'center',
     marginVertical: 20,
-    marginBottom: 40,
+    marginBottom: 50,
   },
   title: {
-    fontSize: 28,
+    fontSize: RFValue(22),
     fontWeight: 'bold',
     color: '#000',
-    fontFamily: 'Inter_700Bold', // Use Inter for title
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: RFValue(15),
     color: '#777',
     marginVertical: 15,
     textAlign: 'center',
-    fontFamily: 'Inter_400Regular', // Use Inter for subtitle
+  },
+  email: {
+    color: 'green',
+    fontSize: RFValue(15),
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -259,60 +278,61 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   inputBox: {
-    width: 50,
-    height: 50,
+    width: width * 0.11,
+    height: width * 0.11,
     backgroundColor: '#f5f5f5',
     borderRadius: 10,
     textAlign: 'center',
-    fontSize: 24,
+    fontSize: RFValue(16),
     borderWidth: 1,
     borderColor: '#ccc',
-    fontFamily: 'Inter_700Bold', // Use Inter for input
+  },
+  timer: {
+    fontSize: RFValue(13),
+    color: '#555',
   },
   click: {
     marginTop: 15,
     color: '#6d6d6d',
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular', // Use Inter for click text
+    fontSize: RFValue(13),
   },
   resendButton: {
     marginTop: 5,
   },
   resendButtonText: {
     color: 'green',
-    fontSize: 14,
+    fontSize: RFValue(12),
     textDecorationLine: 'underline',
-    fontFamily: 'Inter_400Regular', // Use Inter for resend
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: 'gray',
   },
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: 15,
+    paddingVertical: height * 0.015,
     borderRadius: 50,
     marginTop: 25,
     alignItems: 'center',
   },
   verifyButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: RFValue(16),
     fontWeight: 'bold',
-    fontFamily: 'CodeProBold', // Use Code Pro for button text
-  },
-  email: {
-    color: 'green',
-    bottom: 10,
-    fontFamily: 'Inter_400Regular', // Use Inter for email
   },
   backButton: {
     position: 'absolute',
-    top: 40,
-    left: 20,
+    top: height * 0.05,
+    left: width * 0.05,
     backgroundColor: 'transparent',
     padding: 0,
     zIndex: 10,
   },
   backButtonCircle: {
-    backgroundColor: '#fde245', // yellow
+    backgroundColor: '#fcbd21',
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -327,44 +347,40 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 20,
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: '#fff',
+    padding: width * 0.08,
+    borderRadius: width * 0.06,
     alignItems: 'center',
+    width: '90%',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: RFValue(20),
     fontWeight: 'bold',
-    color: '#1e1e1e',
-    marginVertical: 10,
-    fontFamily: 'Inter_700Bold', // Use Inter for modal title
+    marginTop: 10,
+    color: '#000',
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#555',
+    fontSize: RFValue(15),
     textAlign: 'center',
+    marginTop: 10,
     marginBottom: 20,
-    fontFamily: 'Inter_400Regular', // Use Inter for modal message
+    color: '#555',
   },
   confirmButton: {
     backgroundColor: '#38b6ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.1,
+    borderRadius: 30,
   },
   confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: RFValue(16),
     fontWeight: 'bold',
-    fontFamily: 'CodeProBold', // Use Code Pro for confirm button
   },
-  timer: { fontSize: 16, color: 'red', marginBottom: 10, fontFamily: 'Inter_400Regular' },
-  disabledButton: { opacity: 0.5 },
-  disabledText: { color: 'gray', fontFamily: 'Inter_400Regular' },
 });
 
 export default VerificationRegister;

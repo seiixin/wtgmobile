@@ -73,6 +73,16 @@ const Verification = () => {
     }
   }, [timeLeft]);
 
+  // Auto proceed after 2 seconds when verified
+  useEffect(() => {
+    if (isVerified) {
+      const timer = setTimeout(() => {
+        handleConfirmation();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVerified]);
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -182,8 +192,7 @@ const Verification = () => {
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
-        <Text style={styles.subtitle}>Please enter the code we just sent to
-</Text>
+        <Text style={styles.subtitle}>Please enter the code we just sent to</Text>
         <Text style={styles.email}>{email}</Text>
         <View style={styles.inputContainer}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -207,7 +216,7 @@ const Verification = () => {
         <TouchableOpacity
           style={[styles.resendButton, timeLeft > 0 && styles.disabledButton]}
           onPress={handleResendCode}
-          disabled={timeLeft > 0} // Disable button if countdown is ongoing
+          disabled={timeLeft > 0}
         >
           <Text style={[styles.resendButtonText, timeLeft > 0 && styles.disabledText]}>
             Resend Code
@@ -228,9 +237,6 @@ const Verification = () => {
             <Text style={styles.modalMessage}>
               Yahoo! You have successfully verified the account.
             </Text>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmation}>
-              <Text style={styles.confirmButtonText}>Continue to Home</Text>
-            </TouchableOpacity>
           </View>
         </View>
       )}
