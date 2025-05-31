@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Dimensions, TouchableOpacity, ScrollView, ImageBackground, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet, StatusBar } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-const { width, height } = Dimensions.get('window');
-
-const AccountandProfile = () => {
+const GuestAccountandProfile = () => {
   const navigation = useNavigation();
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -29,72 +28,79 @@ const AccountandProfile = () => {
   };
 
   return (
-    <ImageBackground source={require('../assets/FAQsBG.png')} style={styles.background}>
-      <ScrollView style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <AntDesign name="arrowleft" size={24} color="white" />
-        </TouchableOpacity>
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground source={require('../assets/FAQsBG.png')} style={styles.background} resizeMode="cover">
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: hp('5%') }}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <AntDesign name="arrowleft" size={wp('6.5%')} color="white" />
+          </TouchableOpacity>
 
-        <Text style={styles.header}>Account & Profile</Text>
-        <Text style={styles.subHeader}>
-          <AntDesign name="wechat" size={24} color="black" />{"  "}Choose a Question
-        </Text>
+          <Text style={styles.header}>Account & Profile</Text>
+          <Text style={styles.subHeader}>
+            <AntDesign name="wechat" size={wp('6%')} color="black" />{"  "}Choose a Question
+          </Text>
 
-        <View style={styles.faqContainer}>
-          {faqs.map((item, index) => (
-            <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
-              <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
-                <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]}>{item.question}</Text>
-                <AntDesign name={openIndex === index ? "up" : "down"} size={18} color="gray" />
-              </TouchableOpacity>
-              {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    </ImageBackground>
+          <View style={styles.faqContainer}>
+            {faqs.map((item, index) => (
+              <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
+                <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
+                  <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
+                  <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')}/>
+                </TouchableOpacity>
+                {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </ImageBackground>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  background: { 
-    flex: 1, 
-    resizeMode: 'cover' 
-  },
+  background: { flex: 1, resizeMode: 'cover' },
   container: {
     flex: 1,
-    paddingHorizontal: width * 0.05,
-    marginTop: height * 0.2,
+    paddingHorizontal: wp('5%'),
+    marginTop: hp('20%'),
   },
   backButton: {
     position: 'absolute',
-    top: height * 0.018,
-    left: width * 0.025,
+    top: hp('2%'),
+    left: wp('2%'),
     zIndex: 10,
     backgroundColor: '#fcbd21',
-    padding: width * 0.03,
-    borderRadius: width * 0.12,
+    padding: wp('2.5%'),
+    borderRadius: wp('10%'),
   },
   header: {
-    fontSize: width * 0.065,
+    fontSize: wp('6.5%'),
     fontWeight: 'bold',
-    marginBottom: height * 0.012,
-    marginLeft: width * 0.15,
+    marginBottom: hp('0.5%'),
+    marginLeft: wp('19%'),
+    fontFamily: 'Inter_700Bold',
+    marginTop: hp('2%'),
   },
   subHeader: {
     color: 'gray',
-    marginBottom: height * 0.025,
-    marginLeft: width * 0.15,
-    fontSize: width * 0.045,
+    marginBottom: hp('2%'),
+    marginLeft: wp('16%'),
+    fontSize: wp('4%'),
+    fontFamily: 'Inter_400Regular',
   },
   faqContainer: {
-    marginTop: height * 0.012,
+    marginTop: hp('1%'),
   },
   faqItem: {
     backgroundColor: 'white',
-    borderRadius: width * 0.025,
-    marginBottom: height * 0.012,
-    padding: width * 0.045,
+    borderRadius: wp('2.5%'),
+    marginBottom: hp('1.2%'),
+    padding: wp('4%'),
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -109,18 +115,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   faqQuestion: {
-    fontSize: width * 0.045,
+    fontSize: wp('4.2%'),
     fontWeight: 'bold',
     color: '#12894f',
+    flex: 1,
+    fontFamily: 'Inter_700Bold',
   },
   activeQuestion: {
     color: '#00796B',
   },
   faqAnswer: {
-    marginTop: height * 0.012,
+    marginTop: hp('1%'),
     color: '#555',
-    fontSize: width * 0.04,
+    fontSize: wp('3.8%'),
+    fontFamily: 'Inter_400Regular',
   },
 });
 
-export default AccountandProfile;
+export default GuestAccountandProfile;

@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, Dimensions, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from "react-native-responsive-fontsize";
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
-
 const { width, height } = Dimensions.get('window');
 
 const VerificationRegister = () => {
   const [verificationCode, setVerificationCode] = useState(Array(6).fill(''));
   const [email, setEmail] = useState('');
-  const [isVerified, setIsVerified] = useState(false); // State to track verification status
-  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
+  const [isVerified, setIsVerified] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [timerId, setTimerId] = useState(null);
   const navigation = useNavigation();
   const route = useRoute();
   const inputRefs = Array.from({ length: 6 }, () => React.createRef());
 
-  // Start or restart the countdown timer
   const startTimer = (duration = 60) => {
     setTimeLeft(duration);
     if (timerId) clearInterval(timerId);
@@ -39,8 +38,7 @@ const VerificationRegister = () => {
     if (route.params && route.params.email) {
       setEmail(route.params.email);
     }
-    startTimer(60); // Start timer on mount
-
+    startTimer(60);
     return () => {
       if (timerId) clearInterval(timerId);
     };
@@ -54,19 +52,14 @@ const VerificationRegister = () => {
   };
 
   const handleInputChange = (text, index) => {
-    if (!/^\d*$/.test(text)) return; // Only allow numeric input
-
+    if (!/^\d*$/.test(text)) return;
     let codeArray = [...verificationCode];
     codeArray[index] = text;
     setVerificationCode(codeArray);
-
-    // Auto-focus next input
     if (text && index < 5) {
       const nextInputRef = inputRefs[index + 1];
       if (nextInputRef && nextInputRef.current) nextInputRef.current.focus();
     }
-
-    // Auto-submit when last digit is entered
     if (text && index === 5 && codeArray.every((digit) => digit !== '')) {
       handleVerifyCode(codeArray.join(''));
     }
@@ -84,19 +77,16 @@ const VerificationRegister = () => {
       Alert.alert(`Please wait for the countdown to finish before resending the code. Time left: ${formatTime(timeLeft)}`);
       return;
     }
-
     try {
       const response = await fetch(`${BASE_URL}/api/otp/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         Alert.alert("OTP resent successfully!");
-        startTimer(60); // Reset the timer to 1 minute
+        startTimer(60);
         await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + 60).toString());
       } else {
         Alert.alert("Failed to resend OTP. Please try again.");
@@ -116,43 +106,32 @@ const VerificationRegister = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
-        console.log("OTP verified successfully:", data);
-
         // Step 2: Complete the registration process
         const registerResponse = await fetch(`${BASE_URL}/api/users/register`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(route.params.formData),
         });
-
         const registerData = await registerResponse.json();
-
         if (registerResponse.ok) {
-          setIsVerified(true); // Show confirmation modal
-          await AsyncStorage.removeItem(`verificationTimer_${email}`); // Reset the OTP timer in AsyncStorage
+          setIsVerified(true);
+          await AsyncStorage.removeItem(`verificationTimer_${email}`);
         } else {
-          console.error('Error completing registration:', registerData);
           Alert.alert(registerData.message || 'Registration failed');
         }
       } else {
         Alert.alert("Invalid or expired OTP. Please try again.");
-        console.error("OTP verification error:", data.message);
       }
     } catch (error) {
-      console.error("Error verifying OTP:", error);
       Alert.alert("Error verifying OTP. Please try again.");
     }
   };
 
   const handleConfirmation = () => {
     setIsVerified(false);
-    navigation.navigate("SignIn"); // Navigate to the SignIn screen
+    navigation.navigate("SignIn");
   };
 
   const handleBackPress = () => {
@@ -163,11 +142,17 @@ const VerificationRegister = () => {
     <ImageBackground
       source={require('../assets/VerificationBg.png')}
       style={styles.background}
+      resizeMode="cover"
     >
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <View style={styles.backButtonCircle}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
         </View>
       </TouchableOpacity>
 
@@ -192,7 +177,6 @@ const VerificationRegister = () => {
             />
           ))}
         </View>
-
         {/* Countdown Timer */}
         <Text style={styles.timer}>Time left: {formatTime(timeLeft)}</Text>
         <Text style={styles.click}>Don't receive OTP?</Text>
@@ -205,7 +189,6 @@ const VerificationRegister = () => {
             Resend Code
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
           <Text style={styles.verifyButtonText}>Verify Email</Text>
         </TouchableOpacity>
@@ -215,7 +198,7 @@ const VerificationRegister = () => {
       {isVerified && (
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle" size={80} color="#38b6ff" />
+            <Ionicons name="checkmark-circle" size={RFValue(60, height)} color="#38b6ff" />
             <Text style={styles.modalTitle}>Verified!</Text>
             <Text style={styles.modalMessage}>
               Yahoo! You have successfully verified the account.
@@ -230,79 +213,85 @@ const VerificationRegister = () => {
   );
 };
 
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: '100%',
-    height: height * 1.05,
+    height: hp('105%'),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: "#f6f6f6",
   },
   card: {
     backgroundColor: '#fff',
-    padding: width * 0.08,
-    borderRadius: width * 0.1,
+    padding: wp('7%'),
+    borderRadius: wp('7%'),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: hp('0.7%') },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: wp('2%'),
     elevation: 6,
-    top: 20,
-    width: width * 0.88,
+    top: hp('2%'),
+    width: wp('88%'),
     alignItems: 'center',
-    marginVertical: 20,
-    marginBottom: 50,
+    marginVertical: hp('2%'),
+    marginBottom: hp('6%'),
   },
   title: {
-    fontSize: RFValue(22),
+    fontSize: RFValue(22, height),
     fontWeight: 'bold',
     color: '#000',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: RFValue(15),
+    fontSize: RFValue(15, height),
     color: '#777',
-    marginVertical: 15,
+    marginVertical: hp('1.5%'),
     textAlign: 'center',
   },
   email: {
     color: 'green',
-    fontSize: RFValue(15),
-    marginBottom: 10,
+    fontSize: RFValue(15, height),
+    marginBottom: hp('1%'),
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginVertical: 20,
+    width: '110%',
+    marginVertical: hp('2%'),
   },
   inputBox: {
-    width: width * 0.11,
-    height: width * 0.11,
+    width: wp('11%'),
+    height: wp('11%'),
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    borderRadius: wp('2.5%'),
     textAlign: 'center',
-    fontSize: RFValue(16),
+    fontSize: RFValue(16, height),
     borderWidth: 1,
     borderColor: '#ccc',
+    marginHorizontal: wp('1%'),
+    fontFamily: 'Inter_700Bold',
   },
   timer: {
-    fontSize: RFValue(13),
+    fontSize: RFValue(13, height),
     color: '#555',
+    textAlign: 'center',
   },
   click: {
-    marginTop: 15,
+    marginTop: hp('1.5%'),
     color: '#6d6d6d',
-    fontSize: RFValue(13),
+    fontSize: RFValue(13, height),
+    textAlign: 'center',
   },
   resendButton: {
-    marginTop: 5,
+    marginTop: hp('0.5%'),
   },
   resendButtonText: {
     color: 'green',
-    fontSize: RFValue(12),
+    fontSize: RFValue(12, height),
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   disabledButton: {
     opacity: 0.5,
@@ -313,29 +302,30 @@ const styles = StyleSheet.create({
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: height * 0.015,
-    borderRadius: 50,
-    marginTop: 25,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('10%'),
+    marginTop: hp('2.5%'),
     alignItems: 'center',
   },
   verifyButtonText: {
     color: '#fff',
-    fontSize: RFValue(16),
+    fontSize: RFValue(16, height),
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   backButton: {
     position: 'absolute',
-    top: height * 0.05,
-    left: width * 0.05,
+    top: hp('6%'),
+    left: wp('7%'),
     backgroundColor: 'transparent',
     padding: 0,
     zIndex: 10,
   },
   backButtonCircle: {
     backgroundColor: '#fcbd21',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: wp('6%'),
+    width: wp('12%'),
+    height: wp('12%'),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -348,38 +338,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 20,
+    paddingHorizontal: wp('5%'),
   },
   modalContent: {
     backgroundColor: '#fff',
-    padding: width * 0.08,
-    borderRadius: width * 0.06,
+    padding: wp('7%'),
+    borderRadius: wp('6%'),
     alignItems: 'center',
     width: '90%',
   },
   modalTitle: {
-    fontSize: RFValue(20),
+    fontSize: RFValue(20, height),
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: hp('1%'),
     color: '#000',
+    textAlign: 'center',
   },
   modalMessage: {
-    fontSize: RFValue(15),
+    fontSize: RFValue(15, height),
     textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: hp('1%'),
+    marginBottom: hp('2%'),
     color: '#555',
   },
   confirmButton: {
     backgroundColor: '#38b6ff',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.1,
-    borderRadius: 30,
+    paddingVertical: hp('1.5%'),
+    paddingHorizontal: wp('10%'),
+    borderRadius: wp('8%'),
+    marginTop: hp('1%'),
   },
   confirmButtonText: {
     color: '#fff',
-    fontSize: RFValue(16),
+    fontSize: RFValue(16, height),
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    View, Text, TextInput, ImageBackground, Dimensions, StyleSheet, Image, ScrollView, Animated
+    View, Text, TextInput, ImageBackground, Dimensions, StyleSheet, Image, ScrollView, Animated, StatusBar
 } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width, height } = Dimensions.get('window');
-const scale = size => (width / 375) * size;
-const verticalScale = size => (height / 812) * size;
 
 const NovenaOffer = () => {
     const [deceasedName, setDeceasedName] = useState('');
@@ -18,7 +18,6 @@ const NovenaOffer = () => {
     const [languageItems, setLanguageItems] = useState([
         { label: 'English', value: 'english' },
         { label: 'Tagalog', value: 'tagalog' },
-        { label: 'Bisaya', value: 'bisaya' }
     ]);
 
     const slideAnim = useRef(new Animated.Value(600)).current;
@@ -51,19 +50,6 @@ const NovenaOffer = () => {
             day9: "Panginoon, sa ikasiyam na araw ng aming novena, hinihiling namin ang Iyong kapayapaan. Punuin Mo ng Iyong kapayapaan ang aming puso, upang gabayan kami sa araw-araw at lalo kaming mapalapit sa Iyo. Amen.",
             closing: "O Panginoon, iniaalay namin sa Iyo ang aming mga panalangin at hangarin sa pamamagitan ng novena na ito. Nawa’y mangyari ang Iyong kalooban sa aming mga buhay, at nawa’y lumago kami sa pananampalataya, pag-asa, at pagmamahal. Amen."
         },
-        bisaya: {
-              opening: "O labing maloloy-on ug mahigugmaong Diyos, nagaduol kami Kanimo nga may mapainubsanon nga mga kasingkasing, nagahalad sa among mga pag-ampo alang sa Imong kalooy ug panalangin. Nagaampo kami sa Imong giya ug proteksyon sulod ning novena, aron kami mopaduol Kanimo ug mosunod sa Imong kabubut-on. Ihatag kanamo ang grasya sa pagpadayon sa pagtuo ug gugma. Amen.",
-              day1: "Ginoo, sa unang adlaw sa among novena, nagaampo kami nga palig-onon Mo ang among pagtuo. Tabangi kami nga mosalig sa Imong balaan nga plano bisan pa sa mga kalisdanan ug hagit. Nawa unta ang among pagtuo dili maluya kondili magpalig-on matag adlaw. Amen.",
-              day2: "Ginoo, sa ikaduhang adlaw sa among novena, nagaampo kami nga hatagan Mo kami og paglaom sa tanang panahon. Tabangi kami nga dili mawala ang among paglaom bisan sa mga pagsulay ug kasakit sa kinabuhi. Amen.",
-              day3: "Ginoo, sa ikatulong adlaw sa among novena, nagaampo kami alang sa imong gugma. Ipaambit kanamo ang Imong gugma aron kami makahatag ug tinuod nga gugma sa uban. Amen.",
-              day4: "Ginoo, sa ikaupat nga adlaw sa among novena, nagaampo kami alang sa kalig-on sa espirituhanon nga kinabuhi. Tabangi kami nga magmalig-on sa pagtuo ug dili matintal sa mga pagsulay. Amen.",
-              day5: "Ginoo, sa ikalima nga adlaw sa among novena, nagaampo kami alang sa kalinaw sa among mga kasingkasing ug hunahuna. Hatagi kami ug kalinaw nga gikan Kanimo aron kami magpadayon sa pagtuo bisan sa kalibog ug kabalaka. Amen.",
-              day6: "Ginoo, sa ikaunom nga adlaw sa among novena, nagaampo kami alang sa kagawasan gikan sa mga sala. Tabangi kami nga mobiya sa mga butang nga nagapahilayo kanamo gikan Kanimo. Amen.",
-              day7: "Ginoo, sa ikapito nga adlaw sa among novena, nagaampo kami alang sa kaalam. Ihatag kanamo ang kaalam aron makasabot kami sa Imong mga pulong ug kabubut-on. Amen.",
-              day8: "Ginoo, sa ikawalong adlaw sa among novena, nagaampo kami alang sa kaisug. Tabangi kami nga dili mahadlok sa pag-atubang sa mga hagit sa kinabuhi uban ang Imong giya ug proteksyon. Amen.",
-              day9: "Ginoo, sa ikasiyam nga adlaw sa among novena, nagaampo kami nga ang among mga pag-ampo ug mga hangyo motuhop sa Imong kabubut-on. Ihatag kanamo ang grasya nga kinahanglanon aron kami magpadayon sa pag-alagad ug pagtuo Kanimo. Amen.",
-              closing: "O Ginoo, among gihalad Kanimo ang among mga pag-ampo ug mga tinguha pinaagi ning novena. Nawa ang Imong kabubut-on matuman sa among kinabuhi ug kami motubo sa pagtuo, paglaom, ug gugma. Ihatag ang among mga pangaliya kung kini sumala sa Imong kabubut-on, ug tabangi kami nga mosalig sa Imong balaan nga plano. Amen."
-        },
           
           
     };
@@ -80,24 +66,29 @@ const NovenaOffer = () => {
     }, [deceasedName, language]);
 
     return (
+        <>
+        <StatusBar
+            barStyle="dark-content"
+            backgroundColor="transparent"
+            translucent={true}
+        />
         <ImageBackground source={require('../assets/OfferBg.png')} style={styles.background}>
-
-            {/* ✅ Header with Back Button */}
+            {/* Header with Back Button */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
+                    <Ionicons name="arrow-back" size={wp('7%')} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Novena Prayers for All 9 Days</Text>
             </View>
 
-            {/* ✅ Instruction Box */}
+            {/* Instruction Box */}
             <View style={styles.instructionBox}>
                 <Text style={styles.instructionText}>
                     Write the name of the deceased for whom you are praying. It is customary to pray according to the deceased's official first name.
                 </Text>
             </View>
 
-            {/* ✅ Input Section */}
+            {/* Input Section */}
             <View style={styles.inputContainer}>
                 <View style={styles.labelInputWrapper}>
                     <Text style={styles.label}>For</Text>
@@ -121,21 +112,27 @@ const NovenaOffer = () => {
                         placeholder="Choose Language"
                         style={styles.dropdown}
                         dropDownContainerStyle={styles.dropDownContainer}
-                        labelStyle={{ color: 'gray' }}
-                        placeholderStyle={{ color: 'gray' }}
-                        textStyle={{ color: 'gray' }}
+                        labelStyle={{ color: 'gray', fontSize: RFValue(14, height) }}
+                        placeholderStyle={{ color: 'gray', fontSize: RFValue(14, height) }}
+                        textStyle={{ color: 'gray', fontSize: RFValue(14, height) }}
                         arrowIconStyle={{ tintColor: 'gray' }}
                     />
-
-                    {/* Icons Section */}
-                    <View style={styles.iconsContainer}>
-                        <Image source={require('../assets/church_icon.png')} style={styles.icon} />
-                        <Image source={require('../assets/walk_to_grave_logo.png')} style={styles.icon} />
+                    {/* LogosP.png Icon Centered */}
+                    <View style={[styles.iconsContainer, { alignItems: 'center', justifyContent: 'center', width: wp('15%') }]}>
+                        <Image
+                            source={require('../assets/LogosP.png')}
+                            style={{
+                                top: hp('1%'),
+                                            width: wp('18%'),
+                                            height: wp('18%'),
+                                            resizeMode: 'contain',
+                            }}
+                        />
                     </View>
                 </View>
             </View>
 
-            {/* ✅ Prayers Section */}
+            {/* Prayers Section */}
             {deceasedName.trim() && language !== 'Choose Language' && (
                 <Animated.View style={[styles.prayersContainer, { transform: [{ translateY: slideAnim }] }]}>
                     <ImageBackground source={require('../assets/prayer_bg.png')} style={styles.prayerBackground}>
@@ -171,59 +168,63 @@ const NovenaOffer = () => {
                                 <Text style={styles.prayerTitle}>Day 9: Prayer for Peace</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.day9 ?? ''}</Text>
 
-                                <Text style={styles.prayerTitle}>Closing Prayer </Text>
+                                <Text style={styles.prayerTitle}>Closing Prayer</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.closing ?? ''}</Text>
                             </View>
                         </ScrollView>
                     </ImageBackground>
                 </Animated.View>
             )}
-
         </ImageBackground>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
     background: {
         flex: 1,
-        paddingTop: verticalScale(40)
+        paddingTop: hp('5%'),
     },
     header: {
-        flexDirection: 'row', 
-        alignItems: 'center', 
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: verticalScale(15),
-        marginTop: verticalScale(15)
+        paddingVertical: hp('2%'),
+        marginTop: hp('2%'),
     },
     backButton: {
         position: 'absolute',
-        left: scale(15), 
-        padding: scale(10), 
+        left: wp('4%'),
+        padding: wp('2.5%'),
+        bottom: hp('2%'),
     },
     headerTitle: {
-        fontSize: scale(18),
+        fontSize: RFValue(18, height),
         fontWeight: 'bold',
         color: '#333',
+        bottom: hp('1.8%'),
     },
     instructionBox: {
         backgroundColor: '#f0f5da',
-        padding: scale(20),
-        marginHorizontal: scale(20),
-        height: verticalScale(100),
-        marginTop: verticalScale(30),
+        padding: wp('5%'),
+        marginHorizontal: wp('5%'),
+        height: hp('12%'),
+        marginTop: hp('3%'),
+        borderRadius: wp('4%'),
+        justifyContent: 'center',
     },
     instructionText: {
-        fontSize: scale(16),
+        fontSize: RFValue(15, height),
         color: '#006400',
         textAlign: 'justify',
     },
     inputContainer: {
-        marginHorizontal: scale(20),
-        marginTop: verticalScale(20),
-        padding: scale(20),
+        marginHorizontal: wp('5%'),
+        marginTop: hp('2.5%'),
+        padding: wp('5%'),
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: scale(40),
+        borderRadius: wp('10%'),
         backgroundColor: '#fff',
     },
     labelInputWrapper: {
@@ -232,35 +233,37 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
     label: {
-        fontSize: scale(16),
+        fontSize: RFValue(15, height),
         color: '#333',
-        marginRight: scale(10),
+        marginRight: wp('2.5%'),
     },
     input: {
-        fontSize: scale(16),
+        fontSize: RFValue(15, height),
         color: '#333',
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
-        paddingVertical: verticalScale(5),
+        paddingVertical: hp('0.5%'),
+        flex: 1,
     },
     languageAndIconsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         width: '100%',
-        paddingHorizontal: scale(20),
-        right: scale(30)
+        paddingHorizontal: wp('5%'),
+        right: wp('5%'),
     },
     iconsContainer: {
         flexDirection: 'row',
-        right: scale(40)
+        right: wp('8%'),
     },
     icon: {
-        width: scale(40),
-        height: scale(40),
-        marginLeft: scale(10),
+        width: wp('10%'),
+        height: wp('10%'),
+        marginLeft: wp('2.5%'),
+        resizeMode: 'contain',
     },
     dropdown: {
-        width: '40%',
+        width: '50%',
         borderWidth: 0,
         backgroundColor: 'transparent',
         color: '#333',
@@ -276,11 +279,11 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        height: verticalScale(450),
+        height: hp('55%'),
         backgroundColor: 'white',
-        borderTopLeftRadius: scale(30),
-        borderTopRightRadius: scale(30),
-        paddingTop: verticalScale(30),
+        borderTopLeftRadius: wp('8%'),
+        borderTopRightRadius: wp('8%'),
+        paddingTop: hp('3%'),
         elevation: 10,
         shadowColor: '#000',
         shadowOpacity: 0.2,
@@ -288,30 +291,34 @@ const styles = StyleSheet.create({
     },
     prayerBackground: {
         flex: 1,
-        borderTopLeftRadius: scale(30),
-        borderTopRightRadius: scale(30),
+        borderTopLeftRadius: wp('8%'),
+        borderTopRightRadius: wp('8%'),
         overflow: 'hidden',
     },
     scrollViewContent: {
         flexGrow: 1,
     },
     prayers: {
-        padding: scale(20),
+        padding: wp('5%'),
         flex: 1,
     },
     prayerTitle: {
-        fontSize: scale(18),
+        fontSize: RFValue(17, height),
         fontWeight: 'bold',
         color: '#006400',
         textAlign: 'center',
-        marginBottom: verticalScale(5),
+        marginBottom: hp('0.5%'),
+        marginTop: hp('1%'),
+        fontFamily: 'Inter_400Regular',
     },
     prayerText: {
-        fontSize: scale(16),
+        fontSize: RFValue(15, height),
         color: '#333',
-        textAlign: 'justify',
-        lineHeight: scale(22),
-        marginBottom: verticalScale(15),
+        textAlign: 'center', // center the prayer text
+        lineHeight: RFValue(22, height),
+        marginBottom: hp('1.5%'),
+        marginHorizontal: wp('5%'),
+        fontFamily: 'Inter_400Regular',
     },
 });
 

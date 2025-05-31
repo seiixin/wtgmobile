@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, ImageBackground, StatusBar, Dimensions } from 'react-native';
 import { GestureHandlerRootView, FlingGestureHandler, Directions, State } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 // Slide Data
 const slides = [
@@ -51,7 +52,7 @@ const IntroSlides = () => {
         setCurrentIndex(newIndex); // Change content while invisible
 
         // Reset position & Fade-in new content
-        translateX.setValue(direction === 'left' ? 500 : -500);
+        translateX.setValue(direction === 'left' ? wp('100%') : -wp('100%'));
         Animated.parallel([
           Animated.timing(translateX, {
             toValue: 0,
@@ -77,68 +78,75 @@ const IntroSlides = () => {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <FlingGestureHandler
-        direction={Directions.LEFT}
-        onHandlerStateChange={({ nativeEvent }) => {
-          if (nativeEvent.state === State.END) handleSwipe('left');
-        }}
-      >
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <FlingGestureHandler
-          direction={Directions.RIGHT}
+          direction={Directions.LEFT}
           onHandlerStateChange={({ nativeEvent }) => {
-            if (nativeEvent.state === State.END) handleSwipe('right');
+            if (nativeEvent.state === State.END) handleSwipe('left');
           }}
         >
-          <View style={styles.container}>
-            {/* Background Image */}
-            <Animated.View
-              style={[
-                styles.backgroundContainer,
-                { transform: [{ translateX }] }, // Move image smoothly
-              ]}
-            >
-              <ImageBackground
-                source={slides[currentIndex].source}
-                style={styles.backgroundImage}
-                resizeMode="cover"
-              />
-            </Animated.View>
-
-            {/* Title & Description (Now Fades In/Out Properly) */}
-            <Animated.View
-              style={[
-                styles.textContainer,
-                { opacity }, // Fade effect on text
-              ]}
-            >
-              <Text style={styles.title}>{slides[currentIndex].title}</Text>
-              <Text style={styles.description}>{slides[currentIndex].description}</Text>
-            </Animated.View>
-
-            {/* Pagination Dots */}
-            <View style={styles.paginationContainer}>
-              {slides.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    { backgroundColor: index === currentIndex ? '#007bff' : '#ccc' },
-                  ]}
+          <FlingGestureHandler
+            direction={Directions.RIGHT}
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state === State.END) handleSwipe('right');
+            }}
+          >
+            <View style={styles.container}>
+              {/* Background Image */}
+              <Animated.View
+                style={[
+                  styles.backgroundContainer,
+                  { transform: [{ translateX }] }, // Move image smoothly
+                ]}
+              >
+                <ImageBackground
+                  source={slides[currentIndex].source}
+                  style={styles.backgroundImage}
+                  resizeMode="cover"
                 />
-              ))}
-            </View>
+              </Animated.View>
 
-            {/* Navigation Arrow (Only on Last Slide) */}
-            {currentIndex === slides.length - 1 && (
-              <TouchableOpacity style={styles.arrowButton} onPress={goToNextScreen}>
-                <Ionicons name="arrow-forward-circle" size={60} color="#007bff" />
-              </TouchableOpacity>
-            )}
-          </View>
+              {/* Title & Description (Now Fades In/Out Properly) */}
+              <Animated.View
+                style={[
+                  styles.textContainer,
+                  { opacity }, // Fade effect on text
+                ]}
+              >
+                <Text style={styles.title}>{slides[currentIndex].title}</Text>
+                <Text style={styles.description}>{slides[currentIndex].description}</Text>
+              </Animated.View>
+
+              {/* Pagination Dots */}
+              <View style={styles.paginationContainer}>
+                {slides.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      { backgroundColor: index === currentIndex ? '#007bff' : '#ccc' },
+                    ]}
+                  />
+                ))}
+              </View>
+
+              {/* Navigation Arrow (Only on Last Slide) */}
+              {currentIndex === slides.length - 1 && (
+                <TouchableOpacity style={styles.arrowButton} onPress={goToNextScreen}>
+                  <Ionicons name="arrow-forward-circle" size={wp('15%')} color="#007bff" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </FlingGestureHandler>
         </FlingGestureHandler>
-      </FlingGestureHandler>
-    </GestureHandlerRootView>
+      </GestureHandlerRootView>
+    </>
   );
 };
 
@@ -157,41 +165,43 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     position: 'absolute',
-    bottom: 120,
+    bottom: hp('18%'),
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: wp('5%'),
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: wp('6.5%'),
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: hp('1.5%'),
+    fontFamily: 'Inter_700Bold',
   },
   description: {
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: '#000',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: hp('3%'),
+    fontFamily: 'Inter_400Regular',
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     position: 'absolute',
-    bottom: 80,
+    bottom: hp('10%'),
     width: '100%',
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
+    width: wp('3%'),
+    height: wp('3%'),
+    borderRadius: wp('1.5%'),
+    marginHorizontal: wp('1.5%'),
   },
   arrowButton: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
+    bottom: hp('4%'),
+    right: wp('7%'),
   },
 });
 

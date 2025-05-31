@@ -1,89 +1,103 @@
 import React from 'react';
-import { View, ImageBackground, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ImageBackground, Text, TouchableOpacity, StyleSheet, StatusBar, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const GetStarted = () => {
-    const navigation = useNavigation(); // Add this line to use navigation
+  const navigation = useNavigation();
 
   return (
-    <ImageBackground source={require('../assets/GetStarted.png')} style={styles.background}>
-      {/* Main Content Container */}
-
-    <View style={styles.container1}>
-        <Text style={styles.title}>We’ve been there...</Text>
-        <View style={styles.container}>
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground source={require('../assets/GetStarted.png')} style={styles.background} resizeMode="cover">
+        <View style={styles.container1}>
+          <Text style={styles.title}>We’ve been there...</Text>
+          <View style={styles.container}>
             <Text style={styles.description}>
-            Cemetery events are not easy. The encounter with loss, and pain are tough and overwhelming. As we grow older, memorials, funerals, and visiting graves become part of our routine. And then comes a moment like this - confusing and frustrating - and we ask ourselves, “where are they buried? How do I get to their grave? I’ve been here already, why can’t I find it?” We wander around the cemetery over and over again inspecting grave names.
+              Cemetery events are not easy. The encounter with loss, and pain are tough and overwhelming. As we grow older, memorials, funerals, and visiting graves become part of our routine. And then comes a moment like this - confusing and frustrating - and we ask ourselves, “where are they buried? How do I get to their grave? I’ve been here already, why can’t I find it?” We wander around the cemetery over and over again inspecting grave names.
             </Text>
-        </View>
+          </View>
 
-        {/* Buttons Section */}
-        <View style={styles.buttonContainer}>
+          <Image
+            source={require('../assets/GsLogo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
+          {/* Buttons Section */}
+          <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.tourButton} onPress={() => navigation.navigate('IntroSlides')}>
-            <Text style={styles.tourButtonText}>Let’s Take a Tour</Text>
+              <Text style={styles.tourButtonText}>Let’s Take a Tour</Text>
             </TouchableOpacity>
-            
+
             <Text style={styles.signInText}>
-                Already have an account? 
-                <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
-                    <Text style={styles.signInLink}> Sign in</Text>
-                </TouchableOpacity>
+              Already have an account?
+              <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+                <Text style={styles.signInLink}> Sign in</Text>
+              </TouchableOpacity>
             </Text>
-            
+          </View>
         </View>
-    </View>
-      
-    </ImageBackground>
+      </ImageBackground>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: wp('100%'),
+    height: hp('105%'),
     resizeMode: 'cover',
     justifyContent: 'center',
   },
   container1: {
-    marginTop: height * 0.2,
+    marginTop: hp('30%'),
+    alignItems: 'center',
   },
   container: {
     justifyContent: 'center',
-    paddingHorizontal: width * 0.09,
-    paddingVertical: height * 0.02,
-    marginTop: height * 0.01,
+    paddingHorizontal: wp('9%'),
+    paddingVertical: hp('1%'),
+    marginTop: hp('1%'),
+  },
+  logo: {
+    width: wp('15%'),
+    height: hp('8%'),
+    alignSelf: 'center',
   },
   title: {
-    fontSize: width * 0.08, // Responsive font size
+    fontSize: wp('8%'),
     fontWeight: '900',
     textAlign: 'center',
     color: '#12894f',
-    marginBottom: height * 0.01,
+    marginBottom: hp('1%'),
+    fontFamily: 'Inter_700Bold',
   },
   description: {
-    fontSize: width * 0.035,
+    fontSize: wp('3.5%'),
     color: '#333',
-    marginBottom: height * 0.025,
-    marginHorizontal: width * 0.02,
+    marginHorizontal: wp('2%'),
     textAlign: 'center',
-    lineHeight: width * 0.05,
+    lineHeight: wp('5%'),
+    fontFamily: 'Inter_400Regular',
   },
   buttonContainer: {
     alignItems: 'center',
-    paddingVertical: height * 0.025,
-    marginTop: height * 0.09,
+    paddingVertical: hp('2.5%'),
+
   },
   tourButton: {
-    width: width * 0.6,
+    width: wp('60%'),
     backgroundColor: '#00aa13',
-    paddingVertical: height * 0.02,
-    borderRadius: width * 0.08,
+    paddingVertical: hp('2%'),
+    borderRadius: wp('8%'),
     alignItems: 'center',
-    marginBottom: height * 0.012,
+    marginBottom: hp('1.2%'),
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -92,24 +106,27 @@ const styles = StyleSheet.create({
   },
   tourButtonText: {
     color: '#fff',
-    fontSize: width * 0.045,
+    fontSize: wp('4.5%'),
     fontWeight: '600',
+    fontFamily: 'Inter_700Bold',
   },
   signInText: {
     textAlign: 'center',
-    fontSize: width * 0.037,
+    fontSize: wp('3.7%'),
     color: '#555',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: height * 0.01,
+    marginTop: hp('1%'),
+    fontFamily: 'Inter_400Regular',
   },
   signInLink: {
     color: '#1b5343',
     fontWeight: 'bold',
     marginLeft: 2,
-    fontSize: width * 0.037,
+    fontSize: wp('3.7%'),
     textDecorationLine: 'underline',
     top: 2,
+    fontFamily: 'Inter_700Bold',
   },
 });
 

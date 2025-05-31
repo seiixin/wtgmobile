@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ImageBackground, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ImageBackground, Image, StatusBar, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import ConfirmationModal from '../components/modals/ConfirmationModal'; // Adjust the path as necessary
+import ConfirmationModal from '../components/modals/ConfirmationModal';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
+
+const { width, height } = Dimensions.get('window');
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-  const [isModalVisible, setModalVisible] = useState(false); // State to control modal visibility
+  const [isModalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
   const { email } = route.params;
+
+  const validatePassword = (password) =>
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password) &&
+    /[@$!%*?&#]/.test(password);
 
   const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
@@ -22,6 +33,13 @@ const ResetPassword = () => {
     }
     if (newPassword !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    if (!validatePassword(newPassword)) {
+      Alert.alert(
+        'Password Requirements',
+        'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.'
+      );
       return;
     }
     try {
@@ -45,6 +63,11 @@ const ResetPassword = () => {
 
   return (
     <ImageBackground source={require("../assets/resetPassBG2.png")} style={styles.background}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Image source={require("../assets/BackButton.png")} style={styles.backIcon} />
       </TouchableOpacity>
@@ -66,7 +89,7 @@ const ResetPassword = () => {
               secureTextEntry={!isPasswordVisible}
             />
             <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-              <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={18} color="#d9d9d9" />
+              <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={RFValue(18, height)} color="#d9d9d9" />
             </TouchableOpacity>
           </View>
 
@@ -81,29 +104,29 @@ const ResetPassword = () => {
               secureTextEntry={!isConfirmPasswordVisible}
             />
             <TouchableOpacity onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}>
-              <Ionicons name={isConfirmPasswordVisible ? "eye" : "eye-off"} size={18} color="#d9d9d9" />
+              <Ionicons name={isConfirmPasswordVisible ? "eye" : "eye-off"} size={RFValue(18, height)} color="#d9d9d9" />
             </TouchableOpacity>
           </View>
 
-          {/* Change Password Button */}
           <TouchableOpacity
             style={styles.ChangePassButton}
-            onPress={() => setModalVisible(true)} // Show confirmation modal
+            onPress={() => setModalVisible(true)}
           >
             <Text style={styles.ChangePassText}>Change Password</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         visible={isModalVisible}
         message="Are you sure you want to reset your password?"
         onConfirm={() => {
-          setModalVisible(false); // Close the modal
-          handleResetPassword(); // Proceed with password reset
+          setModalVisible(false);
+          handleResetPassword();
         }}
-        onCancel={() => setModalVisible(false)} // Close the modal
+        onCancel={() => setModalVisible(false)}
+        modalStyle={styles.modalContent}
+        textStyle={styles.modalText}
       />
     </ImageBackground>
   );
@@ -116,60 +139,73 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: "#f6f6f6", 
   },
-  backButton: { position: 'absolute', top: 50, left: 20 },
-  backIcon: { width: 40, height: 40 },
+  backButton: { 
+    position: 'absolute', 
+    top: hp('6%'), 
+    left: wp('7%'), 
+    zIndex: 1,
+  },
+  backIcon: { 
+    width: wp('12%'), 
+    height: wp('12%'),
+  },
   container: {
     flex: 1,
     alignItems: "center",
-    marginTop: 120
+    marginTop: hp('12%'),
   },
   icon: {
-    width: 150,
-    height: 70,
+    width: wp('35%'),
+    height: hp('10%'),
     resizeMode: "contain",
-    marginBottom: 10,
+    marginBottom: hp('2%'),
+    marginTop: hp('2%'),
   },
   card: {
-    width: "80%",
-    borderRadius: 60,
-    paddingVertical: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 35,
-    top: 40,
+    width: wp('85%'),
+    borderRadius: wp('8%'),
+    paddingVertical: hp('2%'),
+    paddingBottom: hp('4%'),
+    paddingHorizontal: wp('7%'),
+    top: hp('4%'),
     alignItems: "center",
+    backgroundColor: 'white',
   },
   title: {
-    fontSize: 24,
+    fontSize: RFValue(22, height),
     fontWeight: "bold",
     color: "black",
+    marginBottom: hp('1%'),
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: RFValue(13, height),
     color: "#777",
-    marginTop: 5,
-    marginBottom: 15,
-    marginHorizontal: 15,
+    marginTop: hp('0.5%'),
+    marginBottom: hp('2%'),
+    marginHorizontal: wp('2%'),
     textAlign: "center",
   },
   label: {
     width: "100%",
-    fontSize: 13,
+    fontSize: RFValue(14, height),
     color: "black",
-    marginTop: 10,
+    marginTop: hp('1.5%'),
     fontWeight: "bold",
+    textAlign: 'left',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: "100%",
-    backgroundColor: "#fff",           // White background
-    borderRadius: 10,                  // More rounded corners
-    borderWidth: 1,                    // Add border
-    borderColor: "#e0e0e0",            // Light gray border
-    paddingHorizontal: 10,
-    marginTop: 8,
-    marginBottom: 10,
-    shadowColor: "#000",               // Subtle shadow
+    backgroundColor: "#fff",
+    borderRadius: wp('2.5%'),
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    paddingHorizontal: wp('2%'),
+    marginTop: hp('1%'),
+    marginBottom: hp('1.5%'),
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 2,
@@ -177,23 +213,35 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 45,
-    backgroundColor: "transparent",    // No background, handled by container
-    fontSize: 15,
+    height: hp('5.5%'),
+    backgroundColor: "transparent",
+    fontSize: RFValue(15, height),
     color: "#222",
   },
   ChangePassButton: {
     width: "100%",
     backgroundColor: "#fab636",
-    paddingVertical: 12,
-    borderRadius: 50,
-    marginTop: 20,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('10%'),
+    marginTop: hp('2.5%'),
     alignItems: "center",
   },
   ChangePassText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: RFValue(15, height),
     fontWeight: "bold",
+  },
+  modalContent: {
+    width: wp('90%'),
+    backgroundColor: '#fff',
+    padding: wp('5%'),
+    borderRadius: wp('4%'),
+    alignItems: 'center',
+    maxHeight: hp('80%'),
+  },
+  modalText: {
+    fontSize: RFValue(15, height),
+    textAlign: 'center',
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert, Dimensions } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
@@ -8,8 +8,11 @@ import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+const { width, height } = Dimensions.get('window');
 
 // ✅ Custom Drawer Content
 const CustomDrawerContent = (props) => {
@@ -65,29 +68,35 @@ const CustomDrawerContent = (props) => {
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
             {/* Profile Section */}
-                                  <View style={styles.profileSection}>
-                                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                          <Image
-                                              source={{
-                                                  uri: user?.profileImage
-                                                      ? user.profileImage
-                                                      : 'https://via.placeholder.com/150'
-                                              }}
-                                              style={styles.profileImage}
-                                          />
-                                          <View style={{ marginLeft: 16 }}>
-                                              <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-                                              <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                                              <TouchableOpacity
-                                                  style={styles.editProfileButton}
-                                                  onPress={() => navigation.navigate('EditProfile')}
-                                              >
-                                                  <MaterialIcons name="edit" size={16} color="green" />
-                                                  <Text style={styles.editProfileText}>Edit Profile</Text>
-                                              </TouchableOpacity>
-                                          </View>
-                                      </View>
-                                  </View>
+            <View style={styles.profileSection}>
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Image
+      source={
+        user?.profileImage
+          ? { uri: user.profileImage }
+          : require('../assets/blankDP.jpg') // fallback local image
+      }
+      style={styles.profileImage}
+    />
+    <View style={{ marginLeft: 16 }}>
+      <Text style={styles.profileName}>
+        {user?.name
+          ? user.name.length > 16
+            ? `${user.name.slice(0, 16)}...`
+            : user.name
+          : "Loading..."}
+      </Text>
+      <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+      <TouchableOpacity
+        style={styles.editProfileButton}
+        onPress={() => navigation.navigate('EditProfile')}
+      >
+        <MaterialIcons name="edit" size={16} color="green" />
+        <Text style={styles.editProfileText}>Edit Profile</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</View>
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
@@ -331,7 +340,9 @@ const GradientNextButton = ({ onPress }) => (
   // Fetch grave details when deceasedName is set and has a space (Firstname Lastname)
   useEffect(() => {
     const fetchGraveDetails = async () => {
-      if (!graveDetails.deceasedName.trim() || !graveDetails.deceasedName.includes(' ')) {
+      // Only fetch if there are at least two words (first and last name)
+      const nameParts = graveDetails.deceasedName.trim().split(/\s+/);
+      if (nameParts.length < 2) {
         return;
       }
       setIsFetchingGrave(true);
@@ -342,10 +353,8 @@ const GradientNextButton = ({ onPress }) => (
         const data = await response.json();
         if (data && data.length > 0) {
           const grave = data[0];
-          // Extract year from burial (handles both "2024" and "2024-01-01T00:00:00.000Z")
           let burialYear = '';
           if (grave.burial) {
-            // If burial is a date string, extract the year
             const match = grave.burial.match(/^\d{4}/);
             burialYear = match ? match[0] : grave.burial;
           }
@@ -426,20 +435,28 @@ const GradientNextButton = ({ onPress }) => (
             <Swipeable
               key={service._id}
               renderRightActions={() => (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#ff4d4d',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: 85,
-                    height: '79%',
-                    borderRadius: 10,
-                    marginVertical: 5,
-                  }}
-                  onPress={() => handleRemoveService(service._id)}
-                >
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Remove</Text>
-                </TouchableOpacity>
+<TouchableOpacity
+  style={{
+    backgroundColor: '#ff4d4d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: wp('22%'), // Responsive width
+    height: hp('7%'), // Responsive height
+    borderRadius: wp('2.5%'),
+    marginVertical: hp('0.7%'),
+    marginLeft: wp('2%'),
+  }}
+  onPress={() => handleRemoveService(service._id)}
+>
+  <Text style={{
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: wp('4%'), // Responsive font size
+    fontFamily: 'Inter_700Bold',
+  }}>
+    Remove
+  </Text>
+</TouchableOpacity>
               )}
             >
               <View style={styles.serviceRow}>
@@ -457,7 +474,15 @@ const GradientNextButton = ({ onPress }) => (
                     marginRight: 10,
                   }}
                 >
-                  {service.selected && <Text style={{ color: "#fff", fontWeight: "bold" }}>✓</Text>}
+                  {service.selected && (
+                    <Text style={{
+  color: "#fff",
+  fontWeight: "bold",
+  fontSize: wp('4.5%'), // Responsive
+}}>
+  ✓
+</Text>
+                  )}
                 </TouchableOpacity>
                 <View style={styles.serviceCard}>
                   <Image source={serviceIcons[service.serviceName]} style={styles.serviceIcon} />
@@ -497,43 +522,73 @@ const GradientNextButton = ({ onPress }) => (
                   >
                     {/* Collapsed Row: Icon, Name, Status */}
                     <TouchableOpacity
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        minHeight: 65,
-                        paddingHorizontal: 18, // Add horizontal padding inside the card
-                        width: '100%',
-                      }}
-                      onPress={() => toggleExpand(transaction._id)}
-                      activeOpacity={0.8}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                        <Image
-                          source={serviceIcons[transaction.services?.[0]?.serviceName]}
-                          style={{ width: 40, height: 40, marginRight: 16 }}
-                        />
-                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#333' }}>
-                          {transaction.services?.[0]?.serviceName}
-                          {transaction.services?.length > 1 && (
-                            <Text style={{ color: '#888', fontSize: 15 }}>
-                              {`  +${transaction.services.length - 1} more`}
-                            </Text>
-                          )}
-                        </Text>
-                      </View>
-                      <Text style={{
-                        color: transaction.status === 'paid' || transaction.status === 'Completed' ? '#1976d2' : '#fab636',
-                        fontWeight: 'bold',
-                        fontSize: 13,
-                        minWidth: 90,
-                        textAlign: 'right'
-                      }}>
-                        {transaction.status === 'paid'
-                          ? 'Completed'
-                          : (transaction.status || 'To Process')}
-                      </Text>
-                    </TouchableOpacity>
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 65,
+    paddingHorizontal: 18,
+    width: '100%',
+  }}
+  onPress={() => toggleExpand(transaction._id)}
+  activeOpacity={0.8}
+>
+  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+    <Image
+      source={serviceIcons[transaction.services?.[0]?.serviceName]}
+      style={{ width: 40, height: 40, marginRight: 16 }}
+    />
+    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+      <Text
+        style={{
+          fontWeight: 'bold',
+          fontSize: wp('4%'),
+          color: '#333',
+          flexShrink: 1,
+          flexWrap: 'wrap',
+          minWidth: 0,
+        }}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {transaction.services?.[0]?.serviceName}
+      </Text>
+      {transaction.services?.length > 1 && (
+        <Text
+          style={{
+            color: '#888',
+            fontSize: wp('3.8%'),
+            marginLeft: 6,
+            flexShrink: 0,
+          }}
+          numberOfLines={1}
+        >
+          {`+${transaction.services.length - 1} more`}
+        </Text>
+      )}
+    </View>
+  </View>
+  <Text
+    style={{
+      color:
+        transaction.status === 'paid' || transaction.status === 'Completed'
+          ? '#1976d2'
+          : '#fab636',
+      fontWeight: 'bold',
+      fontSize: wp('3.5%'),
+      minWidth: 90,
+      textAlign: 'right',
+      marginLeft: 8,
+      flexShrink: 0,
+    }}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    {transaction.status === 'paid'
+      ? 'Completed'
+      : transaction.status || 'To Process'}
+  </Text>
+</TouchableOpacity>
 
                     {/* Expanded Details */}
                     {isExpanded && (
@@ -546,7 +601,7 @@ const GradientNextButton = ({ onPress }) => (
                           </View>
                         ))}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                          <Text style={{ color: '#888' }}>Paid in</Text>
+                          <Text style={{ color: '#888' }}>Payment Method</Text>
                           <Text style={{ color: '#333', fontWeight: 'bold' }}>
                             {transaction.paymentMethod === 'gcash' ? 'Gcash' : (transaction.paymentMethod || 'Cash')}
                           </Text>
@@ -558,11 +613,14 @@ const GradientNextButton = ({ onPress }) => (
                           </Text>
                         </View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <Text style={{ color: '#888' }}>Payment Time</Text>
-                          <Text style={{ color: '#333' }}>
-                            {transaction.paymentTime ? new Date(transaction.paymentTime).toLocaleDateString() + ' ' + new Date(transaction.paymentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </Text>
-                        </View>
+  <Text style={{ color: '#888' }}>Payment Time</Text>
+  <Text style={{ color: '#333' }}>
+    {transaction.paymentTime
+      ? new Date(transaction.paymentTime).toLocaleDateString() + ' ' +
+        new Date(transaction.paymentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : ''}
+  </Text>
+</View>
                         <View style={{ borderTopWidth: 1, borderColor: '#eee', marginVertical: 8 }} />
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                           <Text style={{ color: '#333', fontWeight: 'bold' }}>Total Payment:</Text>
@@ -578,9 +636,12 @@ const GradientNextButton = ({ onPress }) => (
                       style={{ alignSelf: 'center', marginTop: isExpanded ? 8 : 0 }}
                       onPress={() => toggleExpand(transaction._id)}
                     >
-                      <Text style={{ color: '#888', fontSize: 13 }}>
-                        {isExpanded ? 'View Less  ⌃' : 'View Details  ⌄'}
-                      </Text>
+                      <Text style={{
+  color: '#888',
+  fontSize: wp('3.5%'), // Responsive
+}}>
+  {isExpanded ? 'View Less  ⌃' : 'View Details  ⌄'}
+</Text>
                     </TouchableOpacity>
                   </View>
                 );
@@ -648,18 +709,17 @@ const GradientNextButton = ({ onPress }) => (
               <View style={[modalStyles.inputContainer, { flex: 1.3 }]}>
                 <Text style={modalStyles.label}>Name of the Deceased *</Text>
                 <TextInput
-                  style={modalStyles.input}
-                  value={graveDetails.deceasedName}
-                  onChangeText={text => setGraveDetails({ ...graveDetails, deceasedName: text })}
-                  editable={true}
-                  selectTextOnFocus={true}
-                />
+  style={modalStyles.input}
+  value={graveDetails.deceasedName}
+  onChangeText={text => setGraveDetails({ ...graveDetails, deceasedName: text })}
+  editable={true}
+/>
               </View>
               <View style={[modalStyles.inputContainer]}>
     <Text style={modalStyles.label}>Date of Burial</Text>
     <View style={modalStyles.input}>
       <Text style={{ color: graveDetails.dateOfBurial ? '#222' : '#aaa', fontSize: 15 }}>
-        {graveDetails.dateOfBurial || 'No date available'}
+        {graveDetails.dateOfBurial || ''}
       </Text>
     </View>
   </View>
@@ -672,7 +732,7 @@ const GradientNextButton = ({ onPress }) => (
                   value={graveDetails.dateOfBirth}
                   editable={false}
                   selectTextOnFocus={false}
-                  placeholder="Select Date"
+                  placeholder=""
                 />
               </View>
               <View style={modalStyles.inputContainer}>
@@ -688,30 +748,15 @@ const GradientNextButton = ({ onPress }) => (
             <View style={modalStyles.row}>
               <View style={[modalStyles.inputContainer, { flex: 1.4 }]}>
                 <Text style={modalStyles.label}>Category</Text>
-                <DropDownPicker
-                  open={apartmentOpen}
-                  value={graveDetails.category}
-                  setValue={val => setGraveDetails({ ...graveDetails, category: val() })}
-                  items={apartments}
-                  setOpen={setApartmentOpen}
-                  setItems={setApartments}
-                  placeholder="Select Apartment"
-                  style={{
-                    height: 38,
-                    borderColor: '#ccc',
-                    backgroundColor: '#f9f9f9',
-                    minHeight: 38,
-                    paddingVertical: 0,
-                  }}
-                  containerStyle={{
-                    height: 38,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: '#ccc',
-                  }}
-                  zIndex={1000}
-                  disabled={true} // <-- Make dropdown uneditable
-                />
+                <View style={modalStyles.input}>
+      <Text style={{
+        color: graveDetails.category ? '#222' : '#aaa',
+        fontSize: wp('3.8%'),
+        fontFamily: 'Inter_400Regular',
+      }}>
+        {graveDetails.category || ''}
+      </Text>
+    </View>
               </View>
               <View style={modalStyles.inputContainer}>
                 <Text style={modalStyles.label}>Apt. no.</Text>
@@ -764,7 +809,16 @@ const GradientNextButton = ({ onPress }) => (
             >
               <Text style={modalStyles.closeButtonText}>✕</Text>
             </TouchableOpacity>
-            <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 20, marginBottom: 24, alignSelf: 'flex-start' }}>Payment Method</Text>
+            <Text style={{
+  fontWeight: 'bold',
+  fontSize: wp('4.5%'), // Responsive
+  marginTop: hp('2%'),
+  marginBottom: hp('2%'),
+  alignSelf: 'flex-start',
+  fontFamily: 'Inter_700Bold',
+}}>
+  Payment Method
+</Text>
             <View style={{ width: '100%', marginBottom: 20 }}>
               {/* Remove Gcash option */}
               {/* 
@@ -795,19 +849,24 @@ const GradientNextButton = ({ onPress }) => (
               */}
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={() => setSelectedPayment('cash')}
+                onPress={() => setSelectedPayment('Cash')}
                 activeOpacity={0.8}
               >
                 <Image source={require('../assets/cash.png')} style={{ width: 50, height: 50, marginRight: 16 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Pay in Cash</Text>
+                  <Text style={{
+  fontWeight: 'bold',
+  fontSize: wp('4%'), // Responsive
+}}>
+  Pay in Cash
+</Text>
                 </View>
                 <View style={{
                   width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#FFD600',
                   alignItems: 'center', justifyContent: 'center', marginLeft: 8,
-                  backgroundColor: selectedPayment === 'cash' ? '#FFD600' : '#fff'
+                  backgroundColor: selectedPayment === 'Cash' ? '#FFD600' : '#fff'
                 }}>
-                  {selectedPayment === 'cash' && (
+                  {selectedPayment === 'Cash' && (
                     <View style={{
                       width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFD600'
                     }} />
@@ -828,7 +887,7 @@ const GradientNextButton = ({ onPress }) => (
                   alert('Please select a payment method before proceeding.');
                   return;
                 }
-                if (selectedPayment !== 'cash') {
+                if (selectedPayment !== 'Cash') {
                   alert('Only "Pay in Cash" is available at this time. Please select "Pay in Cash" to proceed.');
                   return;
                 }
@@ -858,7 +917,7 @@ const GradientNextButton = ({ onPress }) => (
                   .then(res => res.json())
                   .then(async data => {
                     console.log('Transaction response:', data);
-                    if (selectedPayment === 'cash') {
+                    if (selectedPayment === 'Cash') {
     alert('Service successfully requested! Please proceed to the St. Joseph Cemetery office to complete payment on-site.');
   } else {
     alert('Request submitted!');
@@ -910,7 +969,13 @@ const GradientNextButton = ({ onPress }) => (
                 imageStyle={{ borderRadius: 30, resizeMode: 'stretch' }}
                 resizeMode="stretch"
               >
-                <Text style={{ color: '#1a5242', fontWeight: 'bold', fontSize: 18 }}>Complete Request</Text>
+                <Text style={{
+  color: '#1a5242',
+  fontWeight: 'bold',
+  fontSize: wp('4.5%'), // Responsive
+}}>
+  Complete Request
+</Text>
                 <View style={{
                   backgroundColor: '#fff',
                   width: 32,
@@ -920,7 +985,13 @@ const GradientNextButton = ({ onPress }) => (
                   justifyContent: 'center',
                   right: 65,
                 }}>
-                  <Text style={{ color: '#1a5242', fontWeight: 'bold', fontSize: 18 }}>➔</Text>
+                  <Text style={{
+  color: '#1a5242',
+  fontWeight: 'bold',
+  fontSize: wp('4.5%'), // Responsive
+}}>
+  ➔
+</Text>
                 </View>
               </ImageBackground>
             </TouchableOpacity>
@@ -939,18 +1010,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#f6f6f6",
   },
   headerBackground: {
-    width: "100%", // Ensure it spans the full width of the screen
-    height: 150, // Adjust height to match the design
+    width: "100%",
+    height: hp('18%'), // Responsive height
     justifyContent: "center",
     alignItems: "center",
   },
   headerImage: {
-    resizeMode: "cover", // Ensure the image covers the area
-    width: "100%", // Match the width of the container
-    height: "100%", // Match the height of the container
-    borderBottomLeftRadius: 30, // Add curve to the bottom-left corner
-    borderBottomRightRadius: 30, // Add curve to the bottom-right corner
-    overflow: "hidden", // Ensure the curve is visible
+    resizeMode: "cover",
+    width: "100%",
+    height: "100%",
+    borderBottomLeftRadius: wp('8%'),
+    borderBottomRightRadius: wp('8%'),
+    overflow: "hidden",
   },
   headerContent: {
     flexDirection: "row",
@@ -959,11 +1030,12 @@ const styles = StyleSheet.create({
     width: "90%",
   },
   header: {
-    fontSize: 20,
+    fontSize: wp('6%'),
     fontWeight: "bold",
     color: "#1a5242",
-    marginTop: 30,
+    marginTop: hp('7%'),
     textAlign: "center",
+    fontFamily: 'Inter_700Bold',
   },
   backButtonRequested: {
     position: "absolute",
@@ -989,94 +1061,89 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 10,
+    marginBottom: hp('1%'),
   },
   tab: {
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: "#aaa",
-    paddingVertical: 10,
+    paddingVertical: hp('1%'),
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
+    fontFamily: 'Inter_400Regular',
   },
   activeTab: {
     color: "#fab636",
     borderBottomColor: "#fab636",
   },
   scrollContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: wp('5%'),
+    paddingBottom: hp('2%'),
   },
   serviceRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: hp('1%'),
   },
+  drawerIcon: {
+  width: wp('11%'),
+  height: wp('11%'),
+  resizeMode: 'contain',
+  marginRight: wp('2.5%'),
+},
   serviceCard: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#e2efc2",
-    padding: 15,
-    borderRadius: 10,
+    padding: wp('4%'),
+    borderRadius: wp('3%'),
   },
   transactionCard: {
     backgroundColor: "#f9f9f9",
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: wp('3%'),
+    marginBottom: hp('1.2%'),
     width: '100%',
     paddingHorizontal: 0,
     paddingVertical: 0,
-    minHeight: 65,
+    minHeight: hp('8%'),
     justifyContent: 'center',
   },
   serviceIcon: {
-    width: 40,
-    height: 40,
-    marginHorizontal: 10,
+    width: wp('10%'),
+    height: wp('10%'),
+    marginHorizontal: wp('2.5%'),
   },
   serviceDetails: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  transactionDetails: {
-    flex: 1,
-    marginLeft: 10,
-  },
   serviceName: {
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: "#333",
-  },
-  transactionStatus: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#fab636",
-    marginTop: 5,
-  },
-  transactionInfo: {
-    fontSize: 12,
-    color: "#555",
-    marginTop: 2,
+    fontFamily: 'Inter_700Bold',
   },
   servicePrice: {
     fontWeight: "bold",
-
+    fontSize: wp('4%'),
+    fontFamily: 'Inter_700Bold',
   },
   noTransactionsText: {
     textAlign: "center",
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: "#aaa",
-    marginTop: 20,
+    marginTop: hp('2%'),
+    fontFamily: 'Inter_400Regular',
   },
   footer: {
-    padding: 20,
+    padding: wp('5%'),
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: wp('5%'),
+    borderTopRightRadius: wp('5%'),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: wp('2%'),
     elevation: 5,
   },
   footerContainer: {
@@ -1086,49 +1153,51 @@ const styles = StyleSheet.create({
   },
   footerTop: {
     backgroundColor: "#fff",
-    borderBottomLeftRadius: 25, // Add curve to the bottom-left corner
-    borderBottomRightRadius: 25, // Add curve to the bottom-right corner
-    height: 90,
-    padding: 20,
+    borderBottomLeftRadius: wp('6%'),
+    borderBottomRightRadius: wp('6%'),
+    height: hp('12%'),
+    padding: wp('5%'),
     elevation: 5,
-    top: 15,
+    top: hp('2%'),
     zIndex: 2
   },
   footerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: hp('1%'),
   },
   footerBottom: {
     width: "100%",
-    padding: 20,
-    overflow: "hidden", // Ensure the rounded corners are visible
+    padding: wp('5%'),
+    overflow: "hidden",
   },
   footerImage: {
-    resizeMode: "cover", 
-    width: "111%", // Match the width of the container
+    resizeMode: "cover",
+    width: "115%",
+    height: "215%",
   },
   paymentButton: {
-    paddingVertical: 15,
-    borderRadius: 50,
+    paddingVertical: hp('2%'),
+    borderRadius: wp('12%'),
     alignItems: "center",
-    marginTop: 10,
-    backgroundColor: "transparent", // Remove solid color
+    marginTop: hp('1%'),
+    backgroundColor: "transparent",
   },
   paymentButtonText: {
-    color: "#1a5242", // Adjust text color for visibility
-    fontSize: 16,
+    color: "#1a5242",
+    fontSize: wp('4.2%'),
     fontWeight: "bold",
-    alignSelf:"flex-start"
+    alignSelf: "flex-start",
+    fontFamily: 'Inter_700Bold',
   },
   collapseButton: {
     position: "absolute",
-    right: 20,
-    top: 40,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    right: wp('5%'),
+    top: hp('5%'),
+    width: wp('8%'),
+    height: wp('8%'),
+    borderRadius: wp('4%'),
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
@@ -1139,18 +1208,20 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   collapseIcon: {
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: "#333",
     fontWeight: "bold",
   },
   totalText: {
-    fontSize: 16,
+    fontSize: wp('4%'),
     color: "black",
+    fontFamily: 'Inter_700Bold',
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: wp('5%'),
     fontWeight: "bold",
     color: "#333",
+    fontFamily: 'Inter_700Bold',
   },
   fixedFooter: {
     position: 'absolute',
@@ -1158,16 +1229,16 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: '#fff',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    padding: wp('5%'),
+    borderTopLeftRadius: wp('5%'),
+    borderTopRightRadius: wp('5%'),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: wp('2%'),
     elevation: 5,
     zIndex: 10,
   },
@@ -1181,28 +1252,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: wp('21%'),
+    height: wp('21%'),
+    borderRadius: wp('10.5%'),
+    borderWidth: 1,
+    borderColor: '#00aa13',
   },
   profileName: {
-    fontSize: 18,
+    fontSize: RFValue(19, height),
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: hp('1.2%'),
   },
   profileLocation: {
-    fontSize: 14,
+    fontSize: RFValue(15, height),
     color: '#555',
   },
   editProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: hp('0.6%'),
   },
   editProfileText: {
-    fontSize: 14,
+    fontSize: RFValue(15, height),
     color: 'green',
-    marginLeft: 5,
+    marginLeft: wp('1.2%'),
   },
   menuSection: {
     marginVertical: 10,
@@ -1215,18 +1288,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   drawerTextGreen: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
     color: '#12894f',
   },
   drawerTextYellow: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
     color: '#cb9717',
   },
   drawerTextBlue: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
     color: '#1580c2',
   },
   signOutSection: {
@@ -1242,18 +1315,18 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   signOutText: {
-    fontSize: 16,
-    marginLeft: 10,
+    fontSize: RFValue(18, height),
+    marginLeft: wp('2.5%'),
     color: '#333',
   },
-  drawerIcon: {
-    width: 40, // Set width
-    height: 40, // Set height
-    resizeMode: 'contain', // Make sure it scales properly
-    marginRight: 10, // Add spacing between icon and text
+  drawerText: {
+    fontSize: RFValue(16, height),
+    marginLeft: wp('3.5%'),
+    color: '#333',
   },
 });
 
+// Modal styles
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -1262,65 +1335,69 @@ const modalStyles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 24,
-    paddingBottom: 40,
-    minHeight: 420, // Set your desired fixed height here
+    borderTopLeftRadius: wp('8%'),
+    borderTopRightRadius: wp('8%'),
+    padding: wp('6%'),
+    paddingBottom: hp('5%'),
+    minHeight: hp('55%'),
     alignItems: 'center',
   },
   closeButton: {
     position: 'absolute',
-    top: -25,
+    top: -hp('3%'),
     alignSelf: 'center',
     backgroundColor: '#1a5242',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: wp('11%'),
+    height: wp('11%'),
+    borderRadius: wp('5.5%'),
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: RFValue(24, height),
     fontWeight: 'bold',
   },
   title: {
     fontWeight: 'bold',
-    fontSize: 18,
-    marginTop: 20,
-    marginBottom: 16,
+    fontSize: RFValue(20, height),
+    marginTop: hp('2%'),
+    marginBottom: hp('2%'),
     alignSelf: 'flex-start',
+    fontFamily: 'Inter_700Bold',
   },
   row: {
     flexDirection: 'row',
     width: '100%',
-    gap: 10,
-    marginBottom: 10,
-    zIndex: 1000, // Add this line
+    gap: wp('2%'),
+    marginBottom: hp('1%'),
+    zIndex: 1000,
   },
   inputContainer: {
     flex: 1,
   },
   label: {
-    fontSize: 13,
-    marginBottom: 2,
+    fontSize: RFValue(14, height),
+    marginBottom: hp('0.5%'),
     color: '#222',
+    fontFamily: 'Inter_700Bold',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 2,
-    padding: 8,
-    backgroundColor: '#fff', // <-- Make input field white
+    borderRadius: wp('2%'),
+    marginBottom: hp('0.5%'),
+    padding: wp('2%'),
+    backgroundColor: '#fff',
+    fontSize: RFValue(15, height),
+    fontFamily: 'Inter_400Regular',
   },
   dropdown: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: wp('2%'),
+    padding: wp('2%'),
     backgroundColor: '#f9f9f9',
     justifyContent: 'center',
   },
@@ -1328,31 +1405,33 @@ const modalStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 5,
+    borderRadius: wp('2%'),
     width: '100%',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    marginTop: 30,
+    paddingVertical: hp('2%'),
+    paddingHorizontal: wp('6%'),
+    marginTop: hp('3%'),
   },
   nextButtonText: {
     color: '#1a5242',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: RFValue(18, height),
+    fontFamily: 'Inter_700Bold',
   },
   nextButtonCircle: {
     backgroundColor: '#fff',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: wp('8%'),
+    height: wp('8%'),
+    borderRadius: wp('4%'),
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
-    right: 35,
+    marginLeft: wp('2.5%'),
+    right: wp('9%'),
   },
   nextButtonArrow: {
     color: '#1a5242',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: RFValue(18, height),
+    fontFamily: 'Inter_700Bold',
   },
 });
 

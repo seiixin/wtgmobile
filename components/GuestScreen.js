@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ImageBackground, StatusBar, Dimensions } from "react-native";
 import RNModal from "react-native-modal";
 import { LinearGradient } from 'expo-linear-gradient';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerActions } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import { Dimensions } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const { width, height } = Dimensions.get("window");
 
@@ -14,7 +14,7 @@ const services = [
   { id: 3, name: "Construction Permit", image: require("../assets/PermitIMG.png") },
   { id: 4, name: "Niche Demolition", image: require("../assets/DemolitionIMG.png") },
   { id: 5, name: "Lot for Lease Existing Fee", image: require("../assets/LotIMG.png") },
-  { id: 6, name: "Gravestone QR", image: require("../assets/GravestoneQrIMG.png") }, // Added new service
+  { id: 6, name: "Gravestone QR", image: require("../assets/GravestoneQrIMG.png") },
 ];
 
 const burialOptions = [
@@ -23,7 +23,7 @@ const burialOptions = [
     name: "ADULT (Ordinary)", 
     description: "w/ Lapida\n• 5 YEARS CONTRACT\n• RENEWABLE", 
     image: require("../assets/adult.png"),
-    bgColor: "#e2efc2", // Light Red
+    bgColor: "#e2efc2",
     route: "AdultDetails",
   },
   { 
@@ -31,7 +31,7 @@ const burialOptions = [
     name: "CHILD APT.", 
     description: "optional for Lapida\n• 5 YEARS CONTRACT\n• NON-RENEWABLE", 
     image: require("../assets/child.png"),
-    bgColor: "#c2dfef", // Light Red
+    bgColor: "#c2dfef",
     route: "ChildAptDetails",
   },
   { 
@@ -39,7 +39,7 @@ const burialOptions = [
     name: "BONE APT.", 
     description: "2 bones only\n• 5 YEARS CONTRACT\n• RENEWABLE", 
     image: require("../assets/bones.png"),
-    bgColor: "#efe6c2", // Light Red
+    bgColor: "#efe6c2",
     route: "BoneAptDetails",
   },
   { 
@@ -47,7 +47,7 @@ const burialOptions = [
     name: "PRIVATE LOTS", 
     description: "AVAILABLE IN:\n• UNDER GROUND\n• ABOVE GROUND", 
     image: require("../assets/private.png"),
-    bgColor: "#efc2c2", // Light Red
+    bgColor: "#efc2c2",
     route: "PrivateLotDetails",
   }
 ];
@@ -153,89 +153,125 @@ const GuestScreenContent = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require('../assets/ServicesBG.png')} 
-      style={styles.background} 
-      resizeMode="cover"
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Drawer Toggle Button */}
-        <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.drawerToggle}>
-          <View style={styles.line} />
-          <View style={styles.line} />
-          <View style={styles.line} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Cemetery Services & Maintenance</Text>
-        <Text style={styles.headerSubtitle}>
-          Provide dignified burial options for loved ones with various choices to suit different needs.
-        </Text>
-      </View>
-
-      {/* Maintenance Services */}
-      <Text style={styles.sectionTitle}>Maintenance and Construction Services</Text>
-      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-        {services.map((service) => (
-          <TouchableOpacity key={service.id} onPress={() => handleServicePress(service)} style={styles.serviceCard}>
-            <Image source={service.image} style={styles.serviceImage} />
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground 
+        source={require('../assets/ServicesBG.png')} 
+        style={styles.background} 
+        resizeMode="cover"
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          {/* Drawer Toggle Button */}
+          <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.drawerToggle}>
+            <View style={styles.line} />
+            <View style={styles.line} />
+            <View style={styles.line} />
           </TouchableOpacity>
-        ))}
-      </ScrollView>
 
-      {/* Burial Services */}
-      <Text style={styles.sectionTitle1}>Burial Services</Text>
-      <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollViewContent}>
-        {burialOptions.map((option) => (
-          <View key={option.id} style={[styles.burialCard, { backgroundColor: option.bgColor }]}>
-            <Image source={option.image} style={styles.burialImage} />
-            <View style={styles.burialInfo}>
-              <Text style={styles.burialTitle}>{option.name}</Text>
-              <Text style={styles.burialDescription}>{option.description}</Text>
-            </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={styles.button} 
-                onPress={() => navigation.navigate(option.route)}
-              >
-                <Text style={styles.buttonText}>View details</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Bottom Sheet Modal */}
-      <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
-        <View style={styles.modalContent}>
-          {selectedService && (
-            <>
-              <View style={styles.divider} />
-              <Image source={selectedService.image} style={styles.modalImage} />
-              <Text style={styles.modalTitle}>{selectedService.title}</Text>
-              <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
-              <Text style={styles.modalDescription}>{selectedService.description}</Text>
-              <TouchableOpacity 
-                onPress={() => {
-                  setModalVisible(false);
-                  navigation.navigate("GuestLogin");
-                }} 
-                style={styles.requestButton}
-              >
-                <LinearGradient
-                  colors={["#ffef5d", "#7ed957"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.requestServiceGradient}
-                >
-                  <Text style={styles.requestButtonText}>Request Service</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </>
-          )}
+          <Text style={styles.headerTitle}>Cemetery Services & Maintenance</Text>
+          <Text style={styles.headerSubtitle}>
+            Provide dignified burial options for loved ones with various choices to suit different needs.
+          </Text>
         </View>
-      </RNModal>
-    </ImageBackground>
+
+        {/* Maintenance Services */}
+        <Text style={styles.sectionTitle}>Maintenance and Construction Services</Text>
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          {services.map((service) => (
+            <TouchableOpacity key={service.id} onPress={() => handleServicePress(service)} style={styles.serviceCard}>
+              <Image source={service.image} style={styles.serviceImage} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Burial Services */}
+        <Text style={styles.sectionTitle1}>Burial Services</Text>
+        <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollViewContent}>
+          {burialOptions.map((option) => (
+            <View key={option.id} style={[styles.burialCard, { backgroundColor: option.bgColor }]}>
+              <Image source={option.image} style={styles.burialImage} />
+              <View style={styles.burialInfo}>
+                <Text style={styles.burialTitle}>{option.name}</Text>
+                <Text style={styles.burialDescription}>{option.description}</Text>
+              </View>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity 
+                  style={styles.button} 
+                  onPress={() => navigation.navigate(option.route)}
+                >
+                  <Text style={styles.buttonText}>View details</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Bottom Sheet Modal */}
+        <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
+          <View
+            style={[
+              styles.modalContent,
+              selectedService && selectedService.description && selectedService.description.length > 120
+                ? { height: hp('50%') }
+                : { height: hp('45%') }
+            ]}
+          >
+            {selectedService && (
+              <>
+                <View style={styles.divider} />
+                <Image source={selectedService.image} style={styles.modalImage} />
+                <Text style={styles.modalTitle}>{selectedService.title}</Text>
+                <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
+                <ScrollView
+                  style={{ width: '100%', flex: 1 }}
+                  contentContainerStyle={{
+                    flexGrow: 1,
+                    justifyContent: 'center', // Center vertically
+                  }}
+                >
+                  {selectedService.description
+                    .split(/\n|•/g)
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .map((line, idx) => (
+                      <Text
+                        key={idx}
+                        style={[
+                          styles.modalDescription,
+                          { marginTop: idx === 0 ? hp('1.2%') : hp('1.5%') }
+                        ]}
+                      >
+                        {`• ${line}`}
+                      </Text>
+                    ))}
+                </ScrollView>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setModalVisible(false);
+                    navigation.navigate("GuestLogin");
+                  }} 
+                  style={styles.requestButton}
+                >
+                  <LinearGradient
+                    colors={["#ffef5d", "#7ed957"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.requestServiceGradient}
+                  >
+                    <Text style={styles.requestButtonText}>Request Service</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </RNModal>
+      </ImageBackground>
+    </>
   );
 };
 
@@ -256,8 +292,8 @@ const GuestScreen = () => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: "100%",
-    height: "100%",
+    width: wp('100%'),
+    height: hp('100%'),
     resizeMode: "cover",
   },
   container: {
@@ -265,73 +301,76 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FA",
   },
   header: {
-    padding: width * 0.05,
-    borderBottomLeftRadius: width * 0.05,
-    borderBottomRightRadius: width * 0.05,
-    marginTop: height * 0.07,
-    marginBottom: height * 0.01,
+    padding: wp('5%'),
+    borderBottomLeftRadius: wp('5%'),
+    borderBottomRightRadius: wp('5%'),
+    marginTop: hp('7%'),
+    marginBottom: hp('1%'),
   },
   headerTitle: {
-    fontSize: width * 0.09,
+    fontSize: wp('7%'),
     fontWeight: "bold",
     color: "#2D6A4F",
-    marginTop: height * 0.03,
+    marginTop: hp('3%'),
+    fontFamily: 'Inter_700Bold',
   },
   headerSubtitle: {
-    fontSize: width * 0.035,
+    fontSize: wp('3.5%'),
     color: "#555",
-    marginTop: height * 0.005,
+    marginTop: hp('0.5%'),
+    fontFamily: 'Inter_400Regular',
   },
   drawerToggle: {
     position: "absolute",
     top: 0,
-    left: width * 0.050,
-    width: width * 0.08,
-    height: width * 0.08,
+    left: wp('5%'),
+    width: wp('8%'),
+    height: wp('8%'),
     justifyContent: "center",
     alignItems: "center",
-    
   },
   line: {
-    width: width * 0.06,
+    width: wp('6%'),
     height: 2,
     backgroundColor: "#2D6A4F",
     marginVertical: 2,
   },
   sectionTitle: {
-    fontSize: width * 0.04,
+    fontSize: wp('4%'),
     color: "#a6a6a6",
-    marginTop: height * 0.03,
-    marginLeft: width * 0.05,
+    marginTop: hp('7%'),
+    marginLeft: wp('5%'),
+    fontFamily: 'Inter_400Regular',
   },
   sectionTitle1: {
-    fontSize: width * 0.04,
+    fontSize: wp('4%'),
     color: "#a6a6a6",
-    marginLeft: width * 0.05,
-    marginTop: height * 0.03,
+    marginLeft: wp('5%'),
+    marginTop: hp('3%'),
+    fontFamily: 'Inter_400Regular',
   },
   horizontalScroll: {
-    paddingHorizontal: width * 0.025,
-    paddingVertical: height * 0.012,
+    paddingHorizontal: wp('2.5%'),
+    paddingVertical: hp('1.2%'),
   },
   serviceCard: {
     alignItems: "center",
-    borderRadius: width * 0.025,
-    marginHorizontal: width * 0.025,
+    borderRadius: wp('2.5%'),
+    marginHorizontal: wp('2.5%'),
     shadowColor: "#000",
     shadowOpacity: 0.2,
-    shadowRadius: width * 0.025,
+    shadowRadius: wp('2.5%'),
     elevation: 5,
   },
   serviceImage: {
-    width: width * 0.32,
-    height: width * 0.26,
-    marginBottom: height * 0.005,
-    marginRight: width * 0.01,
+    width: wp('32%'),
+    height: wp('28%'),
+    marginBottom: hp('3%'),
+    marginRight: wp('1%'),
     resizeMode: "contain",
   },
   serviceText: {
-    fontSize: width * 0.03,
+    fontSize: wp('3%'),
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -339,17 +378,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF",
-    margin: width * 0.012,
-    padding: width * 0.025,
-    marginHorizontal: width * 0.05,
-    borderRadius: width * 0.025,
+    margin: wp('1.2%'),
+    padding: wp('2.5%'),
+    marginHorizontal: wp('5%'),
+    borderRadius: wp('2.5%'),
     position: "relative",
-    minHeight: height * 0.12,
+    minHeight: hp('12%'),
   },
   burialImage: {
-    width: width * 0.13,
-    height: width * 0.13,
-    marginRight: width * 0.025,
+    width: wp('13%'),
+    height: wp('13%'),
+    marginRight: wp('2.5%'),
     resizeMode: "contain",
   },
   burialInfo: {
@@ -357,35 +396,38 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   burialTitle: {
-    fontSize: width * 0.045,
+    fontSize: wp('4.5%'),
     fontWeight: "bold",
     color: "#2D6A4F",
+    fontFamily: 'Inter_700Bold',
   },
   burialDescription: {
-    fontSize: width * 0.032,
+    fontSize: wp('3.2%'),
     color: "#555",
+    fontFamily: 'Inter_400Regular',
   },
   buttonContainer: {
     position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: "#fff",
-    padding: width * 0.025,
-    borderTopLeftRadius: width * 0.025,
+    padding: wp('2.5%'),
+    borderTopLeftRadius: wp('2.5%'),
   },
   button: {
     backgroundColor: "#2D6A4F",
-    paddingVertical: height * 0.01,
-    paddingHorizontal: width * 0.04,
-    borderRadius: width * 0.025,
+    paddingVertical: hp('1%'),
+    paddingHorizontal: wp('4%'),
+    borderRadius: wp('2.5%'),
     position: "relative",
     bottom: 0,
     right: 0,
   },
   buttonText: {
     color: "#FFF",
-    fontSize: width * 0.032,
+    fontSize: wp('3.2%'),
     fontWeight: "bold",
+    fontFamily: 'Inter_400Regular',
   },
   modal: {
     justifyContent: "flex-end",
@@ -393,109 +435,119 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    padding: width * 0.06,
-    borderTopLeftRadius: width * 0.05,
-    borderTopRightRadius: width * 0.05,
+    padding: wp('6%'),
+    borderTopLeftRadius: wp('5%'),
+    borderTopRightRadius: wp('5%'),
     alignItems: "center",
-    height: height * 0.4,
+    height: hp('40%'),
   },
   divider: {
     width: "25%",
-    height: height * 0.006,
+    height: hp('0.6%'),
     backgroundColor: "#d9d9d9",
     bottom: 5,
     borderRadius: 10,
   },
   modalImage: {
-    width: width * 0.18,
-    height: width * 0.18,
-    marginBottom: height * 0.012,
-    marginTop: height * 0.025,
+    width: wp('18%'),
+    height: wp('18%'),
+    marginBottom: hp('1.2%'),
+    marginTop: hp('2.5%'),
     resizeMode: "contain",
   },
   modalTitle: {
-    fontSize: width * 0.065,
+    fontSize: wp('6.5%'),
     fontWeight: "bold",
     color: "#333333",
     textAlign: "center",
+    fontFamily: 'Inter_700Bold',
   },
   modalPricing: {
-    fontSize: width * 0.04,
+    fontSize: wp('4%'),
     fontWeight: "bold",
     color: "#333333",
-    marginTop: height * 0.008,
+    marginTop: hp('0.8%'),
+    fontFamily: 'Inter_400Regular',
   },
   modalDescription: {
-    fontSize: width * 0.037,
+    fontSize: wp('3.7%'),
     color: "#555",
     textAlign: "left",
-    marginTop: height * 0.012,
+    marginTop: hp('1.2%'),
+    fontFamily: 'Inter_400Regular',
+    paddingHorizontal: wp('5%'),
   },
   requestButton: {
-    borderRadius: width * 0.025,
-    marginTop: height * 0.018,
+    borderRadius: wp('2.5%'),
+    marginTop: hp('1.8%'),
     width: "80%",
     alignItems: "center",
-    marginVertical: height * 0.018,
+    marginVertical: hp('1.8%'),
   },
   requestButtonText: {
     color: "#1a5242",
-    fontSize: width * 0.04,
+    fontSize: wp('4%'),
     fontWeight: "bold",
+    fontFamily: 'Inter_700Bold',
   },
+  
   requestServiceGradient: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: width * 0.025,
-    paddingVertical: height * 0.015,
+    borderRadius: wp('2.5%'),
+    paddingVertical: hp('1.5%'),
   },
+  
   mainScrollViewContent: {
-    paddingBottom: height * 0.025,
+    paddingBottom: hp('2.5%'),
   },
   drawerContainer: {
     flex: 1,
-    padding: width * 0.05,
+    padding: wp('5%'),
     backgroundColor: "#fff",
   },
   menuSection: {
-    marginVertical: height * 0.012,
+    marginVertical: hp('1.2%'),
   },
   drawerItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: height * 0.012,
-    paddingHorizontal: width * 0.04,
-    borderRadius: width * 0.025,
+    paddingVertical: hp('1.2%'),
+    paddingHorizontal: wp('4%'),
+    borderRadius: wp('2.5%'),
   },
   drawerTextBlue: {
-    fontSize: width * 0.04,
-    marginLeft: width * 0.04,
+    fontSize: wp('4%'),
+    marginLeft: wp('4%'),
     color: "#1580c2",
+    fontFamily: 'Inter_400Regular',
   },
   drawerTextYellow: {
-    fontSize: width * 0.04,
-    marginLeft: width * 0.04,
+    fontSize: wp('4%'),
+    marginLeft: wp('4%'),
     color: "#cb9717",
+    fontFamily: 'Inter_400Regular',
   },
   drawerIcon: {
-    width: width * 0.11,
-    height: width * 0.11,
+    width: wp('11%'),
+    height: wp('11%'),
     resizeMode: "contain",
-    marginRight: width * 0.025,
+    marginRight: wp('2.5%'),
   },
   signInButton: {
     backgroundColor: "#00aa13",
-    paddingVertical: height * 0.018,
-    borderRadius: width * 0.025,
+    paddingVertical: hp('1.8%'),
+    borderRadius: wp('2.5%'),
     alignItems: "center",
-    marginHorizontal: width * 0.04,
-    marginTop: height * 0.025,
+    marginHorizontal: wp('4%'),
+    marginTop: hp('2.5%'),
   },
   signInButtonText: {
     color: "#fff",
-    fontSize: width * 0.045,
+    fontSize: wp('4.5%'),
     fontWeight: "bold",
+    fontFamily: 'Inter_700Bold',
   },
 });
 

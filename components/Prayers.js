@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Dimensions, ScrollView, ImageBackground, Alert, SectionList } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Dimensions, ScrollView, ImageBackground, Alert, SectionList, StatusBar } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import WaveCurve from '../components/WaveCurve';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
-
 const { width, height } = Dimensions.get('window');
 
 const CustomDrawerContent = (props) => {
@@ -67,15 +68,21 @@ const handleSignOut = () => {
                         <View style={styles.profileSection}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Image
-                                    source={{
-                                        uri: user?.profileImage
-                                            ? user.profileImage
-                                            : 'https://via.placeholder.com/150'
-                                    }}
+                                    source={
+                                        user?.profileImage
+                                          ? { uri: user.profileImage }
+                                          : require('../assets/blankDP.jpg') // fallback local image
+                                    }
                                     style={styles.profileImage}
                                 />
                                 <View style={{ marginLeft: 16 }}>
-                                    <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
+                                    <Text style={styles.profileName}>
+                                      {user?.name
+                                        ? user.name.length > 16
+                                          ? `${user.name.slice(0, 16)}...`
+                                          : user.name
+                                        : "Loading..."}
+                                    </Text>
                                     <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
                                     <TouchableOpacity
                                         style={styles.editProfileButton}
@@ -191,178 +198,183 @@ const PrayersScreen = () => {
     };
 
     return (
-
+        <>
+        <StatusBar
+            barStyle="dark-content"
+            backgroundColor="transparent"
+            translucent={true}
+        />
         <ImageBackground
-              source={require('../assets/HistoryBgg.png')} 
-              style={styles.background}
-               >
+            source={require('../assets/HistoryBgg.png')}
+            style={styles.background}
+        >
+            <View style={styles.container}>
+                {/* Background & Header */}
+                <View style={styles.topSection}>
+                    {/* <Image source={require('../assets/11BG.png')} style={styles.bg} /> */}
+                     <View style={styles.topBar}>
+                            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+                                <Ionicons
+                                    name="menu"
+                                    size={24}
+                                    color="black"
+                                    style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                                />
+                            </TouchableOpacity>
+                            <View style={styles.imageContainer}></View>
+                    </View>
 
-        <View style={styles.container}>
-            {/* Background & Header */}
-            <View style={styles.topSection}>
-                {/* <Image source={require('../assets/11BG.png')} style={styles.bg} /> */}
-                 <View style={styles.topBar}>
-                        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                            <Ionicons
-                                name="menu"
-                                size={24}
-                                color="black"
-                                style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                    {/* Search Bar */}
+                    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
+                        <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+                            <TextInput
+                                style={styles.searchBar}
+                                placeholder="Search by Fullname or Nickname"
+                                placeholderTextColor="gray"
+                                value={searchQuery}
+                                onChangeText={text => {
+                                    setSearchQuery(text);
+                                    if (text.trim() === '') {
+                                        setSearchResults([]);
+                                        setHasSearched(false);
+                                    }
+                                }}
                             />
-                        </TouchableOpacity>
-                        <View style={styles.imageContainer}></View>
-                </View>
+                            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+                                <Ionicons name="search" size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
 
-                {/* Search Bar */}
-                <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
-                    <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
-                        <TextInput
-                            style={styles.searchBar}
-                            placeholder="Search by Fullname or Nickname"
-                            placeholderTextColor="gray"
-                            value={searchQuery}
-                            onChangeText={text => {
-                                setSearchQuery(text);
-                                if (text.trim() === '') {
-                                    setSearchResults([]);
-                                    setHasSearched(false);
-                                }
-                            }}
-                        />
-                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                            <Ionicons name="search" size={20} color="white" />
-                        </TouchableOpacity>
+
+                        {/* Four Buttons */}
+                        <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+                            <View style={styles.IconDivider} />
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+                            <View style={styles.IconDivider} />
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+                            <View style={styles.IconDivider} />
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-
-                    {/* Four Buttons */}
-                    <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-                        <View style={styles.IconDivider} />
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-                        <View style={styles.IconDivider} />
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-                        <View style={styles.IconDivider} />
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
-                        </TouchableOpacity>
-                    </View>
                 </View>
 
-            </View>
+                {/* Wave Background */}
+                <View style={styles.waveContainer}>
+                    <WaveCurve color="#fff" />
+                </View>
 
-            {/* Wave Background */}
-            <View style={styles.waveContainer}>
-                <WaveCurve color="#fff" />
-            </View>
+                {/* Content Area */}
+                <View style={styles.content}>
+                    {/* Only show this block if NOT searching */}
+                    {searchQuery.trim().length === 0 && (
+                        <>
+                            <View style={styles.filterContainer}>
+                                <Text style={styles.filterText}>Prayers for the Deceased</Text>
+                            </View>
+                            <View style={styles.divider} />
 
-            {/* Content Area */}
-            <View style={styles.content}>
-                {/* Only show this block if NOT searching */}
-                {searchQuery.trim().length === 0 && (
-                    <>
-                        <View style={styles.filterContainer}>
-                            <Text style={styles.filterText}>Prayers for the Deceased</Text>
-                        </View>
-                        <View style={styles.divider} />
-
-                        <View style={{ flex: 1, marginBottom: height * 0.07 }}>
-                            <ScrollView
-                                contentContainerStyle={styles.scrollContent}
-                                showsVerticalScrollIndicator={false}
-                            >
-                                <View style={styles.contentRow}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('RosaryPrayer')} style={styles.touchableImage}>
-                                        <Image source={require('../assets/RosaryImg.png')} style={styles.contentImage} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => navigation.navigate('NovenaPrayer')} style={styles.touchableImage}>
-                                        <Image source={require('../assets/NovenaImg.png')} style={styles.contentImage} />
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.contentRow}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('MassIntention')} style={styles.touchableImage}>
-                                        <Image source={require('../assets/MassImg.png')} style={styles.contentImage} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => navigation.navigate('PsalmReading')} style={styles.touchableImage}>
-                                        <Image source={require('../assets/ReadingsImg.png')} style={styles.contentImage} />
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.contentRow}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('SpecialIntention')} style={styles.touchableImage}>
-                                        <Image source={require('../assets/SpecialImg.png')} style={styles.contentImage} />
-                                    </TouchableOpacity>
-                                </View>
-                            </ScrollView>
-                        </View>
-                    </>
-                )}
-
-                {/* Show SectionList ONLY when searching */}
-                {searchQuery.trim().length > 0 && hasSearched && (
-                    <SectionList
-                        style={{ marginTop: -height * 0.06 }}
-                        sections={[
-                            { title: '', data: searchResults, type: 'searchResults' }
-                        ]}
-                        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
-                        renderSectionHeader={({ section }) => (
-                            <Text style={styles.sectionTitle}>{section.title}</Text>
-                        )}
-                        renderItem={({ item, section }) => {
-                            const formattedDateOfBirth = item.dateOfBirth
-                                ? new Intl.DateTimeFormat('en-US', {
-                                    month: 'long',
-                                    day: '2-digit',
-                                    year: 'numeric',
-                                }).format(new Date(item.dateOfBirth))
-                                : 'Unknown';
-
-                            const formattedBurialDate = item.burial
-                                ? new Intl.DateTimeFormat('en-US', {
-                                    month: 'long',
-                                    day: '2-digit',
-                                    year: 'numeric',
-                                }).format(new Date(item.burial))
-                                : 'Unknown';
-
-                            return (
-                                <TouchableOpacity
-                                    style={styles.card}
-                                    onPress={() => handleResultCardClick(item)}
+                            <View style={{ flex: 1, marginBottom: height * 0.07 }}>
+                                <ScrollView
+                                    contentContainerStyle={styles.scrollContent}
+                                    showsVerticalScrollIndicator={false}
                                 >
-                                    <Image
-                                        source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
-                                        style={styles.cardImage}
-                                    />
-                                    <View style={styles.cardContent}>
-                                        <Text style={styles.cardTitle}>
-                                            {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
-                                        </Text>
-                                        <Text style={styles.cardDates}>
-                                            {formattedDateOfBirth} - {formattedBurialDate}
-                                        </Text>
-                                        <Text style={styles.cardLocation}>
-                                            {item.phase}, Apartment {item.aptNo}
-                                        </Text>
+                                    <View style={styles.contentRow}>
+                                        <TouchableOpacity onPress={() => navigation.navigate('RosaryPrayer')} style={styles.touchableImage}>
+                                            <Image source={require('../assets/RosaryImg.png')} style={styles.contentImage} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => navigation.navigate('NovenaPrayer')} style={styles.touchableImage}>
+                                            <Image source={require('../assets/NovenaImg.png')} style={styles.contentImage} />
+                                        </TouchableOpacity>
                                     </View>
-                                </TouchableOpacity>
-                            );
-                        }}
-                        contentContainerStyle={{ paddingBottom: 100 }}
-                        ListEmptyComponent={() => (
-                            <Text style={styles.noResultsText}>No results found.</Text>
-                        )}
-                    />
-                )}
+                                    <View style={styles.contentRow}>
+                                        <TouchableOpacity onPress={() => navigation.navigate('MassIntention')} style={styles.touchableImage}>
+                                            <Image source={require('../assets/MassImg.png')} style={styles.contentImage} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => navigation.navigate('PsalmReading')} style={styles.touchableImage}>
+                                            <Image source={require('../assets/ReadingsImg.png')} style={styles.contentImage} />
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.contentRow}>
+                                        <TouchableOpacity onPress={() => navigation.navigate('SpecialIntention')} style={styles.touchableImage}>
+                                            <Image source={require('../assets/SpecialImg.png')} style={styles.contentImage} />
+                                        </TouchableOpacity>
+                                    </View>
+                                </ScrollView>
+                            </View>
+                        </>
+                    )}
+
+                    {/* Show SectionList ONLY when searching */}
+                    {searchQuery.trim().length > 0 && hasSearched && (
+                        <SectionList
+                            style={{ marginTop: -height * 0.06 }}
+                            sections={[
+                                { title: '', data: searchResults, type: 'searchResults' }
+                            ]}
+                            keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+                            renderSectionHeader={({ section }) => (
+                                <Text style={styles.sectionTitle}>{section.title}</Text>
+                            )}
+                            renderItem={({ item, section }) => {
+                                const formattedDateOfBirth = item.dateOfBirth
+                                    ? new Intl.DateTimeFormat('en-US', {
+                                        month: 'long',
+                                        day: '2-digit',
+                                        year: 'numeric',
+                                    }).format(new Date(item.dateOfBirth))
+                                    : 'Unknown';
+
+                                const formattedBurialDate = item.burial
+                                    ? new Intl.DateTimeFormat('en-US', {
+                                        month: 'long',
+                                        day: '2-digit',
+                                        year: 'numeric',
+                                    }).format(new Date(item.burial))
+                                    : 'Unknown';
+
+                                return (
+                                    <TouchableOpacity
+                                        style={styles.card}
+                                        onPress={() => handleResultCardClick(item)}
+                                    >
+                                        <Image
+                                            source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                            style={styles.cardImage}
+                                        />
+                                        <View style={styles.cardContent}>
+                                            <Text style={styles.cardTitle}>
+                                                {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
+                                            </Text>
+                                            <Text style={styles.cardDates}>
+                                                {formattedDateOfBirth} - {formattedBurialDate}
+                                            </Text>
+                                            <Text style={styles.cardLocation}>
+                                                {item.phase}, Apartment {item.aptNo}
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            }}
+                            contentContainerStyle={{ paddingBottom: 100 }}
+                            ListEmptyComponent={() => (
+                                <Text style={styles.noResultsText}>No results found.</Text>
+                            )}
+                        />
+                    )}
+                </View>
             </View>
-        </View>
-    </ImageBackground>
+        </ImageBackground>
+        </>
     );
 };
 
@@ -385,7 +397,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingTop: height * 0.04,
+        paddingTop: hp('4%'),
     },
     topSection: {
         position: 'relative',
@@ -393,7 +405,7 @@ const styles = StyleSheet.create({
     },
     bg: {
         width: '100%',
-        height: height * 1.3,
+        height: hp('130%'),
         position: 'absolute',
         top: 0,
     },
@@ -401,7 +413,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: width * 0.025,
+        padding: wp('2.5%'),
         backgroundColor: 'transparent',
         zIndex: 1,
     },
@@ -410,31 +422,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: width * 0.4,
-        height: height * 0.06,
+        width: wp('40%'),
+        height: hp('6%'),
         resizeMode: 'contain',
     },
     searchBarContainer: {
-        marginHorizontal: width * 0.025,
-        paddingTop: height * 0.012,
-        marginTop: height * 0.022,
+        marginHorizontal: wp('2.5%'),
+        paddingTop: hp('1.2%'),
+        marginTop: hp('2.2%'),
         zIndex: 2,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'white',
-        borderRadius: width * 0.015,
-        paddingHorizontal: width * 0.025,
+        borderRadius: wp('1.5%'),
+        paddingHorizontal: wp('2.5%'),
     },
     searchBar: {
         flex: 1,
-        padding: width * 0.025,
-        fontSize: width * 0.04,
+        padding: wp('2.5%'),
+        fontSize: RFValue(16, height),
     },
     searchButton: {
-        padding: width * 0.025,
+        padding: wp('2.5%'),
         backgroundColor: 'green',
-        borderRadius: width * 0.015,
-        marginLeft: width * 0.012,
+        borderRadius: wp('1.5%'),
+        marginLeft: wp('1.2%'),
     },
     waveContainer: {
         position: 'absolute',
@@ -447,47 +459,47 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'white',
         top: '5%',
-        borderTopLeftRadius: width * 0.05,
-        borderTopRightRadius: width * 0.05,
+        borderTopLeftRadius: wp('5%'),
+        borderTopRightRadius: wp('5%'),
         overflow: 'hidden',
     },
     filterContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: height * 0.012,
-        paddingHorizontal: width * 0.06,
+        marginBottom: hp('1.2%'),
+        paddingHorizontal: wp('6%'),
     },
     filterText: {
-        fontSize: width * 0.05,
+        fontSize: RFValue(18, height),
         color: 'gray',
-        marginHorizontal: width * 0.025,
+        marginHorizontal: wp('2.5%'),
     },
     filterButton: {
-        padding: width * 0.02,
-        borderRadius: width * 0.015,
+        padding: wp('2%'),
+        borderRadius: wp('1.5%'),
         backgroundColor: '#fff',
     },
     divider: {
         height: 2,
         backgroundColor: 'gray',
-        marginBottom: height * 0.025,
-        marginTop: -height * 0.006,
-        marginHorizontal: width * 0.09,
+        marginBottom: hp('2.5%'),
+        marginTop: -hp('0.6%'),
+        marginHorizontal: wp('9%'),
     },
     scrollContent: {
-    paddingHorizontal: width * 0.04,
-    paddingVertical: height * 0.025,
-    paddingBottom: height * 0.12, // ADD this line for extra space at the bottom
-},
+        paddingHorizontal: wp('4%'),
+        paddingVertical: hp('2.5%'),
+        paddingBottom: hp('12%'),
+    },
     contentRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: height * 0.018,
+        marginBottom: hp('1.8%'),
     },
     contentImage: {
         width: '100%',
-        height: height * 0.18,
+        height: hp('18%'),
         resizeMode: 'contain',
     },
     touchableImage: {
@@ -496,127 +508,129 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     buttonRow: {
-        bottom: height * 0.04,
+        bottom: hp('4%'),
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: width * 0.05,
-        marginBottom: height * 0.012,
-        height: height * 0.06,
+        paddingHorizontal: wp('5%'),
+        marginBottom: hp('1.2%'),
+        height: hp('6%'),
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: width * 0.025,
-        borderRadius: width * 0.015,
+        padding: wp('2.5%'),
+        borderRadius: wp('1.5%'),
         flex: 1,
         justifyContent: 'center',
-        marginHorizontal: width * 0.012,
+        marginHorizontal: wp('1.2%'),
     },
     buttonImage: {
-        width: width * 0.05,
-        height: width * 0.05,
+        width: wp('5%'),
+        height: wp('5%'),
         resizeMode: 'contain',
     },
     IconDivider: {
-        height: height * 0.06,
+        height: hp('6%'),
         width: 0.5,
         backgroundColor: 'gray',
     },
     drawerContainer: {
         flex: 1,
-        padding: width * 0.05,
+        padding: wp('5%'),
         backgroundColor: '#fff',
     },
     profileSection: {
         alignItems: 'center',
-        marginBottom: height * 0.025,
+        marginBottom: hp('2.5%'),
     },
     profileImage: {
-        width: width * 0.21,
-        height: width * 0.21,
-        borderRadius: width * 0.105,
+        width: wp('21%'),
+        height: wp('21%'),
+        borderRadius: wp('10.5%'),
+        borderWidth: 1,
+        borderColor: '#00aa13',
     },
     profileName: {
-        fontSize: width * 0.048,
+        fontSize: RFValue(19, height),
         fontWeight: 'bold',
-        marginTop: height * 0.012,
+        marginTop: hp('1.2%'),
     },
     profileLocation: {
-        fontSize: width * 0.038,
+        fontSize: RFValue(15, height),
         color: '#555',
     },
     editProfileButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: height * 0.006,
+        marginTop: hp('0.6%'),
     },
     editProfileText: {
-        fontSize: width * 0.038,
+        fontSize: RFValue(15, height),
         color: 'green',
-        marginLeft: width * 0.012,
+        marginLeft: wp('1.2%'),
     },
     menuSection: {
-        marginVertical: height * 0.012,
+        marginVertical: hp('1.2%'),
     },
     drawerItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: height * 0.012,
-        paddingHorizontal: width * 0.04,
-        borderRadius: width * 0.025,
+        paddingVertical: hp('1.2%'),
+        paddingHorizontal: wp('4%'),
+        borderRadius: wp('2.5%'),
     },
     drawerTextGreen: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#12894f',
     },
     drawerTextYellow: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#cb9717',
     },
     drawerTextBlue: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#1580c2',
     },
     signOutSection: {
         marginTop: 'auto',
         borderTopWidth: 1,
         borderColor: '#ccc',
-        paddingTop: height * 0.012,
-        paddingBottom: height * 0.05,
+        paddingTop: hp('1.2%'),
+        paddingBottom: hp('5%'),
     },
     signOutButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: height * 0.018,
+        paddingVertical: hp('1.8%'),
     },
     signOutText: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.025,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('2.5%'),
         color: '#333',
     },
     drawerIcon: {
-        width: width * 0.11,
-        height: width * 0.11,
+        width: wp('11%'),
+        height: wp('11%'),
         resizeMode: 'contain',
-        marginRight: width * 0.025,
+        marginRight: wp('2.5%'),
     },
     sectionTitle: {
-        fontSize: width * 0.045,
+        fontSize: RFValue(20, height),
         fontWeight: 'bold',
-        paddingVertical: height * 0.015,
-        paddingHorizontal: width * 0.04,
+        paddingVertical: hp('1.5%'),
+        paddingHorizontal: wp('4%'),
         backgroundColor: '#f9f9f9',
     },
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: width * 0.04,
-        borderRadius: width * 0.015,
+        padding: wp('4%'),
+        borderRadius: wp('1.5%'),
         backgroundColor: '#fff',
-        marginBottom: height * 0.015,
+        marginBottom: hp('1.5%'),
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -627,33 +641,33 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     cardImage: {
-        width: width * 0.15,
-        height: width * 0.15,
-        borderRadius: width * 0.075,
-        marginRight: width * 0.03,
+        width: wp('15%'),
+        height: wp('15%'),
+        borderRadius: wp('7.5%'),
+        marginRight: wp('3%'),
     },
     cardContent: {
         flex: 1,
     },
     cardTitle: {
-        fontSize: width * 0.04,
+        fontSize: RFValue(16, height),
         fontWeight: '500',
-        marginBottom: height * 0.005,
+        marginBottom: hp('0.5%'),
     },
     cardDates: {
-        fontSize: width * 0.035,
+        fontSize: RFValue(14, height),
         color: 'gray',
-        marginBottom: height * 0.005,
+        marginBottom: hp('0.5%'),
     },
     cardLocation: {
-        fontSize: width * 0.035,
+        fontSize: RFValue(14, height),
         color: '#333',
     },
     noResultsText: {
         textAlign: 'center',
         color: 'gray',
-        padding: height * 0.02,
-        fontSize: width * 0.04,
+        padding: hp('2%'),
+        fontSize: RFValue(16, height),
     },
 });
 

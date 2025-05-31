@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackground, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackground, Image, StatusBar, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfirmationModal from '../components/modals/ConfirmationModal'; // Import the reusable modal
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
+
+const { width, height } = Dimensions.get('window');
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -13,6 +17,7 @@ const ChangePassword = () => {
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [isConfirmationVisible, setConfirmationVisible] = useState(false); // State for confirmation modal
+  const [email, setEmail] = useState(''); // State for email
 
   const navigation = useNavigation();
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -45,22 +50,23 @@ const ChangePassword = () => {
     }
 
     try {
-      // Retrieve user ID from AsyncStorage
+      // Get the logged-in user's ID from AsyncStorage (set during login)
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) {
-        Alert.alert("Error", "User not found");
+        Alert.alert('Error', 'User not found. Please log in again.');
         return;
       }
 
-      // Check if current password is correct
+      // Validate current password using /api/users/validate-password/:id
       const response = await fetch(`${BASE_URL}/api/users/validate-password/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword }),
       });
 
       const data = await response.json();
-      if (!response.ok) {
+
+      if (!response.ok || !data.valid) {
         Alert.alert('Error', data.message || 'Invalid current password');
         return;
       }
@@ -74,11 +80,8 @@ const ChangePassword = () => {
 
       const updateData = await updateResponse.json();
       if (updateResponse.ok) {
-        // Reset OTP timer in AsyncStorage
-        await AsyncStorage.removeItem(`verificationTimer_${userId}`);
-
         Alert.alert('Success', 'Password has been changed successfully');
-        navigation.goBack(); // Navigate back to profile
+        navigation.goBack();
       } else {
         Alert.alert('Error', updateData.message || 'Failed to change password');
       }
@@ -94,6 +97,11 @@ const ChangePassword = () => {
       source={require("../assets/ChangePasswordBG.png")} 
       style={styles.background}
     >
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Image source={require("../assets/BackButton.png")} style={styles.backIcon} />
       </TouchableOpacity>
@@ -191,66 +199,68 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
-    left: 35,
+    top: hp('6%'),
+    left: wp('7%'),
     zIndex: 1,
   },
   backIcon: {
-    width: 40,
-    height: 40,
+    width: wp('12%'),
+    height: wp('12%'),
   },
   container: {
-    width: '80%',
-    padding: 20,
+    width: wp('85%'),
+    padding: wp('5%'),
     backgroundColor: 'white',
-    borderRadius: 40,
+    borderRadius: wp('8%'),
     alignItems: 'center',
-    height: "65%",
-   
+    height: hp('72%'), // Responsive height
   },
   header: {
-    fontSize: 24,
+    fontSize: RFValue(22, height),
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: hp('2%'),
+    marginBottom: hp('1%'),
     textAlign: 'center',
   },
   subHeader: {
-    fontSize: 16,
+    fontSize: RFValue(15, height),
     color: 'gray',
-    marginBottom: 20,
+    marginBottom: hp('2%'),
     textAlign: 'center',
   },
   input: {
     width: '100%',
-    height: 45,
+    height: hp('6%'),
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingLeft: 10,
-    marginBottom: 15,
+    borderRadius: wp('2%'),
+    paddingLeft: wp('2%'),
+    marginBottom: hp('1.2%'),
+    fontSize: RFValue(15, height),
   },
   button: {
     backgroundColor: '#fab636',
-    padding: 15,
-    borderRadius: 50,
+    padding: hp('1.8%'),
+    borderRadius: wp('10%'),
     width: '100%',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: hp('2%'),
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: RFValue(15, height),
+    fontWeight: 'bold',
   },
   icon: {
-    width: 60,
-    height: 60,
-    marginTop: 20,
+    width: wp('18%'),
+    height: wp('18%'),
+    marginTop: hp('2%'),
   },
   label: {
     fontWeight: 'bold',
     alignSelf: 'flex-start',
-    marginTop: 15,
+    marginTop: hp('1.5%'),
+    fontSize: RFValue(14, height),
   },
   passwordContainer: {
     width: '100%',
@@ -258,8 +268,17 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 10,
-    top: 12,
+    right: wp('2%'),
+    top: hp('1.2%'),
+  },
+  // Example modal style if you use a custom modal
+  modalContent: {
+    width: wp('90%'),
+    backgroundColor: '#fff',
+    padding: wp('5%'),
+    borderRadius: wp('4%'),
+    alignItems: 'center',
+    maxHeight: hp('80%'),
   },
 });
 

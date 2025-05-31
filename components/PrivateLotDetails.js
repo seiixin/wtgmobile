@@ -1,25 +1,31 @@
 import React, { useState } from "react";
-import { View, Text, Dimensions, Image, TouchableOpacity, StyleSheet, ImageBackground, ScrollView } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, ImageBackground, ScrollView, StatusBar, Dimensions } from "react-native";
 import { useNavigation } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 const { width, height } = Dimensions.get("window");
 
 const PrivateLotDetails = () => {
   const navigation = useNavigation();
 
-  // State to manage visibility of sub-options for each option
   const [isUndergroundOpen, setIsUndergroundOpen] = useState(false);
   const [isAboveGroundOpen, setIsAboveGroundOpen] = useState(false);
 
-  // Toggle functions
   const toggleUnderground = () => setIsUndergroundOpen(!isUndergroundOpen);
   const toggleAboveGround = () => setIsAboveGroundOpen(!isAboveGroundOpen);
 
   return (
-    <ImageBackground 
-      source={require('../assets/AdultDetBG.png')} // Using the uploaded background image
-      style={styles.background} 
-      resizeMode="cover"
-    >
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground 
+        source={require('../assets/AdultDetBG.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
         <View style={styles.headsContainer}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Image source={require('../assets/BackButton.png')} style={styles.backImage} />
@@ -112,107 +118,111 @@ const PrivateLotDetails = () => {
             <Text style={styles.optionPrice}>₱4,000.00</Text>
           </View>
         </ScrollView>
-    </ImageBackground>
+      </ImageBackground>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: wp('100%'),
+    height: hp('105%'),
     resizeMode: 'cover',
   },
   headsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    top: height * 0.06,
+    top: hp('6%'),
     justifyContent: 'center',
   },
   backButton: {
     position: 'absolute',
-    left: width * 0.05,
-    top: height * 0.012,
+    left: wp('5%'),
   },
   backImage: {
-    width: width * 0.11,
-    height: width * 0.11,
+    width: wp('11%'),
+    height: wp('11%'),
   },
   header: {
-    fontSize: width * 0.058,
+    fontSize: wp('6%'),
     fontWeight: 'bold',
     textAlign: "center",
-    marginTop: height * 0.012,
+    marginTop: hp('1.2%'),
+    fontFamily: 'Inter_700Bold',
   },
   headerTitle: {
-    fontSize: width * 0.065,
+    fontSize: wp('6.5%'),
     fontWeight: "bold",
     color: "#2D6A4F",
     textAlign: "center",
-    marginTop: height * 0.012,
+    marginTop: hp('1.2%'),
+    fontFamily: 'Inter_700Bold',
   },
   headerSubtitle: {
-    fontSize: width * 0.052,
+    fontSize: wp('5.2%'),
     color: "#555",
     textAlign: "center",
     fontWeight: 'bold',
-    marginTop: height * 0.006,
+    marginTop: hp('0.6%'),
+    fontFamily: 'Inter_700Bold',
   },
   profileImageContainer: {
     backgroundColor: '#efc2c2',
-    width: width * 0.37,
-    height: width * 0.37,
-    borderRadius: width * 0.185,
+    width: wp('37%'),
+    height: wp('37%'),
+    borderRadius: wp('18.5%'),
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: height * 0.18,
+    marginTop: hp('18%'),
     alignSelf: "center",
   },
   image: {
-    width: width * 0.24,
-    height: width * 0.24,
-    borderRadius: width * 0.12,
+    width: wp('24%'),
+    height: wp('24%'),
+    borderRadius: wp('12%'),
   },
   detailsContainer: {
     alignItems: 'flex-start',
-    paddingLeft: width * 0.05,
-    marginBottom: height * 0.012,
-    paddingTop: height * 0.05,
+    paddingLeft: wp('5%'),
+    marginBottom: hp('1.2%'),
+    paddingTop: hp('5%'),
   },
   dateText: {
-    fontSize: width * 0.035,
+    fontSize: wp('3.5%'),
     color: "#555",
     textAlign: "center",
+    fontFamily: 'Inter_400Regular',
   },
   logo: {
     alignSelf: 'flex-end',
-    marginTop: -height * 0.05,
-    marginRight: width * 0.025,
+    marginTop: -hp('5%'),
+    marginRight: wp('2.5%'),
   },
   logoImage: {
-    width: width * 0.18,
-    height: width * 0.13,
+    width: wp('18%'),
+    height: wp('13%'),
     resizeMode: "contain",
   },
   optionContainer: {
-    marginVertical: height * 0.006,
-    paddingVertical: height * 0.014,
+    marginVertical: hp('0.6%'),
+    paddingVertical: hp('1.4%'),
     backgroundColor: "#e9f7f1",
-    borderRadius: width * 0.025,
-    paddingHorizontal: width * 0.05,
+    borderRadius: wp('2.5%'),
+    paddingHorizontal: wp('5%'),
     width: '90%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     alignSelf: 'center',
-    minHeight: height * 0.09,
+    minHeight: hp('9%'),
   },
   subOptionContainer: {
-    marginVertical: height * 0.006,
-    paddingVertical: height * 0.01,
+    marginVertical: hp('0.6%'),
+    paddingVertical: hp('1%'),
     backgroundColor: "#d1f0d2",
-    borderRadius: width * 0.025,
-    paddingHorizontal: width * 0.05,
+    borderRadius: wp('2.5%'),
+    paddingHorizontal: wp('5%'),
     width: '90%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -222,31 +232,35 @@ const styles = StyleSheet.create({
   textContainer: {
     flexDirection: 'column',
     justifyContent: 'center',
-    paddingHorizontal: width * 0.05,
+    paddingHorizontal: wp('5%'),
     flex: 1,
   },
   optionTitle: {
-    fontSize: width * 0.045,
+    fontSize: wp('4.5%'),
     fontWeight: "bold",
     color: "#2D6A4F",
+    fontFamily: 'Inter_700Bold',
   },
   optionTitle1: {
-    fontSize: width * 0.038,
+    fontSize: wp('3.8%'),
     fontWeight: "bold",
     color: "#2D6A4F",
+    fontFamily: 'Inter_700Bold',
   },
   optionPrice: {
-    fontSize: width * 0.04,
+    fontSize: wp('4%'),
     color: "#333",
-    marginTop: height * 0.006,
+    marginTop: hp('0.6%'),
     textAlign: 'right',
+    fontFamily: 'Inter_700Bold',
   },
   checkboxText1: {
-    fontSize: width * 0.032,
+    fontSize: wp('3.2%'),
     color: "#555",
+    fontFamily: 'Inter_400Regular',
   },
   scrollViewContent: {
-    paddingBottom: height * 0.04,
+    paddingBottom: hp('4%'),
   },
 });
 

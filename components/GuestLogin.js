@@ -1,161 +1,176 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; 
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, StatusBar, Dimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 const GuestLogin = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity style={styles.backButton}
-      onPress={() => navigation.goBack()}>
-        <Image source={require('../assets/BackButton2.png')} style={styles.backButtonImage} />
-      </TouchableOpacity>
-
-      
-      <View style={styles.logoContainer}>
-        <Image source={require('../assets/GuestLoginLogo.png')} style={styles.logo} />
-        <Text style={styles.appName}>Walk to Grave</Text>
-        <Text style={styles.tagline}>Navigation App</Text>
-      </View>
-
-     
-
-      <View style={styles.socialButtonsContainer}>
-      <TouchableOpacity 
-                       onPress={() => { 
-                         navigation.navigate("SignIn");  // Navigate to GuestLogin screen
-                       }} 
-                       style={styles.button}
-                     >
-      <Image source={require('../assets/mail.png')} style={styles.icons} />
-        <Text style={styles.buttonText}>Sign in with email</Text>
-      </TouchableOpacity>
-        {/* Google */}
-        <TouchableOpacity style={styles.socialButton}>
-          <Image source={require('../assets/google.png')} style={styles.icon} />
-          <Text style={styles.socialButtonText}>Sign in with Google</Text>
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Image source={require('../assets/BackButton2.png')} style={styles.backButtonImage} />
         </TouchableOpacity>
 
-        {/* Facebook */}
-        <TouchableOpacity style={styles.socialButton}>
-          <Image source={require('../assets/facebook.png')} style={styles.icon} />
-          <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
-        </TouchableOpacity>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/GuestLoginLogo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.appName}>Walk to Grave</Text>
+          <Text style={styles.tagline}>Navigation App</Text>
+        </View>
 
-        {/* Apple */}
-        <TouchableOpacity style={styles.socialButton}>
-          <Image source={require('../assets/apple.png')} style={styles.icon} />
-          <Text style={styles.socialButtonText}>Sign in with Apple</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.socialButtonsContainer}>
+          <TouchableOpacity
+            onPress={() => { navigation.navigate("SignIn"); }}
+            style={styles.button}
+          >
+            <Image source={require('../assets/mail.png')} style={styles.icons} />
+            <Text style={styles.buttonText}>Sign in with email</Text>
+          </TouchableOpacity>
+          {/* Google */}
+          <TouchableOpacity style={styles.socialButton}>
+            <Image source={require('../assets/google.png')} style={styles.icon} />
+            <Text style={styles.socialButtonText}>Sign in with Google</Text>
+          </TouchableOpacity>
+          {/* Facebook */}
+          <TouchableOpacity style={styles.socialButton}>
+            <Image source={require('../assets/facebook.png')} style={styles.icon} />
+            <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
+          </TouchableOpacity>
+          {/* Apple */}
+          <TouchableOpacity style={styles.socialButton}>
+            <Image source={require('../assets/apple.png')} style={styles.icon} />
+            <Text style={styles.socialButtonText}>Sign in with Apple</Text>
+          </TouchableOpacity>
+        </View>
 
-      <Text style={styles.terms}>
-        I have read and acknowledge the{' '}
-        <Text style={styles.link}>Terms of Service</Text> and{' '}
-        <Text style={styles.link}>Privacy Policy</Text>
-      </Text>
-    </ScrollView>
+        <Text style={styles.terms}>
+          I have read and acknowledge the Walk to Grave{' '}
+          <Text style={styles.link}>Terms of Service</Text> and{' '}
+          <Text style={styles.link}>Privacy Policy</Text>
+        </Text>
+      </ScrollView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    justifyContent: 'center', // Ensures content is vertically aligned
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: wp('5%'),
     backgroundColor: '#fff',
   },
   backButton: {
     position: 'absolute',
-    top: 45,
-    left: 20,
-    width: 40, // Adjust width as needed
-    height: 40, // Adjust height as needed
+    top: hp('5%'),
+    left: wp('5%'),
+    width: wp('10%'),
+    height: wp('10%'),
+    zIndex: 10,
   },
   backButtonImage: {
-    width: '100%',  // Makes the image fill the container width
-    height: '100%', // Makes the image fill the container height
-    resizeMode: 'contain', // Ensures the image is scaled properly
-  },  
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: hp('5%'),
+    marginTop: hp('7%'),
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 10,
+    width: wp('43%'),
+    height: wp('32%'),
+
   },
   appName: {
-    fontSize: 32,
+    fontSize: wp('8%'),
     fontWeight: 'bold',
     color: '#1a5242',
+    fontFamily: 'Inter_700Bold',
   },
   tagline: {
-    fontSize: 18,
+    fontSize: wp('4%'),
     color: '#1a5242',
+    fontFamily: 'Inter_400Regular',
   },
   button: {
     backgroundColor: '#2E8B57',
-    padding: 10,
-    borderRadius: 30,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('8%'),
     borderWidth: 1,
     borderColor: '#ddd',
-    marginBottom: 10, // Space between buttons
-    width: '80%', // Adjust the width for consistency
-    flexDirection: 'row', // Align icon and text horizontally
-    justifyContent: 'flex-start', // Align icon and text to the start (left)
-    alignItems: 'center', // Ensure content is aligned vertically in the center
+    marginBottom: hp('1.2%'),
+    width: wp('80%'),
+    flexDirection: 'row',
+    justifyContent: 'center', // Center the text horizontally
+    alignItems: 'center',
+    paddingHorizontal: wp('5%'),
   },
   buttonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: wp('4%'),
     fontWeight: 'bold',
-    
-
+    fontFamily: 'Inter_700Bold',
+    textAlign: 'center', // Center the text
+    flex: 1, // Take available space for centering
   },
   socialButtonsContainer: {
-    flexDirection: 'column', // Stack buttons vertically
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: hp('2.5%'),
   },
   socialButton: {
     backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 30,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('8%'),
     borderWidth: 1,
     borderColor: '#ddd',
-    marginBottom: 10, // Space between buttons
-    width: '80%', // Adjust the width for consistency
-    flexDirection: 'row', // Align icon and text horizontally
-    justifyContent: 'flex-start', // Align icon and text to the start (left)
-    alignItems: 'center', // Ensure content is aligned vertically in the center
+    marginBottom: hp('1.2%'),
+    width: wp('80%'),
+    flexDirection: 'row',
+    justifyContent: 'center', // Center the text horizontally
+    alignItems: 'center',
+    paddingHorizontal: wp('5%'),
   },
   icon: {
-    width: 30,
-    height: 30,
-    marginRight: 50, // Space between icon and text
+    width: wp('7%'),
+    height: wp('7%'),
+    resizeMode: 'contain',
   },
-  icons:{
-    width: 25,
-    height: 20,
-    marginRight: 54,
+  icons: {
+    width: wp('6%'),
+    height: wp('6%'),
+    resizeMode: 'contain',
   },
   socialButtonText: {
-    fontSize: 14,
-    color: 'black', // Green text color
+    fontSize: wp('4%'),
+    color: 'black',
     fontWeight: 'bold',
+    fontFamily: 'Inter_700Bold',
+    textAlign: 'center', // Center the text
+    flex: 1, // Take available space for centering
   },
   terms: {
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: wp('3.2%'),
     color: 'black',
-    marginTop: 20,
+    marginTop: hp('2%'),
+    fontFamily: 'Inter_400Regular',
+    paddingHorizontal: wp('10%'),
   },
   link: {
     color: 'green',
+    textDecorationLine: 'underline',
+    fontFamily: 'Inter_700Bold',
   },
 });
 

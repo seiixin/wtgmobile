@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground, StatusBar } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ViewShot from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from "react-native-responsive-fontsize";
 
 const { width, height } = Dimensions.get('window');
 
@@ -135,100 +137,106 @@ const GraveInformation = () => {
     }, [grave._id]);
 
     return (
-        <View style={{ flex: 1 }}>
-            {/* Fixed Buttons */}
-            <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}
-            >
-                <Ionicons name="arrow-back" size={26} color="white" />
-            </TouchableOpacity>
-            <View style={styles.topRightButtons}>
-                <TouchableOpacity style={styles.shareButton}>
-                    <Ionicons name="share-social-outline" size={26} color="white" />
+        <>
+            <StatusBar
+                barStyle="dark-content"
+                backgroundColor="transparent"
+                translucent={true}
+            />
+            <View style={{ flex: 1 }}>
+                {/* Fixed Buttons */}
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}
+                >
+                    <Ionicons name="arrow-back" size={wp('6.5%')} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
-                    <Ionicons
-                        name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                        size={26}
-                        color="white"
-                    />
-                </TouchableOpacity>
-            </View>
-
-            {/* Scrollable Content */}
-            <ScrollView contentContainerStyle={styles.container}>
-                {/* Header Image */}
-                <View style={styles.headerContainer}>
-                    <Image
-                        source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
-                        style={styles.headerImage}
-                    />
+                <View style={styles.topRightButtons}>
+                    <TouchableOpacity style={styles.shareButton}>
+                        <Ionicons name="share-social-outline" size={wp('6.5%')} color="white" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
+                        <Ionicons
+                            name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                            size={wp('6.5%')}
+                            color="white"
+                        />
+                    </TouchableOpacity>
                 </View>
 
-                {/* Profile Section */}
-                <View style={styles.profileContainer}>
-                    <View style={styles.profileImageContainer}>
+                {/* Scrollable Content */}
+                <ScrollView contentContainerStyle={styles.container}>
+                    {/* Header Image */}
+                    <View style={styles.headerContainer}>
                         <Image
-                            source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/90' }}
-                            style={styles.profileImage}
+                            source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
+                            style={styles.headerImage}
                         />
                     </View>
-                    <View style={styles.profileInfo}>
-                        <Text style={styles.name}>{grave.firstName}{grave.nickname ? ` '${grave.nickname}'` : ''} {grave.lastName}</Text>
-                        <Text style={styles.dates}>
-                            Born on {grave.dateOfBirth ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.dateOfBirth)) : 'N/A'}
-                        </Text>
-                        <Text style={styles.dates}>
-                            Buried {grave.burial ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.burial)) : 'N/A'}
-                        </Text>
-                        <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
-                    </View>
-                    <ImageBackground
-                        source={hasCandleBeenLit
-                            ? require("../assets/CandleLighted.png")
-                            : require("../assets/CandleLight.png")}
-                        style={styles.profileBottomLeftImage}
-                    >
-                        <View style={styles.candleCountContainer}>
-                            <Text style={styles.candleCountText}>{candleCount}</Text>
+
+                    {/* Profile Section */}
+                    <View style={styles.profileContainer}>
+                        <View style={styles.profileImageContainer}>
+                            <Image
+                                source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/90' }}
+                                style={styles.profileImage}
+                            />
                         </View>
-                    </ImageBackground>
-                    <Image source={require("../assets/WtG.png")} style={styles.profileBottomRightImage} />
-                </View>
-
-                {/* Description */}
-                <Text style={styles.description}>
-                    {grave.description || 'No description available.'}
-                </Text>
-
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                        onPress={handleLightCandle}
-                        style={[styles.lightCandleButton, hasCandleBeenLit && styles.noBackground]}
-                    >
-                        {hasCandleBeenLit ? (
-                            <LinearGradient
-                                colors={["#000000", "#c89116"]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.lightCandleGradient}
-                            >
-                                <View style={styles.buttonContent}>
-                                    <Image source={require("../assets/Candle2.png")} style={styles.CandleImage} />
-                                    <Text style={styles.buttonText3}>  Candle was Lit</Text>
-                                </View>
-                            </LinearGradient>
-                        ) : (
-                            <View style={styles.buttonContent}>
-                                <Image source={require("../assets/Candle1.png")} style={styles.CandleImage} />
-                                <Text style={styles.buttonText}>  Light a candle</Text>
+                        <View style={styles.profileInfo}>
+                            <Text style={styles.name}>{grave.firstName}{grave.nickname ? ` '${grave.nickname}'` : ''} {grave.lastName}</Text>
+                            <Text style={styles.dates}>
+                                Born on {grave.dateOfBirth ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.dateOfBirth)) : 'N/A'}
+                            </Text>
+                            <Text style={styles.dates}>
+                                Buried {grave.burial ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(grave.burial)) : 'N/A'}
+                            </Text>
+                            <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
+                        </View>
+                        <ImageBackground
+                            source={hasCandleBeenLit
+                                ? require("../assets/CandleLighted.png")
+                                : require("../assets/CandleLight.png")}
+                            style={styles.profileBottomLeftImage}
+                        >
+                            <View style={styles.candleCountContainer}>
+                                <Text style={styles.candleCountText}>{candleCount}</Text>
                             </View>
-                        )}
-                    </TouchableOpacity>
+                        </ImageBackground>
+                        <Image source={require("../assets/WtG.png")} style={styles.profileBottomRightImage} />
+                    </View>
 
-                    <TouchableOpacity
+                    {/* Description */}
+                    <Text style={styles.description}>
+                        {grave.description || 'No description available.'}
+                    </Text>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                            onPress={handleLightCandle}
+                            style={[styles.lightCandleButton, hasCandleBeenLit && styles.noBackground]}
+                        >
+                            {hasCandleBeenLit ? (
+                                <LinearGradient
+                                    colors={["#000000", "#c89116"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.lightCandleGradient}
+                                >
+                                    <View style={styles.buttonContent}>
+                                        <Image source={require("../assets/Candle2.png")} style={styles.CandleImage} />
+                                        <Text style={styles.buttonText3}>  Candle was Lit</Text>
+                                    </View>
+                                </LinearGradient>
+                            ) : (
+                                <View style={styles.buttonContent}>
+                                    <Image source={require("../assets/Candle1.png")} style={styles.CandleImage} />
+                                    <Text style={styles.buttonText}>  Light a candle</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
     style={styles.scanMemoryButton}
     onPress={() => navigation.navigate('QRScanner')}
 >
@@ -244,46 +252,46 @@ const GraveInformation = () => {
         </View>
     </LinearGradient>
 </TouchableOpacity>
-                </View>
+                    </View>
 
-                {/* Bottom Buttons */}
-                <View style={styles.bottomContainer}>
-                    <View style={styles.bottomButtons}>
-                        {/* Update Details Button */}
-                        <TouchableOpacity style={styles.bottomButton}>
-                            <Image source={require("../assets/update.png")} style={styles.updateImage} />
-                            <Text style={styles.bottomButtonText}>Update Details</Text>
-                        </TouchableOpacity>
+                    {/* Bottom Buttons */}
+                    <View style={styles.bottomContainer}>
+                        <View style={styles.bottomButtons}>
+                            {/* Update Details Button */}
+                            <TouchableOpacity style={styles.bottomButton}>
+                                <Image source={require("../assets/update.png")} style={styles.updateImage} />
+                                <Text style={styles.bottomButtonText}>Update Details</Text>
+                            </TouchableOpacity>
 
-                        {/* Divider */}
-                        <View style={styles.divider} />
+                            {/* Divider */}
+                            <View style={styles.divider} />
 
-                        {/* Prayers Button */}
+                            {/* Prayers Button */}
+                            <TouchableOpacity
+                                style={styles.bottomButton}
+                                onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}
+                            >
+                                <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
+                                <Text style={styles.bottomButtonText}>Prayers</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Bottom Container with Touchable Area */}
                         <TouchableOpacity
-                            style={styles.bottomButton}
-                            onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}
+                          style={styles.bottomContainer2}
+                          activeOpacity={0.8}
+                          onPress={() => navigation.navigate('Map', { grave })} // Pass grave as param
                         >
-                            <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
-                            <Text style={styles.bottomButtonText}>Prayers</Text>
+                          <View style={styles.navigateButtonContainer}>
+                            <Text style={styles.navigateButtonText}>
+                              <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
+                            </Text>
+                          </View>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Bottom Container with Touchable Area */}
-                    <TouchableOpacity
-                      style={styles.bottomContainer2}
-                      activeOpacity={0.8}
-                      onPress={() => navigation.navigate('Map', { grave })} // Pass grave as param
-                    >
-                      <View style={styles.navigateButtonContainer}>
-                        <Text style={styles.navigateButtonText}>
-                          <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Hidden ViewShot for Modal Content */}
-                <View style={{ position: 'absolute', left: -9999, top: -9999 }}>
+                    {/* Hidden ViewShot for Modal Content */}
+                    <View style={{ position: 'absolute', left: -9999, top: -9999 }}>
   <ViewShot ref={modalContentRef} options={{ format: 'png', quality: 0.9 }}>
     <ImageBackground
       source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
@@ -326,8 +334,8 @@ const GraveInformation = () => {
   </ViewShot>
 </View>
 
-                {/* Modal */}
-                <Modal
+                    {/* Modal */}
+                    <Modal
     transparent={true}
     visible={isCandleLit}
     animationType="fade"
@@ -373,106 +381,108 @@ const GraveInformation = () => {
         </View>
     </TouchableWithoutFeedback>
 </Modal>
-            </ScrollView>
-        </View>
+                </ScrollView>
+            </View>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: "#fff" },
   headerContainer: { position: "relative" },
-  headerImage: { width: "100%", height: height * 0.45 },
+  headerImage: { width: "100%", height: hp('45%') },
 
   backButton: {
     position: 'absolute',
-    top: height * 0.05,
-    left: width * 0.06,
+    top: hp('5%'),
+    left: wp('6%'),
     backgroundColor: 'rgb(252, 189, 33)',
-    padding: width * 0.025,
-    borderRadius: width * 0.12,
+    padding: wp('2.5%'),
+    borderRadius: wp('12%'),
     zIndex: 10,
   },
   topRightButtons: {
     position: 'absolute',
-    top: height * 0.05,
-    right: width * 0.05,
+    top: hp('5%'),
+    right: wp('5%'),
     flexDirection: 'row',
     zIndex: 10,
   },
   shareButton: {
     backgroundColor: 'rgba(54, 38, 38, 0.5)',
-    padding: width * 0.025,
-    borderRadius: width * 0.12,
-    marginRight: width * 0.025,
+    padding: wp('2.5%'),
+    borderRadius: wp('12%'),
+    marginRight: wp('2.5%'),
   },
   bookmarkButton: {
     backgroundColor: 'rgba(54, 38, 38, 0.5)',
-    padding: width * 0.025,
-    borderRadius: width * 0.12,
+    padding: wp('2.5%'),
+    borderRadius: wp('12%'),
   },
   profileContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: width * 0.05,
+    padding: wp('5%'),
     position: "relative"
   },
   profileImageContainer: {
-    top: -height * 0.08,
-    width: width * 0.25,
-    height: width * 0.25,
-    borderRadius: width * 0.125,
+    top: -hp('8%'),
+    width: wp('25%'),
+    height: wp('25%'),
+    borderRadius: wp('12.5%'),
     borderWidth: 2,
     borderColor: "#94b143",
     alignItems: "center",
     justifyContent: "center",
   },
   profileImage: {
-    width: width * 0.23,
-    height: width * 0.23,
-    borderRadius: width * 0.115,
+    width: wp('23%'),
+    height: wp('23%'),
+    borderRadius: wp('11.5%'),
     borderWidth: 2,
     borderColor: "white",
   },
   profileInfo: { flex: 1 },
   profileBottomLeftImage: {
     position: "absolute",
-    bottom: height * 0.01,
-    left: width * 0.08,
-    width: width * 0.18,
-    height: width * 0.18,
-    borderRadius: width * 0.03,
+    bottom: hp('1%'),
+    left: wp('8%'),
+    width: wp('18%'),
+    height: wp('18%'),
+    borderRadius: wp('3%'),
   },
   profileBottomRightImage: {
     position: "absolute",
-    bottom: height * 0.01,
-    right: width * 0.05,
-    width: width * 0.13,
-    height: width * 0.13,
-    borderRadius: width * 0.03,
+    bottom: hp('1%'),
+    right: wp('5%'),
+    width: wp('13%'),
+    height: wp('13%'),
+    borderRadius: wp('3%'),
   },
-  name: { fontSize: width * 0.06, fontWeight: "bold", marginBottom: height * 0.005 },
-  dates: { fontSize: width * 0.037, color: "gray" },
-  location: { fontSize: width * 0.03, color: "gray", marginTop: height * 0.005 },
+  name: { fontSize: RFValue(20, height), fontWeight: "bold", marginBottom: hp('0.5%') },
+  dates: { fontSize: RFValue(13, height), color: "gray" },
+  location: { fontSize: RFValue(11, height), color: "gray", marginTop: hp('0.5%') },
   description: {
-    marginHorizontal: width * 0.05,
-    marginVertical: height * 0.012,
+    marginHorizontal: wp('5%'),
+    marginVertical: hp('1.2%'),
     textAlign: "center",
     width: "90%",
-    height: height * 0.13,
-    lineHeight: width * 0.045,
+    height: hp('13%'),
+    lineHeight: RFValue(18, height),
+    fontSize: RFValue(13, height),
   },
 
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-evenly",
-    marginTop: height * 0.012,
+    marginTop: hp('1.2%'),
   },
   lightCandleButton: {
-    borderRadius: width * 0.025,
+    borderRadius: wp('2.5%'),
     overflow: "hidden",
     backgroundColor: "orange",
-    width: width * 0.38,
-    height: height * 0.065,
+    width: wp('38%'),
+    height: hp('6.5%'),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -482,29 +492,29 @@ const styles = StyleSheet.create({
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: width * 0.025,
+    borderRadius: wp('2.5%'),
   },
   buttonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: width * 0.025,
+    paddingHorizontal: wp('2.5%'),
   },
   CandleImage: {
-    width: width * 0.045,
-    height: height * 0.035,
+    width: wp('4.5%'),
+    height: hp('3.5%'),
     resizeMode: "contain"
   },
   ScanningImage: {
-    width: width * 0.06,
-    height: height * 0.035,
+    width: wp('6%'),
+    height: hp('3.5%'),
     resizeMode: "contain"
   },
   scanMemoryButton: {
-    borderRadius: width * 0.025,
+    borderRadius: wp('2.5%'),
     overflow: "hidden",
-    width: width * 0.38,
-    height: height * 0.065,
+    width: wp('38%'),
+    height: hp('6.5%'),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -513,16 +523,16 @@ const styles = StyleSheet.create({
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: width * 0.025,
+    borderRadius: wp('2.5%'),
   },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: width * 0.045 },
-  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: width * 0.045 },
-  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: width * 0.045 },
+  buttonText: { color: "white", fontWeight: "bold", fontSize: RFValue(16, height) },
+  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: RFValue(16, height) },
+  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: RFValue(16, height) },
 
   bottomContainer: {
     justifyContent: "space-evenly",
     backgroundColor: "white",
-    marginTop: height * 0.012,
+    marginTop: hp('1.2%'),
     paddingTop: 0,
     shadowColor: "#000",
     shadowOpacity: 0.3,
@@ -530,8 +540,8 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   bottomContainer2: {
-    marginBottom: -height * 0.012,
-    paddingBottom: -height * 0.012,
+    marginBottom: -hp('1.2%'),
+    paddingBottom: -hp('1.2%'),
   },
   bottomButtons: {
     flexDirection: "row",
@@ -541,14 +551,14 @@ const styles = StyleSheet.create({
   bottomButton: {
     flexDirection: "column",
     alignItems: "center",
-    padding: width * 0.025,
-    paddingHorizontal: width * 0.05,
+    padding: wp('2.5%'),
+    paddingHorizontal: wp('5%'),
     flex: 1,
   },
   modalBackgroundImage: {
     width: '100%',
-    minHeight: height * 0.6,
-    borderRadius: width * 0.05,
+    minHeight: hp('60%'),
+    borderRadius: wp('5%'),
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -563,13 +573,13 @@ const styles = StyleSheet.create({
     zIndex: 2,
     alignItems: 'center',
     width: '100%',
-    padding: width * 0.05,
+    padding: wp('5%'),
   },
   bottomButtonText: {
-    marginTop: height * 0.005,
+    marginTop: hp('0.5%'),
     textAlign: "center",
     color: "#4d4c4c",
-    fontSize: width * 0.032,
+    fontSize: RFValue(12, height),
   },
   divider: {
     width: 1.5,
@@ -577,131 +587,132 @@ const styles = StyleSheet.create({
     backgroundColor: "gray",
   },
   prayerImage: {
-    width: width * 0.045,
-    height: height * 0.03,
+    width: wp('4.5%'),
+    height: hp('3%'),
     resizeMode: "contain"
   },
   updateImage: {
-    width: width * 0.05,
-    height: height * 0.03,
+    width: wp('5%'),
+    height: hp('3%'),
     resizeMode: "contain"
   },
   navigateButtonContainer: {
     backgroundColor: "#2E8B57",
-    padding: width * 0.04,
+    padding: wp('4%'),
     alignItems: "center",
-    borderTopLeftRadius: width * 0.05,
-    borderTopRightRadius: width * 0.05,
+    borderTopLeftRadius: wp('5%'),
+    borderTopRightRadius: wp('5%'),
     width: "100%",
-    height: height * 0.08,
+    height: hp('8%'),
     alignSelf: "center"
   },
   navigateButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: width * 0.045
+    fontSize: RFValue(16, height)
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.9)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: width * 0.05,
+    paddingHorizontal: wp('5%'),
   },
   modalContent: {
     width: "90%",
-    borderRadius: width * 0.05,
-    padding: width * 0.05,
+    borderRadius: wp('5%'),
+    padding: wp('5%'),
     alignItems: "center",
+    backgroundColor: "#fff",
   },
   wtg2logo: {
-    width: width * 0.18,
-    height: width * 0.18,
-    top: -height * 0.025,
+    width: wp('18%'),
+    height: wp('18%'),
+    top: -hp('2.5%'),
   },
   WtG2: {
-    width: width * 0.23,
-    height: width * 0.23,
-    marginBottom: height * 0.018,
+    width: wp('23%'),
+    height: wp('23%'),
+    marginBottom: hp('1.8%'),
     resizeMode: "contain",
   },
   modalProfileImage: {
-    width: width * 0.27,
-    height: width * 0.27,
-    borderRadius: width * 0.135,
+    width: wp('27%'),
+    height: wp('27%'),
+    borderRadius: wp('13.5%'),
     borderWidth: 0.1,
     borderColor: "white",
   },
   imageBorderOuter: {
-    width: width * 0.29,
-    height: width * 0.29,
-    borderRadius: width * 0.145,
+    width: wp('29%'),
+    height: wp('29%'),
+    borderRadius: wp('14.5%'),
     backgroundColor: "#94b143",
     justifyContent: "center",
     alignItems: "center",
   },
   imageBorderInner: {
-    width: width * 0.28,
-    height: width * 0.28,
-    borderRadius: width * 0.14,
+    width: wp('28%'),
+    height: wp('28%'),
+    borderRadius: wp('14%'),
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
   },
   memorialHeader: {
-    fontSize: width * 0.09,
+    fontSize: RFValue(32, height),
     fontWeight: "bold",
-    marginBottom: height * 0.012,
+    marginBottom: hp('1.2%'),
     color: "white",
     textAlign: "center",
   },
   memorialSubtext: {
-    fontSize: width * 0.05,
+    fontSize: RFValue(16, height),
     fontStyle: "italic",
-    marginBottom: height * 0.018,
+    marginBottom: hp('1.8%'),
     textAlign: "center",
     color: "white",
   },
   candleCount: {
-    fontSize: width * 0.045,
+    fontSize: RFValue(16, height),
     textAlign: "center",
-    marginTop: height * 0.018,
-    marginBottom: height * 0.03,
+    marginTop: hp('1.8%'),
+    marginBottom: hp('3%'),
     color: "white",
   },
   boldText: {
     fontWeight: "bold",
   },
   encourageText: {
-    fontSize: width * 0.05,
+    fontSize: RFValue(18, height),
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
-    marginBottom: height * 0.06,
+    marginBottom: hp('6%'),
   },
   socialIcons: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: width * 0.04,
+    gap: wp('4%'),
   },
   icon: {
-    width: width * 0.15,
-    height: width * 0.15,
+    width: wp('15%'),
+    height: wp('15%'),
   },
   candleCountContainer: {
     position: 'absolute',
-    top: height * 0.012,
-    right: width * 0.11,
+    top: hp('1.2%'),
+    right: wp('11%'),
     backgroundColor: 'red',
-    borderRadius: width * 0.025,
-    width: width * 0.045,
-    height: width * 0.045,
+    borderRadius: wp('2.5%'),
+    width: wp('4.5%'),
+    height: wp('4.5%'),
     alignItems: 'center',
     justifyContent: 'center',
   },
   candleCountText: {
     color: 'white',
-    fontSize: width * 0.025,
+    fontSize: RFValue(10, height),
     fontWeight: 'bold',
   },
 });

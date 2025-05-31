@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, SectionList, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, SectionList, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView, StatusBar } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import WaveCurve from './WaveCurve';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width, height } = Dimensions.get('window');
-
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
@@ -65,29 +66,35 @@ const handleSignOut = () => {
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
             {/* Profile Section */}
-                       <View style={styles.profileSection}>
-                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                               <Image
-                                   source={{
-                                       uri: user?.profileImage
-                                           ? user.profileImage
-                                           : 'https://via.placeholder.com/150'
-                                   }}
-                                   style={styles.profileImage}
-                               />
-                               <View style={{ marginLeft: 16 }}>
-                                   <Text style={styles.profileName}>{user?.name || "Loading..."}</Text>
-                                   <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                                   <TouchableOpacity
-                                       style={styles.editProfileButton}
-                                       onPress={() => navigation.navigate('EditProfile')}
-                                   >
-                                       <MaterialIcons name="edit" size={16} color="green" />
-                                       <Text style={styles.editProfileText}>Edit Profile</Text>
-                                   </TouchableOpacity>
-                               </View>
-                           </View>
-                       </View>
+            <View style={styles.profileSection}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Image
+                        source={
+                            user?.profileImage
+                              ? { uri: user.profileImage }
+                              : require('../assets/blankDP.jpg') // fallback local image
+                          }
+                        style={styles.profileImage}
+                    />
+                    <View style={{ marginLeft: wp('4%') }}>
+                        <Text style={styles.profileName}>
+                          {user?.name
+                            ? user.name.length > 16
+                              ? `${user.name.slice(0, 16)}...`
+                              : user.name
+                            : "Loading..."}
+                        </Text>
+                        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                        <TouchableOpacity
+                            style={styles.editProfileButton}
+                            onPress={() => navigation.navigate('EditProfile')}
+                        >
+                            <MaterialIcons name="edit" size={RFValue(16, height)} color="green" />
+                            <Text style={styles.editProfileText}>Edit Profile</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
@@ -404,7 +411,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingTop: height * 0.04,
+        paddingTop: hp('4%'),
     },
     topSection: {
         position: 'relative',
@@ -412,7 +419,7 @@ const styles = StyleSheet.create({
     },
     bg: {
         width: '100%',
-        height: height * 1.3,
+        height: hp('130%'),
         position: 'absolute',
         top: 0,
     },
@@ -420,7 +427,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: width * 0.025,
+        padding: wp('2.5%'),
         backgroundColor: 'transparent',
         zIndex: 1,
     },
@@ -429,67 +436,67 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: width * 0.4,
-        height: height * 0.06,
+        width: wp('40%'),
+        height: hp('6%'),
         resizeMode: 'contain',
     },
     searchBarContainer: {
-        marginHorizontal: width * 0.025,
-        paddingTop: height * 0.012,
-        marginTop: height * 0.022,
+        marginHorizontal: wp('2.5%'),
+        paddingTop: hp('1.2%'),
+        marginTop: hp('2.2%'),
         zIndex: 2,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'white',
-        borderRadius: width * 0.015,
-        paddingHorizontal: width * 0.025,
+        borderRadius: wp('1.5%'),
+        paddingHorizontal: wp('2.5%'),
     },
     searchBar: {
         flex: 1,
-        padding: width * 0.025,
-        fontSize: width * 0.04,
+        padding: wp('2.5%'),
+        fontSize: RFValue(16, height),
     },
     searchButton: {
-        padding: width * 0.025,
+        padding: wp('2.5%'),
         backgroundColor: 'green',
-        borderRadius: width * 0.015,
-        marginLeft: width * 0.012,
+        borderRadius: wp('1.5%'),
+        marginLeft: wp('1.2%'),
     },
     filterContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: height * 0.012,
-        paddingHorizontal: width * 0.06,
+        marginBottom: hp('1.2%'),
+        paddingHorizontal: wp('6%'),
     },
     filterText: {
-        fontSize: width * 0.05,
+        fontSize: RFValue(18, height),
         color: 'green',
     },
     filterButton: {
-        padding: width * 0.02,
-        borderRadius: width * 0.015,
+        padding: wp('2%'),
+        borderRadius: wp('1.5%'),
         backgroundColor: '#fff',
     },
     divider: {
         height: 2,
         backgroundColor: 'green',
-        marginBottom: height * 0.025,
-        marginTop: -height * 0.006,
+        marginBottom: hp('2.5%'),
+        marginTop: -hp('0.6%'),
     },
     content: {
         flex: 1,
         top: '5%',
-        paddingHorizontal: width * 0.04,
+        paddingHorizontal: wp('4%'),
         backgroundColor: 'white',
-        paddingTop: height * 0.012,
+        paddingTop: hp('1.2%'),
     },
     card: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: width * 0.025,
-        marginBottom: height * 0.012,
-        padding: width * 0.025,
+        borderRadius: wp('2.5%'),
+        marginBottom: hp('1.2%'),
+        padding: wp('2.5%'),
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -497,56 +504,56 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cardImage: {
-        width: width * 0.18,
-        height: width * 0.18,
-        borderRadius: width * 0.025,
-        marginRight: width * 0.025,
+        width: wp('18%'),
+        height: wp('18%'),
+        borderRadius: wp('2.5%'),
+        marginRight: wp('2.5%'),
     },
     cardContent: {
         flex: 1,
     },
     cardTitle: {
-        fontSize: width * 0.045,
+        fontSize: RFValue(18, height),
         fontWeight: 'bold',
         color: '#333',
     },
     cardDates: {
-        fontSize: width * 0.038,
+        fontSize: RFValue(15, height),
         color: '#666',
     },
     cardLocation: {
-        fontSize: width * 0.032,
+        fontSize: RFValue(13, height),
         color: '#999',
     },
     cardAction: {
         backgroundColor: 'green',
-        padding: width * 0.02,
-        borderRadius: width * 0.02,
+        padding: wp('2%'),
+        borderRadius: wp('2%'),
     },
     buttonRow: {
-        bottom: height * 0.04,
+        bottom: hp('4%'),
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: width * 0.05,
-        marginBottom: height * 0.012,
-        height: height * 0.06,
+        paddingHorizontal: wp('5%'),
+        marginBottom: hp('1.2%'),
+        height: hp('6%'),
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: width * 0.025,
-        borderRadius: width * 0.015,
+        padding: wp('2.5%'),
+        borderRadius: wp('1.5%'),
         flex: 1,
         justifyContent: 'center',
-        marginHorizontal: width * 0.012,
+        marginHorizontal: wp('1.2%'),
     },
     buttonImage: {
-        width: width * 0.05,
-        height: width * 0.05,
+        width: wp('5%'),
+        height: wp('5%'),
         resizeMode: 'contain',
     },
     IconDivider: {
-        height: height * 0.06,
+        height: hp('6%'),
         width: 0.5,
         backgroundColor: 'gray',
     },
@@ -554,91 +561,106 @@ const styles = StyleSheet.create({
         height: 0.5,
         width: '85%',
         backgroundColor: 'gray',
-        marginHorizontal: width * 0.09,
-        bottom: height * 0.035,
+        marginHorizontal: wp('9%'),
+        bottom: hp('3.5%'),
     },
     drawerContainer: {
         flex: 1,
-        padding: width * 0.05,
+        padding: wp('5%'),
         backgroundColor: '#fff',
-        borderTopRightRadius: width * 0.25,
-        borderBottomRightRadius: width * 0.25,
+        borderTopRightRadius: wp('25%'),
+        borderBottomRightRadius: wp('25%'),
     },
     profileSection: {
         alignItems: 'center',
-        marginBottom: height * 0.025,
+        marginBottom: hp('2.5%'),
     },
     profileImage: {
-        width: width * 0.21,
-        height: width * 0.21,
-        borderRadius: width * 0.105,
+        width: wp('21%'),
+        height: wp('21%'),
+        borderRadius: wp('10.5%'),
+        borderWidth: 1,
+        borderColor: '#00aa13',
     },
     profileName: {
-        fontSize: width * 0.048,
+        fontSize: RFValue(19, height),
         fontWeight: 'bold',
-        marginTop: height * 0.012,
+        marginTop: hp('1.2%'),
     },
     profileLocation: {
-        fontSize: width * 0.038,
+        fontSize: RFValue(15, height),
         color: '#555',
     },
     editProfileButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: height * 0.006,
+        marginTop: hp('0.6%'),
     },
     editProfileText: {
-        fontSize: width * 0.038,
+        fontSize: RFValue(15, height),
         color: 'green',
-        marginLeft: width * 0.012,
+        marginLeft: wp('1.2%'),
     },
     menuSection: {
-        marginVertical: height * 0.012,
+        marginVertical: hp('1.2%'),
     },
     drawerItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: height * 0.012,
-        paddingHorizontal: width * 0.04,
-        borderRadius: width * 0.025,
+        paddingVertical: hp('1.2%'),
+        paddingHorizontal: wp('4%'),
+        borderRadius: wp('2.5%'),
     },
     drawerTextGreen: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#12894f',
     },
     drawerTextYellow: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#cb9717',
     },
     drawerTextBlue: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.04,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('4%'),
         color: '#1580c2',
     },
     signOutSection: {
         marginTop: 'auto',
         borderTopWidth: 1,
         borderColor: '#ccc',
-        paddingTop: height * 0.012,
-        paddingBottom: height * 0.05,
+        paddingTop: hp('1.2%'),
+        paddingBottom: hp('5%'),
     },
     signOutButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: height * 0.018,
+        paddingVertical: hp('1.8%'),
     },
     signOutText: {
-        fontSize: width * 0.045,
-        marginLeft: width * 0.025,
+        fontSize: RFValue(18, height),
+        marginLeft: wp('2.5%'),
         color: '#333',
     },
     drawerIcon: {
-        width: width * 0.11,
-        height: width * 0.11,
+        width: wp('11%'),
+        height: wp('11%'),
         resizeMode: 'contain',
-        marginRight: width * 0.025,
+        marginRight: wp('2.5%'),
+    },
+    sectionTitle: {
+        fontSize: RFValue(20, height),
+        fontWeight: 'bold',
+        color: '#12894f',
+        marginVertical: hp('1%'),
+        marginLeft: wp('3%'),
+    },
+    noResultsText: {
+        textAlign: 'center',
+        color: 'gray',
+        marginTop: hp('30%'),
+        fontSize: RFValue(16, height),
     },
 });
 

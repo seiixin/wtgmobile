@@ -1,16 +1,18 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image, Dimensions} from "react-native";
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import { useNavigation } from '@react-navigation/native'; 
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image, Dimensions, StatusBar, Modal, Platform, ScrollView, KeyboardAvoidingView } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State to toggle password visibility
-  const navigation = useNavigation(); 
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const navigation = useNavigation();
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
   const formatTime = (seconds) => {
@@ -24,11 +26,7 @@ const SignIn = () => {
       alert("Please enter both email and password");
       return;
     }
-
- 
-
     try {
-      // Step 1: Login the user
       const response = await fetch(`${BASE_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,7 +36,6 @@ const SignIn = () => {
       const data = await response.json();
 
       if (data.user && data.user._id) {
-        // Step 2: Check if the timer is still active
         const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
         if (savedTime) {
           const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
@@ -46,16 +43,12 @@ const SignIn = () => {
             alert(`Please wait for the countdown to finish before proceeding. Time left: ${formatTime(remainingTime)}`);
             return;
           } else {
-            // Clear expired timer
             await AsyncStorage.removeItem(`verificationTimer_${email}`);
           }
         }
 
-        // Step 3: Store user ID in AsyncStorage
         await AsyncStorage.setItem("userId", data.user._id);
-        console.log("User ID stored in AsyncStorage:", data.user._id);
 
-        // Step 4: Send OTP to the user's email
         const otpResponse = await fetch(`${BASE_URL}/api/otp/send-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -63,16 +56,11 @@ const SignIn = () => {
         });
 
         const otpData = await otpResponse.json();
-        console.log("OTP response:", otpData);
 
         if (otpResponse.ok && otpData.success) {
           alert("Login successful. Please verify your account with the OTP sent to your email.");
-
-          // Step 5: Save the timer in AsyncStorage
-          const newTime = 60; // 1 minute
+          const newTime = 60;
           await AsyncStorage.setItem(`verificationTimer_${email}`, (Math.floor(Date.now() / 1000) + newTime).toString());
-
-          // Step 6: Navigate to the Verification screen
           navigation.navigate("Verification", { email: data.user.email });
         } else {
           alert("Failed to send OTP. Please try again.");
@@ -87,101 +75,167 @@ const SignIn = () => {
   };
 
   return (
-    <ImageBackground
-      source={require("../assets/SignInBg.jpg")}
-      style={styles.backgroundImage}
-    >
-      <View style={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Sign In</Text>
-          <Text style={styles.subtitle}>Welcome back! Please sign in.</Text>
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground
+        source={require("../assets/SignInBg.png")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          {Platform.OS === 'ios' ? (
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior="padding"
+              keyboardVerticalOffset={0}
+            >
+              <ScrollView
+                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: hp('5%') }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+              <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
+                <SignInContent
+                  email={email}
+                  setEmail={setEmail}
+                  password={password}
+                  setPassword={setPassword}
+                  isPasswordVisible={isPasswordVisible}
+                  setIsPasswordVisible={setIsPasswordVisible}
+                  handleSignIn={handleSignIn}
+                  navigation={navigation}
+                />
+              </ScrollView>
+            </KeyboardAvoidingView>
+          ) : (
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: hp('5%') }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+            <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
+              <SignInContent
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                isPasswordVisible={isPasswordVisible}
+                setIsPasswordVisible={setIsPasswordVisible}
+                handleSignIn={handleSignIn}
+                navigation={navigation}
+              />
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </ImageBackground>
+    </>
+  );
+};
 
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
+const SignInContent = ({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  isPasswordVisible,
+  setIsPasswordVisible,
+  handleSignIn,
+  navigation,
+}) => (
+  <View style={styles.container}>
+    <View style={styles.card}>
+      <Text style={styles.title}>Sign In</Text>
+      <Text style={styles.subtitle}>Welcome back! Please Sign In.</Text>
+
+      <Text style={styles.label}>Email</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your email"
+        placeholderTextColor="#999"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <Text style={styles.label}>Password</Text>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your password"
+          placeholderTextColor="#999"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!isPasswordVisible}
+        />
+        <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
+          <Ionicons
+            name={isPasswordVisible ? "eye" : "eye-off"}
+            size={wp('6%')}
+            color="gray"
           />
+        </TouchableOpacity>
+      </View>
 
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible}
-            />
-            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
-              <Ionicons 
-                name={isPasswordVisible ? "eye" : "eye-off"} // Toggle between eye and eye-off
-                size={24} 
-                color="gray"
-              />
-            </TouchableOpacity>
-          </View>
+      <View style={{ width: "100%", alignItems: "flex-end" }}>
+        <TouchableOpacity onPress={() => navigation.navigate("ChangePassFind")}>
+          <Text style={styles.forgotPassword}>Forgot Password?</Text>
+        </TouchableOpacity>
+      </View>
 
-          <View style={{ width: "100%", alignItems: "flex-end" }}>
-            <TouchableOpacity onPress={() => navigation.navigate("ChangePassFind")}>
-              <Text style={styles.forgotPassword}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.signInButton}
+          onPress={handleSignIn}
+        >
+          <Text style={styles.signInText}>Sign in</Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.guestButton}
+          onPress={() => navigation.navigate("GuestScreen")}
+        >
+          <Text style={styles.guestText}>Continue As Guest</Text>
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.signInButton}
-              onPress={handleSignIn}
-            >
-              <Text style={styles.signInText}>Sign in</Text>
-            </TouchableOpacity>
+      <View style={styles.orContainer}>
+        <View style={styles.line} />
+        <Text style={styles.orText}>OR</Text>
+        <View style={styles.line} />
+      </View>
 
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.guestButton}
-              onPress={() => navigation.navigate("GuestScreen")}
-            >
-              <Text style={styles.guestText}>Continue As Guest</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.socialContainer}>
+        <TouchableOpacity>
+          <Image
+            source={require("../assets/google.png")}
+            style={styles.socialIcon}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Image
+            source={require("../assets/facebook.png")}
+            style={styles.socialIcon}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Image
+            source={require("../assets/twitter.png")}
+            style={styles.socialIcon}
+          />
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.orContainer}>
-            <View style={styles.line} />
-            <Text style={styles.orText}>OR</Text>
-            <View style={styles.line} />
-          </View>
-
-          <View style={styles.socialContainer}>
-            <TouchableOpacity>
-              <Image
-                source={require("../assets/google.png")}
-                style={styles.socialIcon}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Image
-                source={require("../assets/facebook.png")}
-                style={styles.socialIcon}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Image
-                source={require("../assets/twitter.png")}
-                style={styles.socialIcon}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.registerContainer}>
+      <View style={styles.registerContainer}>
         <Text style={styles.registerText}>
           <Text style={styles.blackText}>Don't have an account? </Text>
-          <Text 
+          <Text
             style={styles.registerLink}
             onPress={() => navigation.navigate('Register')}
           >
@@ -189,13 +243,9 @@ const SignIn = () => {
           </Text>
         </Text>
       </View>
-        </View>
-      </View>
-
-      
-    </ImageBackground>
-  );
-};
+    </View>
+  </View>
+);
 
 const styles = StyleSheet.create({
   backgroundImage: {
@@ -209,13 +259,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   card: {
-    width: SCREEN_WIDTH * 0.9,
+    width: wp('80%'),
     maxWidth: 400,
     backgroundColor: "#fff",
-    borderRadius: 80,
-    padding: 25,
-    paddingHorizontal: 30,
-    top: 40,
+    borderRadius: wp('10%'),
+    padding: wp('6%'),
+    paddingHorizontal: wp('8%'),
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
@@ -224,41 +273,47 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    fontSize: SCREEN_WIDTH * 0.06, // ~24px at 400px width
+    fontSize: wp('6%'),
     fontWeight: "bold",
     color: "#000",
+    fontFamily: 'Inter_700Bold',
   },
   subtitle: {
-    fontSize: SCREEN_WIDTH * 0.035, // ~14px
+    fontSize: wp('3.5%'),
     color: "#777",
-    marginVertical: 10,
+    marginVertical: hp('1%'),
     textAlign: "center",
+    fontFamily: 'Inter_400Regular',
   },
   label: {
     width: "100%",
-    fontSize: SCREEN_WIDTH * 0.035,
+    fontSize: wp('3.5%'),
     color: "#000",
-    marginTop: 10,
+    marginTop: hp('1%'),
     fontWeight: "bold",
+    fontFamily: 'Inter_700Bold',
   },
   input: {
     width: "100%",
-    height: 45,
+    height: hp('5%'),
     backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginTop: 5,
+    borderRadius: wp('2%'),
+    paddingHorizontal: wp('2%'),
+    marginTop: hp('0.5%'),
+    fontSize: wp('3.8%'),
+    fontFamily: 'Inter_400Regular',
   },
   forgotPassword: {
     color: "#00aa13",
-    fontSize: SCREEN_WIDTH * 0.03, // ~12px
-    marginTop: 5,
+    fontSize: wp('3%'),
+    marginTop: hp('0.5%'),
     textDecorationLine: "underline",
+    fontFamily: 'Inter_400Regular',
   },
   eyeIcon: {
     position: "absolute",
-    right: 10,
-    top: 15,
+    right: wp('2%'),
+    top: hp('1.2%'),
   },
   passwordContainer: {
     width: "100%",
@@ -267,20 +322,21 @@ const styles = StyleSheet.create({
   signInButton: {
     flex: 1,
     backgroundColor: "#00aa13",
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: hp('1%'),
+    borderRadius: wp('2.5%'),
     alignItems: "center",
-    marginRight: 10,
+    marginRight: wp('2%'),
   },
   signInText: {
     color: "#fff",
-    fontSize: SCREEN_WIDTH * 0.04, // ~16px
+    fontSize: wp('4%'),
     fontWeight: "bold",
+    fontFamily: 'Inter_400Regular',
   },
   orContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: hp('2%'),
   },
   line: {
     flex: 1,
@@ -288,62 +344,66 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   orText: {
-    marginHorizontal: 10,
+    marginHorizontal: wp('2%'),
     color: "#777",
-    fontSize: SCREEN_WIDTH * 0.035,
+    fontSize: wp('3.5%'),
+    fontFamily: 'Inter_400Regular',
   },
   socialContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 20,
+    gap: wp('5%'),
     width: "100%",
-    marginBottom: 20,
+    marginBottom: hp('2%'),
   },
   socialIcon: {
-    width: 50,
-    height: 50,
+    width: wp('12%'),
+    height: wp('12%'),
     resizeMode: "contain",
   },
   buttonContainer: {
     flexDirection: "row",
     width: "100%",
     justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: hp('2%'),
   },
   guestButton: {
     flex: 1,
     backgroundColor: "#fff",
     borderWidth: 2,
     borderColor: "#00aa13",
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: hp('1%'),
+    borderRadius: wp('2.5%'),
     alignItems: "center",
   },
   guestText: {
     color: "green",
-    fontSize: SCREEN_WIDTH * 0.035,
+    fontSize: wp('3.5%'),
+    fontFamily: 'Inter_400Regular',
   },
   registerContainer: {
     alignItems: "center",
-    marginBottom: 30,
-    marginTop: 10,
+    marginBottom: hp('3%'),
+    marginTop: hp('1.5%'),
   },
   registerText: {
-    fontSize: SCREEN_WIDTH * 0.038,
+    fontSize: wp('3.8%'),
     color: "#333",
     flexDirection: "row",
+    fontFamily: 'Inter_400Regular',
   },
   blackText: {
     color: "#333",
-    fontSize: SCREEN_WIDTH * 0.038,
+    fontSize: wp('3.8%'),
+    fontFamily: 'Inter_400Regular',
   },
   registerLink: {
     color: "#00aa13",
     fontWeight: "bold",
     textDecorationLine: "underline",
-    fontSize: SCREEN_WIDTH * 0.038,
+    fontSize: wp('3.8%'),
+    fontFamily: 'Inter_400Regular',
   },
 });
-
 
 export default SignIn;

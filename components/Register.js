@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Modal, Platform, Pressable, Dimensions, ScrollView, StatusBar, KeyboardAvoidingView } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
+import CustomDropdown from './CustomDropdown';
 import { useNavigation } from '@react-navigation/native';
 import { Checkbox } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
@@ -77,26 +77,27 @@ const Register = () => {
   const navigation = useNavigation();
 
   const toggleDatepicker = () => {
-    setDatePickerVisible(!datePickerVisible);
+    setDatePickerVisible(true);
   };
 
-  const onDateChange = (event, selectedDate) => {
-    if (event.type === 'set') {
-      const formattedDate = formatDate(selectedDate);
+  const onDateChange = (event, date) => {
+    if (event.type === 'set' && date) {
+      setSelectedDate(date);
+      const formattedDate = formatDate(date);
       setDateOfBirth(formattedDate);
       setFormData((prevData) => ({
         ...prevData,
         dob: formattedDate,
       }));
     }
-    setDatePickerVisible(false); // Always close after selection
+    setDatePickerVisible(false);
   };
 
   const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`; // Format date as MM/DD/YYYY
+    return `${month}/${day}/${year}`;
   };
 
   const handleInputChange = (field, value) => {
@@ -138,6 +139,26 @@ const Register = () => {
     if (!formData.email || !validateEmail(formData.email)) {
       alert("Please enter a valid email address.");
       return;
+    }
+
+    // Check if email already exists before proceeding
+    try {
+      const emailCheck = await fetch(`${BASE_URL}/api/users/find-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      if (emailCheck.ok) {
+        alert("This email is already registered. Please use a different email.");
+        return;
+      }
+    } catch (err) {
+      // If error is 404, email is not found, so it's OK to proceed
+      // If other error, show a generic error
+      if (err?.response?.status !== 404) {
+        alert("Error checking email. Please try again.");
+        return;
+      }
     }
 
     if (!formData.mobile || !validateMobile(formData.mobile)) {
@@ -291,88 +312,44 @@ const Register = () => {
                 {/* Gender, Date of Birth, and Nationality - Horizontally Aligned */}
                 <View style={styles.horizontalContainer}>
                   <View style={{ zIndex: 3000, width: '33%' }}>
-                    <Text style={styles.label}>Gender*</Text>
-                    <DropDownPicker
-                      open={genderOpen}
+                    <CustomDropdown
+                      label="Gender*"
                       value={formData.gender}
                       items={genderItems}
-                      setOpen={setGenderOpen}
-                      setValue={(callback) => handleDropdownChange('gender', callback(formData.gender))}
+                      onSelect={(val) => handleDropdownChange('gender', val)}
                       placeholder="Gender"
-                      style={[
-                        styles.input,
-                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                      ]}
-                      containerStyle={{
-                        height: hp('5%'),
-                        minHeight: hp('5%'),
-                        maxHeight: hp('5%'),
-                        marginBottom: hp('1%'),
-                      }}
-                      dropDownContainerStyle={{
-                        borderColor: 'gray',
-                        minHeight: hp('5%'),
-                        maxHeight: hp('20%'),
-                      }}
-                      listItemContainerStyle={{
-                        height: hp('5%'),
-                        justifyContent: 'center',
-                      }}
-                      labelStyle={{
-                        fontSize: wp('3.8%'),
-                        fontFamily: 'Inter_400Regular',
-                        color: '#333',
-                      }}
+                      width="100%"
                     />
                   </View>
 
                   <View style={{ zIndex: 2000, width: '30%' }}>
                     <Text style={styles.label}>Date of Birth*</Text>
                     <Pressable onPress={toggleDatepicker}>
-                      <TextInput
-                        style={styles.inputDate}
-                        placeholder="Select Date"
-                        value={dateOfBirth}
-                        editable={false}
-                        onPressIn={toggleDatepicker}
-                      />
+                      <View style={styles.inputDate}>
+                        <Text style={{ color: dateOfBirth ? '#000' : '#D3D3D3', fontSize: wp('3.8%'), fontFamily: 'Inter_400Regular' }}>
+                          {dateOfBirth || "Select Date"}
+                        </Text>
+                      </View>
                     </Pressable>
+                    {datePickerVisible && (
+                      <DateTimePicker
+                        value={selectedDate}
+                        mode="date"
+                        display="default"
+                        onChange={onDateChange}
+                        maximumDate={new Date()}
+                      />
+                    )}
                   </View>
 
                   <View style={{ zIndex: 1000, width: '35%' }}>
-                    <Text style={styles.label}>Nationality*</Text>
-                    <DropDownPicker
-                      open={nationalityOpen}
+                    <CustomDropdown
+                      label="Nationality*"
                       value={formData.nationality}
                       items={nationalityItems}
-                      setOpen={setNationalityOpen}
-                      setValue={(callback) => handleDropdownChange('nationality', callback(formData.nationality))}
+                      onSelect={(val) => handleDropdownChange('nationality', val)}
                       placeholder="Nationality"
-                      style={[
-                        styles.input,
-                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                      ]}
-                      containerStyle={{
-                        height: hp('5%'),
-                        minHeight: hp('5%'),
-                        maxHeight: hp('5%'),
-                        marginBottom: hp('1%'),
-                      }}
-                      dropDownContainerStyle={{
-                        borderColor: 'gray',
-                        minHeight: hp('5%'),
-                        maxHeight: hp('20%'),
-                      }}
-                      listItemContainerStyle={{
-                        height: hp('5%'),
-                        justifyContent: 'center',
-                      }}
-                      labelStyle={{
-                        fontSize: wp('3.8%'),
-                        fontFamily: 'Inter_400Regular',
-                        color: '#333',
-                      }}
-                      listMode="SCROLLVIEW"
+                      width="100%"
                     />
                   </View>
                 </View>
@@ -407,113 +384,35 @@ const Register = () => {
                 {/* Province, City, District - Horizontally Aligned */}
                 <View style={styles.horizontalContainer}>
                   <View style={{ zIndex: 3000, width: '33%' }}>
-                    <Text style={styles.label}>Province*</Text>
-                    <DropDownPicker
-                      open={provinceOpen}
+                    <CustomDropdown
+                      label="Province*"
                       value={formData.province}
                       items={provinceItems}
-                      setOpen={setProvinceOpen}
-                      setValue={(callback) => handleDropdownChange('province', callback(formData.province))}
+                      onSelect={(val) => handleDropdownChange('province', val)}
                       placeholder="Province"
-                      style={[
-                        styles.input,
-                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                      ]}
-                      containerStyle={{
-                        height: hp('5%'),
-                        minHeight: hp('5%'),
-                        maxHeight: hp('5%'),
-                        marginBottom: hp('1%'),
-                      }}
-                      dropDownContainerStyle={{
-                        borderColor: 'gray',
-                        minHeight: hp('5%'),
-                        maxHeight: hp('20%'),
-                      }}
-                      listItemContainerStyle={{
-                        height: hp('5%'),
-                        justifyContent: 'center',
-                      }}
-                      labelStyle={{
-                        fontSize: wp('3.8%'),
-                        fontFamily: 'Inter_400Regular',
-                        color: '#333',
-                      }}
-                      listMode="SCROLLVIEW"
+                      width="100%"
                     />
                   </View>
 
                   <View style={{ zIndex: 2000, width: '36%' }}>
-                    <Text style={styles.label}>City*</Text>
-                    <DropDownPicker
-                      open={cityOpen}
+                    <CustomDropdown
+                      label="City*"
                       value={formData.city}
                       items={cityItems}
-                      setOpen={setCityOpen}
-                      setValue={(callback) => handleDropdownChange('city', callback(formData.city))}
+                      onSelect={(val) => handleDropdownChange('city', val)}
                       placeholder="City"
-                      style={[
-                        styles.input,
-                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                      ]}
-                      containerStyle={{
-                        height: hp('5%'),
-                        minHeight: hp('5%'),
-                        maxHeight: hp('5%'),
-                        marginBottom: hp('1%'),
-                      }}
-                      dropDownContainerStyle={{
-                        borderColor: 'gray',
-                        minHeight: hp('5%'),
-                        maxHeight: hp('20%'),
-                      }}
-                      listItemContainerStyle={{
-                        height: hp('5%'),
-                        justifyContent: 'center',
-                      }}
-                      labelStyle={{
-                        fontSize: wp('3.8%'),
-                        fontFamily: 'Inter_400Regular',
-                        color: '#333',
-                      }}
-                      listMode="SCROLLVIEW"
+                      width="100%"
                     />
                   </View>
 
                   <View style={{ zIndex: 1000, width: '30%' }}>
-                    <Text style={styles.label}>District*</Text>
-                    <DropDownPicker
-                      open={districtOpen}
+                    <CustomDropdown
+                      label="District*"
                       value={formData.district}
                       items={districtItems}
-                      setOpen={setDistrictOpen}
-                      setValue={(callback) => handleDropdownChange('district', callback(formData.district))}
+                      onSelect={(val) => handleDropdownChange('district', val)}
                       placeholder="District"
-                      style={[
-                        styles.input,
-                        { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                      ]}
-                      containerStyle={{
-                        height: hp('5%'),
-                        minHeight: hp('5%'),
-                        maxHeight: hp('5%'),
-                        marginBottom: hp('1%'),
-                      }}
-                      dropDownContainerStyle={{
-                        borderColor: 'gray',
-                        minHeight: hp('5%'),
-                        maxHeight: hp('20%'),
-                      }}
-                      listItemContainerStyle={{
-                        height: hp('5%'),
-                        justifyContent: 'center',
-                      }}
-                      labelStyle={{
-                        fontSize: wp('3.8%'),
-                        fontFamily: 'Inter_400Regular',
-                        color: '#333',
-                      }}
-                      listMode="SCROLLVIEW"
+                      width="100%"
                     />
                   </View>
                 </View>
@@ -629,37 +528,13 @@ const Register = () => {
               <View style={styles.horizontalContainer}>
                 <View style={{ zIndex: 3000, width: '33%' }}>
                   <Text style={styles.label}>Gender*</Text>
-                  <DropDownPicker
-                    open={genderOpen}
+                  <CustomDropdown
+                    label="Gender*"
                     value={formData.gender}
                     items={genderItems}
-                    setOpen={setGenderOpen}
-                    setValue={(callback) => handleDropdownChange('gender', callback(formData.gender))}
+                    onSelect={(val) => handleDropdownChange('gender', val)}
                     placeholder="Gender"
-                    style={[
-                      styles.input,
-                      { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                    ]}
-                    containerStyle={{
-                      height: hp('5%'),
-                      minHeight: hp('5%'),
-                      maxHeight: hp('5%'),
-                      marginBottom: hp('1%'),
-                    }}
-                    dropDownContainerStyle={{
-                      borderColor: 'gray',
-                      minHeight: hp('5%'),
-                      maxHeight: hp('20%'),
-                    }}
-                    listItemContainerStyle={{
-                      height: hp('5%'),
-                      justifyContent: 'center',
-                    }}
-                    labelStyle={{
-                      fontSize: wp('3.8%'),
-                      fontFamily: 'Inter_400Regular',
-                      color: '#333',
-                    }}
+                    width="100%"
                   />
                 </View>
 
@@ -674,42 +549,26 @@ const Register = () => {
                       onPressIn={toggleDatepicker}
                     />
                   </Pressable>
+                  {datePickerVisible && (
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display="default"
+                      onChange={onDateChange}
+                      maximumDate={new Date()}
+                    />
+                  )}
                 </View>
 
                 <View style={{ zIndex: 1000, width: '35%' }}>
                   <Text style={styles.label}>Nationality*</Text>
-                  <DropDownPicker
-                    open={nationalityOpen}
+                  <CustomDropdown
+                    label="Nationality*"
                     value={formData.nationality}
                     items={nationalityItems}
-                    setOpen={setNationalityOpen}
-                    setValue={(callback) => handleDropdownChange('nationality', callback(formData.nationality))}
+                    onSelect={(val) => handleDropdownChange('nationality', val)}
                     placeholder="Nationality"
-                    style={[
-                      styles.input,
-                      { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                    ]}
-                    containerStyle={{
-                      height: hp('5%'),
-                      minHeight: hp('5%'),
-                      maxHeight: hp('5%'),
-                      marginBottom: hp('1%'),
-                    }}
-                    dropDownContainerStyle={{
-                      borderColor: 'gray',
-                      minHeight: hp('5%'),
-                      maxHeight: hp('20%'),
-                    }}
-                    listItemContainerStyle={{
-                      height: hp('5%'),
-                      justifyContent: 'center',
-                    }}
-                    labelStyle={{
-                      fontSize: wp('3.8%'),
-                      fontFamily: 'Inter_400Regular',
-                      color: '#333',
-                    }}
-                    listMode="SCROLLVIEW"
+                    width="100%"
                   />
                 </View>
               </View>
@@ -745,112 +604,37 @@ const Register = () => {
               <View style={styles.horizontalContainer}>
                 <View style={{ zIndex: 3000, width: '33%' }}>
                   <Text style={styles.label}>Province*</Text>
-                  <DropDownPicker
-                    open={provinceOpen}
+                  <CustomDropdown
+                    label="Province*"
                     value={formData.province}
                     items={provinceItems}
-                    setOpen={setProvinceOpen}
-                    setValue={(callback) => handleDropdownChange('province', callback(formData.province))}
+                    onSelect={(val) => handleDropdownChange('province', val)}
                     placeholder="Province"
-                    style={[
-                      styles.input,
-                      { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                    ]}
-                    containerStyle={{
-                      height: hp('5%'),
-                      minHeight: hp('5%'),
-                      maxHeight: hp('5%'),
-                      marginBottom: hp('1%'),
-                    }}
-                    dropDownContainerStyle={{
-                      borderColor: 'gray',
-                      minHeight: hp('5%'),
-                      maxHeight: hp('20%'),
-                    }}
-                    listItemContainerStyle={{
-                      height: hp('5%'),
-                      justifyContent: 'center',
-                    }}
-                    labelStyle={{
-                      fontSize: wp('3.8%'),
-                      fontFamily: 'Inter_400Regular',
-                      color: '#333',
-                    }}
-                    listMode="SCROLLVIEW"
+                    width="100%"
                   />
                 </View>
 
                 <View style={{ zIndex: 2000, width: '36%' }}>
                   <Text style={styles.label}>City*</Text>
-                  <DropDownPicker
-                    open={cityOpen}
+                  <CustomDropdown
+                    label="City*"
                     value={formData.city}
                     items={cityItems}
-                    setOpen={setCityOpen}
-                    setValue={(callback) => handleDropdownChange('city', callback(formData.city))}
+                    onSelect={(val) => handleDropdownChange('city', val)}
                     placeholder="City"
-                    style={[
-                      styles.input,
-                      { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                    ]}
-                    containerStyle={{
-                      height: hp('5%'),
-                      minHeight: hp('5%'),
-                      maxHeight: hp('5%'),
-                      marginBottom: hp('1%'),
-                    }}
-                    dropDownContainerStyle={{
-                      borderColor: 'gray',
-                      minHeight: hp('5%'),
-                      maxHeight: hp('20%'),
-                    }}
-                    listItemContainerStyle={{
-                      height: hp('5%'),
-                      justifyContent: 'center',
-                    }}
-                    labelStyle={{
-                      fontSize: wp('3.8%'),
-                      fontFamily: 'Inter_400Regular',
-                      color: '#333',
-                    }}
-                    listMode="SCROLLVIEW"
+                    width="100%"
                   />
                 </View>
 
                 <View style={{ zIndex: 1000, width: '30%' }}>
                   <Text style={styles.label}>District*</Text>
-                  <DropDownPicker
-                    open={districtOpen}
+                  <CustomDropdown
+                    label="District*"
                     value={formData.district}
                     items={districtItems}
-                    setOpen={setDistrictOpen}
-                    setValue={(callback) => handleDropdownChange('district', callback(formData.district))}
+                    onSelect={(val) => handleDropdownChange('district', val)}
                     placeholder="District"
-                    style={[
-                      styles.input,
-                      { height: hp('5%'), minHeight: hp('5%'), maxHeight: hp('5%'), paddingVertical: 0 }
-                    ]}
-                    containerStyle={{
-                      height: hp('5%'),
-                      minHeight: hp('5%'),
-                      maxHeight: hp('5%'),
-                      marginBottom: hp('1%'),
-                    }}
-                    dropDownContainerStyle={{
-                      borderColor: 'gray',
-                      minHeight: hp('5%'),
-                      maxHeight: hp('20%'),
-                    }}
-                    listItemContainerStyle={{
-                      height: hp('5%'),
-                      justifyContent: 'center',
-                    }}
-                    labelStyle={{
-                      fontSize: wp('3.8%'),
-                      fontFamily: 'Inter_400Regular',
-                      color: '#333',
-                    }}
-                    listMode="SCROLLVIEW"
+                    width="100%"
                   />
                 </View>
               </View>

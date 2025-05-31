@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, Dimensions, ScrollView, StyleSheet, ImageBackground, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard,
-} from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, Dimensions, ScrollView, StyleSheet, ImageBackground, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width, height } = Dimensions.get('window');
 
@@ -84,14 +85,18 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
                     if (!domain) return formData[field];
                     return `${name}@${domain.slice(0, 2)}...`;
                   })()
-                : formData[field] || "Add"}
+                : field === "name" && formData[field]
+                  ? formData[field].length > 16
+                    ? `${formData[field].slice(0, 16)}...`
+                    : formData[field]
+                  : formData[field] || "Add"}
             </Text> 
              {/* Add green checkmark for verified email */}
           {field === "email" && (
-            <Ionicons name="checkmark-circle" size={20} color="green" style={styles.verifiedIcon} />
+            <Ionicons name="checkmark-circle" size={RFValue(20, height)} color="green" style={styles.verifiedIcon} />
           )}
             {/* Show right arrow only for editable fields */}
-            {editable && <Ionicons name="chevron-forward" size={20} color="gray" style={styles.arrowIcon} />}
+            {editable && <Ionicons name="chevron-forward" size={RFValue(20, height)} color="gray" style={styles.arrowIcon} />}
           </TouchableOpacity>
          
         </View>
@@ -172,84 +177,96 @@ const uploadImage = async (imageUri) => {
 
 
   return (
-    <ImageBackground source={require('../assets/ProfileBG.png')} style={styles.background}>
-      <View style={styles.outerContainer}>
-        <View style={styles.back}>
-           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Image source={require('../assets/BackButton.png')} style={styles.backImage} />
-           </TouchableOpacity>
-
-        </View>
-        <View style={styles.container}>
-        <View style={styles.imageContainer}>
+    <>
+      <ImageBackground source={require('../assets/ProfileBG.png')} style={styles.background}>
+        <View style={styles.outerContainer}>
+          <View style={styles.back}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Image source={require('../assets/BackButton.png')} style={styles.backImage} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.container}>
+          <View style={styles.imageContainer}>
   <View style={{ position: 'relative' }}>
-    <Image source={{ uri: `${image}?t=${new Date().getTime()}` }} style={styles.profileImage} />
+    <Image
+      source={
+        image
+          ? { uri: `${image}?t=${new Date().getTime()}` }
+          : require('../assets/blankDP.jpg') // fallback local image
+      }
+      style={styles.profileImage}
+    />
     <TouchableOpacity style={styles.cameraButton} onPress={handlePickImage}>
-      <Ionicons name="camera" size={40} color="black" />
+      <Ionicons name="camera" size={RFValue(28, height)} color="black" />
     </TouchableOpacity>
   </View>
 </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.header}>
-              <Text style={styles.name}>{formData?.name || 'Full Name'}</Text>
+              <Text style={styles.name}>
+                {formData?.name
+                  ? formData.name.length > 16
+                    ? `${formData.name.slice(0, 16)}...`
+                    : formData.name
+                  : 'Full Name'}
+              </Text>
               <Text style={styles.location}>{formData?.city || 'Province, City'}</Text>
             </View>
-            <View style={styles.separator}></View>
-
-            {/* Personal Information */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionHeader}>Personal Information</Text>
-              {renderInfoItem('Name', 'name')}
-              {renderInfoItem('Mobile Number', 'mobile')}
-              {renderInfoItem('Email', 'email', false)}
-              {renderInfoItem('Nationality', 'nationality', false)} 
-              {renderInfoItem('Gender', 'gender', false)} 
-            </View>
-            <View style={styles.separator}></View>
-
-            {/* Account & Security */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionHeader}>Account & Security</Text>
-              <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")}>
-                <Text style={styles.linkText}>Change Password</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-
-      {/* Modal for Editing Fields */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.modalContainer}>
-            <KeyboardAvoidingView
-              style={styles.modalContent}
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
-              <Text style={styles.modalHeader}>{editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}</Text>
-              <TextInput
-                style={styles.input}
-                value={newValue}
-                onChangeText={setNewValue}
-                placeholder={`Enter your ${editingField}`}
-              />
-              <TouchableOpacity onPress={handleUpdate} style={styles.updateButton}>
-                <Text style={styles.updateText}>Update</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </KeyboardAvoidingView>
+              <View style={styles.separator}></View>
+              {/* Personal Information */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionHeader}>Personal Information</Text>
+                {renderInfoItem('Name', 'name')}
+                {renderInfoItem('Mobile Number', 'mobile')}
+                {renderInfoItem('Email', 'email', false)}
+                {renderInfoItem('Nationality', 'nationality', false)}
+                {renderInfoItem('Gender', 'gender', false)}
+              </View>
+              <View style={styles.separator}></View>
+              {/* Account & Security */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionHeader}>Account & Security</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")} style={styles.infoRow}>
+                  <Text style={styles.linkText}>Change Password</Text>
+                  <Ionicons name="chevron-forward" size={RFValue(20, height)} color="gray" style={styles.arrowIcon} />
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </ImageBackground>
+        </View>
+        {/* Modal for Editing Fields */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalContainer}>
+              <KeyboardAvoidingView
+                style={styles.modalContent}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              >
+                <Text style={styles.modalHeader}>{editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newValue}
+                  onChangeText={setNewValue}
+                  placeholder={`Enter your ${editingField}`}
+                  placeholderTextColor="#888"
+                />
+                <TouchableOpacity onPress={handleUpdate} style={styles.updateButton}>
+                  <Text style={styles.updateText}>Update</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </KeyboardAvoidingView>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </ImageBackground>
+    </>
   );
 };
 
@@ -259,8 +276,8 @@ const styles = StyleSheet.create({
   container: {
     width: '85%',
     backgroundColor: 'white',
-    borderRadius: width * 0.08,
-    padding: width * 0.045,
+    borderRadius: wp('8%'),
+    padding: wp('4.5%'),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
@@ -268,20 +285,20 @@ const styles = StyleSheet.create({
     elevation: 3,
     alignSelf: 'center',
     maxHeight: '80%',
-    top: height * 0.04,
+    top: hp('4%'),
   },
   imageContainer: {
-  position: 'absolute',
-  top: -height * 0.07,
-  left: 0,
-  right: 0,
-  alignItems: 'center',
-  zIndex: 2,
-},
+    position: 'absolute',
+    top: -hp('7%'),
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 2,
+  },
   profileImage: {
-    width: width * 0.3,
-    height: width * 0.3,
-    borderRadius: width * 0.15,
+    width: wp('30%'),
+    height: wp('30%'),
+    borderRadius: wp('15%'),
     borderWidth: 2,
     borderColor: '#00aa13',
   },
@@ -290,34 +307,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#fff',
-    borderRadius: width * 0.06,
-    padding: width * 0.015,
+    borderRadius: wp('6%'),
+    padding: wp('1.5%'),
   },
-  header: { alignItems: 'center', marginTop: height * 0.09 },
-  name: { fontSize: width * 0.065, fontWeight: 'bold', marginTop: height * 0.012 },
-  location: { fontSize: width * 0.045, color: '#6d6d6d' },
-  sectionContainer: { padding: width * 0.05 },
-  sectionHeader: { fontSize: width * 0.045, fontWeight: 'bold', marginBottom: height * 0.012, color: '#00aa13' },
-  infoItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: height * 0.012 },
-  label: { color: 'gray', fontSize: width * 0.04 },
-  infoRow: { flexDirection: 'row', alignItems: 'center' },
-  value: { color: 'black', fontSize: width * 0.045 },
+  header: { alignItems: 'center', marginTop: hp('9%') },
+  name: { fontSize: RFValue(22, height), fontWeight: 'bold', marginTop: hp('1.2%') },
+  location: { fontSize: RFValue(15, height), color: '#6d6d6d' },
+  sectionContainer: { padding: wp('5%') },
+  sectionHeader: { fontSize: RFValue(15, height), fontWeight: 'bold', marginBottom: hp('1.2%'), color: '#00aa13' },
+  infoItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: hp('1.2%') },
+  label: { color: 'gray', fontSize: RFValue(13, height) },
+  infoRow: { flexDirection: 'row', alignItems: 'center',  },
+  value: { color: 'black', fontSize: RFValue(15, height) },
   input: {
     borderBottomWidth: 1,
     borderColor: 'gray',
-    paddingVertical: height * 0.012,
+    paddingVertical: hp('1.2%'),
     width: '100%',
-    fontSize: width * 0.045,
+    fontSize: RFValue(15, height),
     borderWidth: 1,
-    borderRadius: width * 0.025,
-    padding: width * 0.03,
-    marginBottom: height * 0.012,
+    borderRadius: wp('2.5%'),
+    padding: wp('3%'),
+    marginBottom: hp('1.2%'),
     backgroundColor: '#fff',
   },
-  icon: { marginLeft: width * 0.012 },
-  arrowIcon: { marginLeft: width * 0.012 },
+  icon: { marginLeft: wp('1.2%') },
+  arrowIcon: { marginLeft: wp('1.2%') },
   separator: {
-    marginTop: height * 0.018,
+    marginTop: hp('1.8%'),
     height: 1,
     width: '80%',
     alignSelf: 'center',
@@ -331,46 +348,51 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: width * 0.07,
+    padding: wp('7%'),
     width: '100%',
-    borderTopLeftRadius: width * 0.08,
-    borderTopRightRadius: width * 0.08,
+    borderTopLeftRadius: wp('8%'),
+    borderTopRightRadius: wp('8%'),
     alignItems: 'center',
   },
   modalHeader: {
-    fontSize: width * 0.05,
-    marginBottom: height * 0.012,
+    fontSize: RFValue(16, height),
+    marginBottom: hp('1.2%'),
     color: 'gray',
     alignSelf: 'flex-start',
   },
   updateButton: {
     backgroundColor: '#fab636',
-    padding: height * 0.018,
-    borderRadius: width * 0.045,
+    padding: hp('1.8%'),
+    borderRadius: wp('4.5%'),
     width: '100%',
-    marginBottom: height * 0.008,
-    marginTop: height * 0.025,
+    marginBottom: hp('0.8%'),
+    marginTop: hp('2.5%'),
   },
-  updateText: { color: 'white', textAlign: 'center', fontSize: width * 0.045 },
-  closeButton: { padding: height * 0.012, alignItems: 'center' },
-  closeButtonText: { color: 'gray', fontSize: width * 0.045 },
+  updateText: { color: 'white', textAlign: 'center', fontSize: RFValue(15, height) },
+  closeButton: { padding: hp('1.2%'), alignItems: 'center' },
+  closeButtonText: { color: 'gray', fontSize: RFValue(15, height) },
   back: {
     alignSelf: 'flex-start',
-    marginBottom: height * 0.04,
-    bottom: height * 0.13,
-    left: width * 0.05,
+    bottom: hp('8%'),
+    left: wp('7%'),
   },
   backButton: {},
   backImage: {
-    width: width * 0.09,
-    height: width * 0.09,
+    width: wp('12%'),
+    height: wp('12%'),
   },
   disabledText: {
     color: "gray",
   },
   verifiedIcon: {
-    marginLeft: width * 0.012,
-    marginRight: -width * 0.025,
+    marginLeft: wp('1.2%'),
+    marginRight: -wp('2.5%'),
+  },
+  linkText: {
+    fontSize: RFValue(15, height),
+    marginTop: hp('1%'),
+    color: 'gray',
+    bottom: hp('0.6%'),
   },
 });
 

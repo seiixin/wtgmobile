@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     elevation: 5,
-    paddingBottom: Platform.OS === 'android' ? 36 : 0, // Add this for Android nav bar spacing
+    paddingBottom: Platform.OS === 'android' ? 0 : 0, // Add this for Android nav bar spacing
 },
   tabButton: {
     alignItems: 'center',

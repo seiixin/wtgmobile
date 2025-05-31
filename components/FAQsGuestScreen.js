@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, Dimensions, TouchableOpacity, FlatList, ImageBackground, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ImageBackground, StyleSheet, Image, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-const { width, height } = Dimensions.get('window');
 // FAQ Categories
 const faqCategories = [
   { id: "1", title: "General Questions", icon: "help-circle-outline" },
@@ -44,7 +44,7 @@ const CustomDrawerContent = (props) => {
       </View>
 
       {/* Sign In Button at the bottom */}
-      <View style={{ flex: 1, justifyContent: 'flex-end', marginTop: 40 }}>
+      <View style={{ flex: 1, justifyContent: 'flex-end', marginTop: hp('5%') }}>
         <TouchableOpacity
           style={styles.signInButton}
           onPress={() => props.navigation.navigate('SignIn')}
@@ -81,32 +81,40 @@ const FAQsGuestScreenContent = () => {
         }
       }}
     >
-      <Ionicons name={item.icon} size={24} color="#34A853" />
+      <Ionicons name={item.icon} size={wp('6.5%')} color="#34A853" />
       <Text style={styles.categoryText}>{item.title}</Text>
-      <Ionicons name="chevron-forward" size={24} color="#ccc" />
+      <Ionicons name="chevron-forward" size={wp('6.5%')} color="#ccc" />
     </TouchableOpacity>
   );
 
   return (
-    <ImageBackground source={require('../assets/FAQsBG.png')} style={styles.background}>
-      <View style={styles.container}>
-        {/* Header with Hamburger Menu */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.drawerToggle}>
-            <Ionicons name="menu" size={30} color="black" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.headerTitle}>FAQs for Guests</Text>
-        <Text style={styles.subtitle}>Choose a Category</Text>
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      <ImageBackground source={require('../assets/FAQsBG.png')} style={styles.background} resizeMode="cover">
+        <View style={styles.container}>
+          {/* Header with Hamburger Menu */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.drawerToggle}>
+              <Ionicons name="menu" size={wp('7%')} color="black" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.headerTitle}>FAQs for Guests</Text>
+          <Text style={styles.subtitle}>Choose a Category</Text>
 
-        <FlatList
-          data={faqCategories}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-        />
-      </View>
-    </ImageBackground>
+          <FlatList
+            data={faqCategories}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </ImageBackground>
+    </>
   );
 };
 
@@ -125,48 +133,49 @@ const FAQsGuestScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  background: { 
-    flex: 1, 
-    resizeMode: 'cover' 
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
   },
   container: {
     flex: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: height * 0.04,
+    paddingHorizontal: wp('5%'),
+    paddingTop: hp('4%'),
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: height * 0.012,
-    marginTop: height * 0.06,
+    marginBottom: hp('1.2%'),
+    marginTop: hp('6%'),
   },
   drawerToggle: {
-    marginRight: width * 0.04,
-    marginBottom: height * 0.05,
+    marginRight: wp('4%'),
+    marginBottom: hp('5%'),
+    bottom: hp('2%'),
   },
   headerTitle: {
-    fontSize: width * 0.08,
+    fontSize: wp('8%'),
     fontWeight: "bold",
-    marginTop: height * 0.01,
+    marginTop: hp('1%'),
     textAlign: "center",
   },
   subtitle: {
-    fontSize: width * 0.045,
+    fontSize: wp('4%'),
     color: "#666",
-    marginBottom: height * 0.025,
-    marginHorizontal: width * 0.05,
+    marginBottom: hp('2.5%'),
+    marginHorizontal: wp('5%'),
     textAlign: "center",
   },
   listContainer: {
-    paddingBottom: height * 0.03,
+    paddingBottom: hp('2.5%'),
   },
   categoryItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: width * 0.04,
-    borderRadius: width * 0.03,
-    marginBottom: height * 0.012,
+    padding: wp('4%'),
+    borderRadius: wp('3%'),
+    marginBottom: hp('1.2%'),
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -175,52 +184,52 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     flex: 1,
-    fontSize: width * 0.045,
+    fontSize: wp('4.2%'),
     fontWeight: "500",
-    marginLeft: width * 0.03,
+    marginLeft: wp('2.5%'),
   },
   drawerContainer: {
     flex: 1,
-    padding: width * 0.05,
+    padding: wp('5%'),
     backgroundColor: '#fff',
   },
   menuSection: {
-    marginVertical: height * 0.012,
+    marginVertical: hp('1.2%'),
   },
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: height * 0.012,
-    paddingHorizontal: width * 0.04,
-    borderRadius: width * 0.025,
+    paddingVertical: hp('1.2%'),
+    paddingHorizontal: wp('3.5%'),
+    borderRadius: wp('2.5%'),
   },
   drawerTextBlue: {
-    fontSize: width * 0.045,
-    marginLeft: width * 0.04,
+    fontSize: wp('4%'),
+    marginLeft: wp('3.5%'),
     color: '#1580c2',
   },
   drawerTextYellow: {
-    fontSize: width * 0.045,
-    marginLeft: width * 0.04,
+    fontSize: wp('4%'),
+    marginLeft: wp('3.5%'),
     color: '#cb9717',
   },
   drawerIcon: {
-    width: width * 0.11,
-    height: width * 0.11,
+    width: wp('10%'),
+    height: wp('10%'),
     resizeMode: 'contain',
-    marginRight: width * 0.025,
+    marginRight: wp('2.5%'),
   },
   signInButton: {
     backgroundColor: "#00aa13",
-    paddingVertical: height * 0.018,
-    borderRadius: width * 0.025,
+    paddingVertical: hp('1.8%'),
+    borderRadius: wp('2.5%'),
     alignItems: "center",
-    marginHorizontal: width * 0.04,
-    marginTop: height * 0.025,
+    marginHorizontal: wp('4%'),
+    marginTop: hp('2.5%'),
   },
   signInButtonText: {
     color: "#fff",
-    fontSize: width * 0.045,
+    fontSize: wp('4.5%'),
     fontWeight: "bold",
   },
 });

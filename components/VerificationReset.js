@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, Dimensions, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from "react-native-responsive-fontsize";
 
 const { width, height } = Dimensions.get('window');
@@ -117,11 +118,17 @@ const VerificationReset = ({ navigation, route }) => {
     <ImageBackground
       source={require('../assets/VerificationBg.png')}
       style={styles.background}
+      resizeMode="cover"
     >
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <View style={styles.backButtonCircle}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
         </View>
       </TouchableOpacity>
 
@@ -167,7 +174,7 @@ const VerificationReset = ({ navigation, route }) => {
       {isVerified && (
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle" size={80} color="#38b6ff" />
+            <Ionicons name="checkmark-circle" size={RFValue(60, height)} color="#38b6ff" />
             <Text style={styles.modalTitle}>Verified!</Text>
             <Text style={styles.modalMessage}>
               You have successfully verified the code. You can now reset your password.
@@ -186,74 +193,80 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: '100%',
-    height: height * 1.05,
+    height: hp('100%'),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: "#f6f6f6",
   },
   card: {
     backgroundColor: '#fff',
-    padding: width * 0.08,
-    borderRadius: width * 0.1,
+    padding: wp('7%'),
+    borderRadius: wp('7%'),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: hp('0.7%') },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: wp('2%'),
     elevation: 6,
-    top: 20,
-    width: width * 0.88,
+    top: hp('2%'),
+    width: wp('88%'),
     alignItems: 'center',
-    marginVertical: 20,
-    marginBottom: 50,
+    marginVertical: hp('2%'),
+    marginBottom: hp('6%'),
   },
   title: {
-    fontSize: RFValue(22),
+    fontSize: RFValue(22, height),
     fontWeight: 'bold',
     color: '#000',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: RFValue(15),
+    fontSize: RFValue(15, height),
     color: '#777',
-    marginVertical: 15,
+    marginVertical: hp('1.5%'),
     textAlign: 'center',
   },
   email: {
     color: 'green',
-    fontSize: RFValue(15),
-    marginBottom: 10,
+    fontSize: RFValue(15, height),
+    marginBottom: hp('1%'),
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 20,
+    marginVertical: hp('2%'),
   },
   inputBox: {
-    width: width * 0.11,
-    height: width * 0.11,
+    width: wp('13%'),
+    height: wp('13%'),
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    borderRadius: wp('2.5%'),
     textAlign: 'center',
-    fontSize: RFValue(16),
+    fontSize: RFValue(18, height),
     borderWidth: 1,
     borderColor: '#ccc',
+    marginHorizontal: wp('1%'),
   },
   timer: {
-    fontSize: RFValue(13),
+    fontSize: RFValue(13, height),
     color: '#555',
+    textAlign: 'center',
   },
   click: {
-    marginTop: 15,
+    marginTop: hp('1.5%'),
     color: '#6d6d6d',
-    fontSize: RFValue(13),
+    fontSize: RFValue(13, height),
+    textAlign: 'center',
   },
   resendButton: {
-    marginTop: 5,
+    marginTop: hp('0.5%'),
   },
   resendButtonText: {
     color: 'green',
-    fontSize: RFValue(12),
+    fontSize: RFValue(12, height),
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   disabledButton: {
     opacity: 0.5,
@@ -264,29 +277,30 @@ const styles = StyleSheet.create({
   verifyButton: {
     width: '85%',
     backgroundColor: '#00aa13',
-    paddingVertical: height * 0.015,
-    borderRadius: 50,
-    marginTop: 25,
+    paddingVertical: hp('1.5%'),
+    borderRadius: wp('10%'),
+    marginTop: hp('2.5%'),
     alignItems: 'center',
   },
   verifyButtonText: {
     color: '#fff',
-    fontSize: RFValue(16),
+    fontSize: RFValue(16, height),
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   backButton: {
     position: 'absolute',
-    top: height * 0.05,
-    left: width * 0.05,
+    top: hp('6%'),
+    left: wp('7%'),
     backgroundColor: 'transparent',
     padding: 0,
     zIndex: 10,
   },
   backButtonCircle: {
     backgroundColor: '#fcbd21',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: wp('6%'),
+    width: wp('12%'),
+    height: wp('12%'),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -299,38 +313,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 20,
+    paddingHorizontal: wp('5%'),
   },
   modalContent: {
     backgroundColor: '#fff',
-    padding: width * 0.08,
-    borderRadius: width * 0.06,
+    padding: wp('7%'),
+    borderRadius: wp('6%'),
     alignItems: 'center',
     width: '90%',
   },
   modalTitle: {
-    fontSize: RFValue(20),
+    fontSize: RFValue(20, height),
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: hp('1%'),
     color: '#000',
+    textAlign: 'center',
   },
   modalMessage: {
-    fontSize: RFValue(15),
+    fontSize: RFValue(15, height),
     textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: hp('1%'),
+    marginBottom: hp('2%'),
     color: '#555',
   },
   confirmButton: {
     backgroundColor: '#38b6ff',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.1,
-    borderRadius: 30,
+    paddingVertical: hp('1.5%'),
+    paddingHorizontal: wp('10%'),
+    borderRadius: wp('8%'),
+    marginTop: hp('1%'),
   },
   confirmButtonText: {
     color: '#fff',
-    fontSize: RFValue(16),
+    fontSize: RFValue(16, height),
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
