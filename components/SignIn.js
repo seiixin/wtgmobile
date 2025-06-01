@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image, Dimensions, StatusBar, Modal, Platform, ScrollView, KeyboardAvoidingView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Image, Dimensions, StatusBar, Modal, Platform, ScrollView, KeyboardAvoidingView, BackHandler } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,8 +12,19 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false); // <-- Add this line
   const navigation = useNavigation();
   const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
+  // Handle Android hardware back button
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      setShowExitModal(true); // or setShowLogoutModal(true) in History.js
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -81,6 +92,47 @@ const SignIn = () => {
         backgroundColor="transparent"
         translucent={true}
       />
+      {/* Exit Confirmation Modal */}
+      <Modal
+        visible={showExitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowExitModal(false)}
+      >
+      <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            alignItems: 'center',
+            width: '80%'
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>
+              Are you sure you want to close the application?
+            </Text>
+            <View style={{ flexDirection: 'row', marginTop: 16 }}>
+              <TouchableOpacity
+                style={{ marginRight: 24, padding: 10 }}
+                onPress={() => setShowExitModal(false)}
+              >
+                <Text style={{ color: '#38b6ff', fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ padding: 10 }}
+                onPress={() => BackHandler.exitApp()}
+              >
+                <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 16 }}>Exit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <ImageBackground
         source={require("../assets/SignInBg.png")}
         style={styles.backgroundImage}

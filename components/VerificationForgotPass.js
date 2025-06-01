@@ -133,11 +133,13 @@ const VerificationForgotPass = () => {
         translucent={true}
       />
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <View style={styles.backButtonCircle}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </View>
-      </TouchableOpacity>
+      {!isVerified && (
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <View style={styles.backButtonCircle}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
@@ -171,10 +173,6 @@ const VerificationForgotPass = () => {
             Resend Code
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
-          <Text style={styles.verifyButtonText}>Continue</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Confirmation Modal */}
@@ -197,7 +195,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: wp('100%'),
-    height: hp('100%'),
+    height: hp('105%'),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: "#f6f6f6",
@@ -287,17 +285,17 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: hp('5%'),
-    left: wp('5%'),
+    top: hp('8%'),
+    left: wp('7%'),
     backgroundColor: 'transparent',
     padding: 0,
     zIndex: 10,
   },
   backButtonCircle: {
     backgroundColor: '#fcbd21',
-    borderRadius: wp('5%'),
-    width: wp('11%'),
-    height: wp('11%'),
+    borderRadius: wp('6%'),
+    width: wp('12%'),
+    height: wp('12%'),
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
+const { width } = Dimensions.get('window');
+
 // Slide Data
 const slides = [
   {
@@ -27,15 +29,21 @@ const slides = [
   },
 ];
 
+const SLIDE_DURATION = 350;
+
 const IntroSlides = () => {
   const navigation = useNavigation();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const translateX = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [nextIndex, setNextIndex] = useState(null);
+  const [swipeDirection, setSwipeDirection] = useState('left');
+  const currentPosition = useRef(new Animated.Value(0)).current;
+  const nextPosition = useRef(new Animated.Value(0)).current;
 
   const handleSwipe = (direction) => {
-    let newIndex = currentIndex;
+    if (isTransitioning) return;
 
+    let newIndex = currentIndex;
     if (direction === 'left' && currentIndex < slides.length - 1) {
       newIndex = currentIndex + 1;
     } else if (direction === 'right' && currentIndex > 0) {
@@ -43,28 +51,29 @@ const IntroSlides = () => {
     }
 
     if (newIndex !== currentIndex) {
-      // Start fading out the text first
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }).start(() => {
-        setCurrentIndex(newIndex); // Change content while invisible
+      setIsTransitioning(true);
+      setNextIndex(newIndex);
+      setSwipeDirection(direction);
 
-        // Reset position & Fade-in new content
-        translateX.setValue(direction === 'left' ? wp('100%') : -wp('100%'));
-        Animated.parallel([
-          Animated.timing(translateX, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]).start();
+      // Set initial positions
+      currentPosition.setValue(0);
+      nextPosition.setValue(direction === 'left' ? width : -width);
+
+      Animated.parallel([
+        Animated.timing(currentPosition, {
+          toValue: direction === 'left' ? -width : width,
+          duration: SLIDE_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(nextPosition, {
+          toValue: 0,
+          duration: SLIDE_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setCurrentIndex(newIndex);
+        setNextIndex(null);
+        setIsTransitioning(false);
       });
     }
   };
@@ -73,9 +82,26 @@ const IntroSlides = () => {
     if (currentIndex < slides.length - 1) {
       handleSwipe('left');
     } else {
-      navigation.navigate('SignIn'); // Navigate to SignIn screen
+      navigation.navigate('SignIn');
     }
   };
+
+  // Helper to render a slide
+  const renderSlide = (slide, animatedStyle = {}) => (
+    <Animated.View style={[styles.slideContainer, animatedStyle]}>
+      <ImageBackground
+        source={slide.source}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{slide.title}</Text>
+          <Text style={styles.description}>{slide.description}</Text>
+        </View>
+      </ImageBackground>
+    </Animated.View>
+  );
 
   return (
     <>
@@ -98,30 +124,32 @@ const IntroSlides = () => {
             }}
           >
             <View style={styles.container}>
-              {/* Background Image */}
-              <Animated.View
-                style={[
-                  styles.backgroundContainer,
-                  { transform: [{ translateX }] }, // Move image smoothly
-                ]}
-              >
-                <ImageBackground
-                  source={slides[currentIndex].source}
-                  style={styles.backgroundImage}
-                  resizeMode="cover"
-                />
-              </Animated.View>
+              {/* Current Slide */}
+              {renderSlide(
+                slides[currentIndex],
+                isTransitioning
+                  ? {
+                      transform: [{ translateX: currentPosition }],
+                      zIndex: 2,
+                      position: 'absolute',
+                      width: '100%',
+                      height: '100%',
+                    }
+                  : {}
+              )}
 
-              {/* Title & Description (Now Fades In/Out Properly) */}
-              <Animated.View
-                style={[
-                  styles.textContainer,
-                  { opacity }, // Fade effect on text
-                ]}
-              >
-                <Text style={styles.title}>{slides[currentIndex].title}</Text>
-                <Text style={styles.description}>{slides[currentIndex].description}</Text>
-              </Animated.View>
+              {/* Next Slide (only during transition) */}
+              {isTransitioning && nextIndex !== null &&
+                renderSlide(
+                  slides[nextIndex],
+                  {
+                    transform: [{ translateX: nextPosition }],
+                    zIndex: 1,
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                  }
+                )}
 
               {/* Pagination Dots */}
               <View style={styles.paginationContainer}>
@@ -154,7 +182,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backgroundContainer: {
+  slideContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: -1,
   },
@@ -162,13 +190,17 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    justifyContent: 'flex-end',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.0)',
   },
   textContainer: {
-    position: 'absolute',
-    bottom: hp('18%'),
     width: '100%',
     paddingHorizontal: wp('5%'),
     alignItems: 'center',
+    marginBottom: hp('18%'),
   },
   title: {
     fontSize: wp('6.5%'),

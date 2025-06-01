@@ -126,11 +126,13 @@ const VerificationReset = ({ navigation, route }) => {
         translucent={true}
       />
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <View style={styles.backButtonCircle}>
-          <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
-        </View>
-      </TouchableOpacity>
+      {!isVerified && (
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <View style={styles.backButtonCircle}>
+            <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.title}>Verification</Text>
@@ -165,9 +167,12 @@ const VerificationReset = ({ navigation, route }) => {
           </Text>
         </TouchableOpacity>
 
+        {/* REMOVE the Continue button below */}
+        {/*
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
           <Text style={styles.verifyButtonText}>Continue</Text>
         </TouchableOpacity>
+        */}
       </View>
 
       {/* Confirmation Modal */}

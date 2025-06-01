@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, Dimensions, ScrollView, StyleSheet, ImageBackground, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, Dimensions, ScrollView, StyleSheet, ImageBackground, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,6 +15,7 @@ const EditProfile = () => {
   const [editingField, setEditingField] = useState(null);
   const [formData, setFormData] = useState({});
   const [image, setImage] = useState(null);
+  const [imageCacheBuster, setImageCacheBuster] = useState(Date.now()); // Add this line
   const [newValue, setNewValue] = useState(""); // New state for updated field value
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
   const navigation = useNavigation();
@@ -105,6 +106,20 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
   };
 
   const handleUpdate = () => {
+    if (editingField === "name") {
+      const nameRegex = /^[A-Za-z\s]{5,45}$/;
+      if (!nameRegex.test(newValue.trim())) {
+        alert("Name must be 5-45 characters only (no numbers or symbols).");
+        return;
+      }
+    }
+    if (editingField === "mobile") {
+      const mobileRegex = /^\d{11}$/;
+      if (!mobileRegex.test(newValue.trim())) {
+        alert("Mobile number must be exactly 11 digits and contain only numbers.");
+        return;
+      }
+    }
     handleChange(editingField, newValue); // Update the field based on current selection
     setModalVisible(false); // Close the modal after update
   };
@@ -125,7 +140,8 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
   if (!result.canceled) {
     const selectedImage = result.assets[0].uri;
-    setImage(selectedImage);  // ✅ Save image locally
+    setImage(selectedImage);
+    setImageCacheBuster(Date.now()); // Update cache buster only when image changes
     setUser((prevUser) => ({ ...prevUser, profileImage: selectedImage }));
 
     // Upload image to the server
@@ -163,7 +179,8 @@ const uploadImage = async (imageUri) => {
     const data = JSON.parse(text);
     if (data.imageUrl) {
       alert("Profile image updated successfully!");
-      setImage(data.imageUrl); // Use Cloudinary URL from backend
+      setImage(data.imageUrl);
+      setImageCacheBuster(Date.now()); // Update cache buster only when image changes
       setUser((prevUser) => ({ ...prevUser, profileImage: data.imageUrl }));
     } else {
       alert("Failed to update profile image.");
@@ -178,6 +195,11 @@ const uploadImage = async (imageUri) => {
 
   return (
     <>
+    <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <ImageBackground source={require('../assets/ProfileBG.png')} style={styles.background}>
         <View style={styles.outerContainer}>
           <View style={styles.back}>
@@ -191,7 +213,7 @@ const uploadImage = async (imageUri) => {
     <Image
       source={
         image
-          ? { uri: `${image}?t=${new Date().getTime()}` }
+          ? { uri: `${image}?t=${imageCacheBuster}` } // Use cache buster from state
           : require('../assets/blankDP.jpg') // fallback local image
       }
       style={styles.profileImage}
@@ -332,7 +354,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   icon: { marginLeft: wp('1.2%') },
-  arrowIcon: { marginLeft: wp('1.2%') },
+  arrowIcon: { left: wp('3%'), marginLeft: -wp('2%') },
   separator: {
     marginTop: hp('1.8%'),
     height: 1,
@@ -341,7 +363,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd',
   },
   modalContainer: {
-    flex: 1,
+    position: 'absolute', // changed from flex: 1
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',

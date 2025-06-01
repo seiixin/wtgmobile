@@ -169,7 +169,7 @@ const Verification = () => {
 
   const handleConfirmation = () => {
     setIsVerified(false);
-    navigation.navigate("MainTabs", { screen: "HistoryTab" }); // Navigate to the main app
+    navigation.navigate('History'); // Navigate to the main app
   };
 
   const handleBackPress = () => {
@@ -189,11 +189,13 @@ const Verification = () => {
         resizeMode="cover"
       >
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <View style={styles.backButtonCircle}>
-            <Ionicons name="arrow-back" size={wp('6%')} color="#fff" />
-          </View>
-        </TouchableOpacity>
+        {!isVerified && (
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <View style={styles.backButtonCircle}>
+              <Ionicons name="arrow-back" size={wp('6%')} color="#fff" />
+            </View>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.card}>
           <Text style={styles.title}>Verification</Text>
@@ -228,9 +230,6 @@ const Verification = () => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
-            <Text style={styles.verifyButtonText}>Continue</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Confirmation Modal */}

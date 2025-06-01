@@ -150,11 +150,13 @@ const VerificationRegister = () => {
         translucent={true}
       />
       {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <View style={styles.backButtonCircle}>
-          <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
-        </View>
-      </TouchableOpacity>
+      {!isVerified && (
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <View style={styles.backButtonCircle}>
+            <Ionicons name="arrow-back" size={RFValue(22, height)} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Main Card */}
       <View style={styles.card}>
@@ -189,9 +191,13 @@ const VerificationRegister = () => {
             Resend Code
           </Text>
         </TouchableOpacity>
+
+        {/* REMOVE the continue/verify button below */}
+        {/* 
         <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
           <Text style={styles.verifyButtonText}>Verify Email</Text>
         </TouchableOpacity>
+        */}
       </View>
 
       {/* Confirmation Modal */}

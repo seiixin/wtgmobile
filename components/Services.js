@@ -217,6 +217,14 @@ const ServicesScreen = () => {
         </ScrollView>
 
         <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
+          {/* StatusBar for modal: dark-content with dark background */}
+          {modalVisible && (
+            <StatusBar
+              barStyle="dark-content"
+              backgroundColor="transparent" // Same as overlay: dark with ~80% opacity
+              translucent={true}
+            />
+          )}
           <View
             style={[
               styles.modalContent,
@@ -433,17 +441,17 @@ const CustomDrawerContent = (props) => {
 </View>
 
       <View style={styles.menuSection}>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
           <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-          <Text style={styles.drawerTextGreen}>Home</Text>
+          <Text style={styles.drawerTextGreen}>History</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
           <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
           <Text style={styles.drawerTextYellow}>Bookmarks</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
           <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
           <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
         </TouchableOpacity>
@@ -623,6 +631,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: hp('40%'),
   },
+  modalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 100,
+  },
   divider: {
     width: "25%",
     height: hp('0.6%'),
@@ -746,89 +765,86 @@ const styles = StyleSheet.create({
   searchIcon: {
     padding: 10,
   },
-  drawerTextGreen: {
-        fontSize: RFValue(18, height),
-        marginLeft: wp('4%'),
-        color: '#12894f',
-    },
-    drawerTextYellow: {
-        fontSize: RFValue(18, height),
-        marginLeft: wp('4%'),
-        color: '#cb9717',
-    },
-    drawerTextBlue: {
-        fontSize: RFValue(18, height),
-        marginLeft: wp('4%'),
-        color: '#1580c2',
-    },
   drawerContainer: {
     flex: 1,
-    padding: 20,
+    padding: wp('5%'),
     backgroundColor: '#fff',
-  },
-  profileSection: {
+    borderTopRightRadius: wp('25%'),
+    borderBottomRightRadius: wp('25%'),
+},
+profileSection: {
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  profileImage: {
+    marginBottom: hp('2.5%'),
+},
+profileImage: {
     width: wp('21%'),
     height: wp('21%'),
     borderRadius: wp('10.5%'),
     borderWidth: 1,
     borderColor: '#00aa13',
-  },
-  profileName: {
+},
+profileName: {
     fontSize: RFValue(19, height),
     fontWeight: 'bold',
     marginTop: hp('1.2%'),
-  },
-  profileLocation: {
+},
+profileLocation: {
     fontSize: RFValue(15, height),
     color: '#555',
-  },
-  editProfileButton: {
+},
+editProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: hp('0.6%'),
-  },
-  editProfileText: {
+},
+editProfileText: {
     fontSize: RFValue(15, height),
     color: 'green',
     marginLeft: wp('1.2%'),
-  },
-  menuSection: {
-    marginVertical: 10,
-  },
-  drawerItem: {
+},
+menuSection: {
+    marginVertical: hp('1.2%'),
+},
+drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-  },
-  drawerText: {
-    fontSize: RFValue(16, height),
-    marginLeft: wp('3.5%'),
-    color: '#333',
-  },
-  signOutSection: {
+    paddingVertical: hp('1.2%'),
+    paddingHorizontal: wp('4%'),
+    borderRadius: wp('2.5%'),
+},
+drawerTextGreen: {
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
+    color: '#12894f',
+},
+drawerTextYellow: {
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
+    color: '#cb9717',
+},
+drawerTextBlue: {
+    fontSize: RFValue(18, height),
+    marginLeft: wp('4%'),
+    color: '#1580c2',
+},
+signOutSection: {
     marginTop: 'auto',
     borderTopWidth: 1,
     borderColor: '#ccc',
-    paddingTop: 10,
-    paddingBottom:10
-  },
-  signOutButton: {
+    paddingTop: hp('1.2%'),
+    paddingBottom: hp('5%'),
+},
+signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-  },
-  signOutText: {
+    paddingVertical: hp('1.8%'),
+},
+signOutText: {
     fontSize: RFValue(18, height),
     marginLeft: wp('2.5%'),
     color: '#333',
-  },
-  drawerIcon: {
+},
+drawerIcon: {
     width: wp('11%'),
     height: wp('11%'),
     resizeMode: 'contain',

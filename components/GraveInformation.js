@@ -15,11 +15,13 @@ const { width, height } = Dimensions.get('window');
 const GraveInformation = () => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { grave } = route.params; // Get passed data
+    const { grave, origin } = route.params || {}; // Get origin
     const [isCandleLit, setIsCandleLit] = useState(false);
     const [hasCandleBeenLit, setHasCandleBeenLit] = useState(false);
     const [candleCount, setCandleCount] = useState(0);
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const timerRef = useRef(null);
     const modalContentRef = useRef(null); // Reference to the modal content
 
     const saveModalAsImage = async () => {
@@ -136,6 +138,38 @@ const GraveInformation = () => {
         checkBookmark();
     }, [grave._id]);
 
+    useEffect(() => {
+      if (hasCandleBeenLit) {
+        const updateTimer = () => {
+          AsyncStorage.getItem('candleData').then(data => {
+            const candleData = data ? JSON.parse(data) : {};
+            const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
+            if (graveCandleData.lastLit) {
+              const now = Date.now();
+              const nextAvailable = graveCandleData.lastLit + 24 * 60 * 60 * 1000;
+              const diff = nextAvailable - now;
+              setTimeLeft(diff > 0 ? diff : 0);
+            }
+          });
+        };
+        updateTimer();
+        timerRef.current = setInterval(updateTimer, 1000);
+        return () => clearInterval(timerRef.current);
+      } else {
+        setTimeLeft(0);
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
+    }, [hasCandleBeenLit, grave._id]);
+
+    const formatTime = (ms) => {
+      if (ms <= 0) return "00:00:00";
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
+    };
+
     return (
         <>
             <StatusBar
@@ -147,7 +181,13 @@ const GraveInformation = () => {
                 {/* Fixed Buttons */}
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}
+                    onPress={() => {
+                        if (origin) {
+                            navigation.navigate(origin);
+                        } else {
+                            navigation.goBack();
+                        }
+                    }}
                 >
                     <Ionicons name="arrow-back" size={wp('6.5%')} color="white" />
                 </TouchableOpacity>
@@ -169,7 +209,7 @@ const GraveInformation = () => {
                     {/* Header Image */}
                     <View style={styles.headerContainer}>
                         <Image
-                            source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
+                            source={grave.image ? { uri: grave.image } : require('../assets/blankDP.jpg')}
                             style={styles.headerImage}
                         />
                     </View>
@@ -178,7 +218,7 @@ const GraveInformation = () => {
                     <View style={styles.profileContainer}>
                         <View style={styles.profileImageContainer}>
                             <Image
-                                source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/90' }}
+                                source={grave.image ? { uri: grave.image } : require('../assets/blankDP.jpg')}
                                 style={styles.profileImage}
                             />
                         </View>
@@ -193,9 +233,11 @@ const GraveInformation = () => {
                             <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
                         </View>
                         <ImageBackground
-                            source={hasCandleBeenLit
-                                ? require("../assets/CandleLighted.png")
-                                : require("../assets/CandleLight.png")}
+                            source={
+                                hasCandleBeenLit
+                                    ? require("../assets/CandleLighted.png")
+                                    : require("../assets/CandleLight.png")
+                            }
                             style={styles.profileBottomLeftImage}
                         >
                             <View style={styles.candleCountContainer}>
@@ -212,47 +254,60 @@ const GraveInformation = () => {
 
                     {/* Action Buttons */}
                     <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                            onPress={handleLightCandle}
-                            style={[styles.lightCandleButton, hasCandleBeenLit && styles.noBackground]}
-                        >
-                            {hasCandleBeenLit ? (
-                                <LinearGradient
-                                    colors={["#000000", "#c89116"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
-                                    style={styles.lightCandleGradient}
-                                >
-                                    <View style={styles.buttonContent}>
-                                        <Image source={require("../assets/Candle2.png")} style={styles.CandleImage} />
-                                        <Text style={styles.buttonText3}>  Candle was Lit</Text>
-                                    </View>
-                                </LinearGradient>
-                            ) : (
-                                <View style={styles.buttonContent}>
-                                    <Image source={require("../assets/Candle1.png")} style={styles.CandleImage} />
-                                    <Text style={styles.buttonText}>  Light a candle</Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
+  <TouchableOpacity
+    onPress={handleLightCandle}
+    style={[
+      styles.lightCandleButton,
+      hasCandleBeenLit && timeLeft > 0 && styles.noBackground
+    ]}
+    disabled={hasCandleBeenLit && timeLeft > 0}
+    activeOpacity={hasCandleBeenLit && timeLeft > 0 ? 1 : 0.7}
+  >
+    {!hasCandleBeenLit ? (
+    // Plain orange background, no gradient
+    <View style={styles.lightCandleGradient}>
+      <View style={styles.buttonContent}>
+        <Image source={require("../assets/Candle1.png")} style={styles.CandleImage} />
+        <Text style={styles.buttonText}>  Light a candle</Text>
+      </View>
+    </View>
+  ) : (
+    // Gradient background for lit/timer states
+    <LinearGradient
+      colors={["#000000", "#c89116"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.lightCandleGradient}
+    >
+      <View style={styles.buttonContent}>
+        <Image source={require("../assets/Candle2.png")} style={styles.CandleImage} />
+        {hasCandleBeenLit && timeLeft > 0 ? (
+          <Text style={styles.buttonText3}>  Light again in {formatTime(timeLeft)}</Text>
+        ) : (
+          <Text style={styles.buttonText}>  Candle was Lit</Text>
+        )}
+      </View>
+    </LinearGradient>
+  )}
+</TouchableOpacity>
 
-                        <TouchableOpacity
+  <TouchableOpacity
     style={styles.scanMemoryButton}
     onPress={() => navigation.navigate('QRScanner')}
->
+  >
     <LinearGradient
-        colors={["#ffef5d", "#7ed957"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.scanMemoryGradient}
+      colors={["#ffef5d", "#7ed957"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.scanMemoryGradient}
     >
-        <View style={styles.buttonContent}>
-            <Image source={require("../assets/scanning.png")} style={styles.ScanningImage} />
-            <Text style={styles.buttonText2}> Scan memory</Text>
-        </View>
+      <View style={styles.buttonContent}>
+        <Image source={require("../assets/scanning.png")} style={styles.ScanningImage} />
+        <Text style={styles.buttonText2}> Scan memory</Text>
+      </View>
     </LinearGradient>
-</TouchableOpacity>
-                    </View>
+  </TouchableOpacity>
+</View>
 
                     {/* Bottom Buttons */}
                     <View style={styles.bottomContainer}>
@@ -269,7 +324,7 @@ const GraveInformation = () => {
                             {/* Prayers Button */}
                             <TouchableOpacity
                                 style={styles.bottomButton}
-                                onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}
+                                onPress={() => navigation.navigate("Prayers")}
                             >
                                 <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
                                 <Text style={styles.bottomButtonText}>Prayers</Text>
@@ -284,8 +339,9 @@ const GraveInformation = () => {
                         >
                           <View style={styles.navigateButtonContainer}>
                             <Text style={styles.navigateButtonText}>
-                              <Ionicons name="location" size={24} color="white" /> Navigate to the Grave
+                              <Ionicons name="location" size={24} color="white" />
                             </Text>
+                            <Text style={styles.navigateButtonText}>Navigate to Grave</Text>
                           </View>
                         </TouchableOpacity>
                     </View>
@@ -294,7 +350,7 @@ const GraveInformation = () => {
                     <View style={{ position: 'absolute', left: -9999, top: -9999 }}>
   <ViewShot ref={modalContentRef} options={{ format: 'png', quality: 0.9 }}>
     <ImageBackground
-      source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/300' }}
+      source={grave.image ? { uri: grave.image } : require('../assets/blankDP.jpg')}
       style={{
         width: 350,
         height: 500,
@@ -317,7 +373,7 @@ const GraveInformation = () => {
         <View style={[styles.imageBorderOuter, { width: 80, height: 80, borderRadius: 40 }]}>
         <View style={[styles.imageBorderInner, { width: 75, height: 75, borderRadius: 37.5 }]}>
             <Image
-              source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/100' }}
+              source={grave.image ? { uri: grave.image } : require('../assets/blankDP.jpg')}
               style={[styles.modalProfileImage, { width: 70, height: 70, borderRadius: 35 }]}
             />
           </View>
@@ -341,43 +397,45 @@ const GraveInformation = () => {
     animationType="fade"
     onRequestClose={() => setIsCandleLit(false)}
 >
+    {/* Add this StatusBar for modal */}
+    <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" translucent={true} />
     <TouchableWithoutFeedback onPress={() => setIsCandleLit(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Image source={require('../assets/WtG2.png')} style={styles.wtg2logo} />
-            <Text style={styles.memorialHeader}>Memorial Candle</Text>
-            <Text style={styles.memorialSubtext}>Thank you for taking part in the memory.</Text>
-            <View style={styles.imageBorderOuter}>
-              <View style={styles.imageBorderInner}>
-                <Image
-                  source={{ uri: grave.image ? grave.image : 'https://via.placeholder.com/100' }}
-                  style={styles.modalProfileImage}
-                />
-              </View>
+            <View style={styles.modalContent}>
+                <Image source={require('../assets/WtG2.png')} style={styles.wtg2logo} />
+                <Text style={styles.memorialHeader}>Memorial Candle</Text>
+                <Text style={styles.memorialSubtext}>Thank you for taking part in the memory.</Text>
+                <View style={styles.imageBorderOuter}>
+                  <View style={styles.imageBorderInner}>
+                    <Image
+                      source={grave.image ? { uri: grave.image } : require('../assets/blankDP.jpg')}
+                      style={styles.modalProfileImage}
+                    />
+                  </View>
+                </View>
+                <Text style={styles.candleCount}>
+                  Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
+                  <Text style={styles.boldText}>{grave.firstName} {grave.lastName} {grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>.
+                </Text>
+                <Text style={styles.encourageText}>
+                  Help light more candles for {grave.firstName} and share with family and friends.
+                </Text>
             </View>
-            <Text style={styles.candleCount}>
-              Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
-              <Text style={styles.boldText}>{grave.firstName} {grave.lastName} {grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>.
-            </Text>
-            <Text style={styles.encourageText}>
-              Help light more candles for {grave.firstName} and share with family and friends.
-            </Text>
-          </View>
-          {/* Social Media and Save Buttons */}
-          <View style={styles.socialIcons}>
-            <TouchableOpacity onPress={saveModalAsImage}>
-              <Ionicons name="download-outline" size={55} color="white" style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={require('../assets/fb2.png')} style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={require('../assets/whatsapp.png')} style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={require('../assets/twitter.png')} style={styles.icon} />
-            </TouchableOpacity>
-          </View>
+            {/* Social Media and Save Buttons */}
+            <View style={styles.socialIcons}>
+                <TouchableOpacity onPress={saveModalAsImage}>
+                    <Ionicons name="download-outline" size={55} color="white" style={styles.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <Image source={require('../assets/fb2.png')} style={styles.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <Image source={require('../assets/whatsapp.png')} style={styles.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <Image source={require('../assets/twitter.png')} style={styles.icon} />
+                </TouchableOpacity>
+            </View>
         </View>
     </TouchableWithoutFeedback>
 </Modal>
@@ -388,7 +446,7 @@ const GraveInformation = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: "#fff" },
+  container: { flexGrow: 1, backgroundColor: "#fff",  justifyContent: 'space-between', minHeight: height,},
   headerContainer: { position: "relative" },
   headerImage: { width: "100%", height: hp('45%') },
 
@@ -466,7 +524,7 @@ const styles = StyleSheet.create({
     marginHorizontal: wp('5%'),
     marginVertical: hp('1.2%'),
     textAlign: "center",
-    width: "90%",
+    marginHorizontal: wp('15%'),
     height: hp('13%'),
     lineHeight: RFValue(18, height),
     fontSize: RFValue(13, height),
@@ -476,6 +534,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
     marginTop: hp('1.2%'),
+    top: hp('4%'),
   },
   lightCandleButton: {
     borderRadius: wp('2.5%'),
@@ -498,7 +557,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: wp('2.5%'),
+    paddingHorizontal: wp('5%'),
   },
   CandleImage: {
     width: wp('4.5%'),
@@ -525,15 +584,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: wp('2.5%'),
   },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: RFValue(16, height) },
-  buttonText3: { color: "#fad02c", fontWeight: "bold", fontSize: RFValue(16, height) },
-  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: RFValue(16, height) },
+  buttonText: { 
+    color: "white", 
+    fontWeight: "bold",
+    fontSize: RFValue(16, height),
+    textAlign: "center", // Add this line
+  },
+  buttonText3: { 
+    color: "#fad02c", 
+    fontWeight: "bold", 
+    fontSize: RFValue(14, height),
+    textAlign: "center", // Add this line
+  },
+  buttonText2: { color: "#333333", fontWeight: "bold", fontSize: RFValue(14, height) },
 
   bottomContainer: {
     justifyContent: "space-evenly",
     backgroundColor: "white",
-    marginTop: hp('1.2%'),
-    paddingTop: 0,
+    marginTop: hp('5%'),
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -600,16 +668,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#2E8B57",
     padding: wp('4%'),
     alignItems: "center",
+    justifyContent: "center", // Add this line
+    flexDirection: "row",     // Add this line
     borderTopLeftRadius: wp('5%'),
     borderTopRightRadius: wp('5%'),
     width: "100%",
-    height: hp('8%'),
-    alignSelf: "center"
+    height: hp('10%'),
+    alignSelf: "center",
   },
   navigateButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: RFValue(16, height)
+    fontSize: RFValue(16, height),
+    
   },
   modalOverlay: {
     flex: 1,
@@ -623,7 +694,7 @@ const styles = StyleSheet.create({
     borderRadius: wp('5%'),
     padding: wp('5%'),
     alignItems: "center",
-    backgroundColor: "#fff",
+
   },
   wtg2logo: {
     width: wp('18%'),

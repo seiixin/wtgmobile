@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     prayerText: {
         fontSize: RFValue(15, height),
         color: '#333',
-        textAlign: 'justify', // changed from 'justify' to 'center'
+        textAlign: 'center', // changed from 'justify' to 'center'
         lineHeight: RFValue(22, height),
         marginBottom: hp('1.5%'),
         marginHorizontal: wp('5%'),

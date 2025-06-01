@@ -28,6 +28,11 @@ const ChangePassword = () => {
       return;
     }
 
+    if (newPassword === currentPassword) {
+      Alert.alert('Error', 'New password must be different from the current password');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       Alert.alert('Error', 'New password and confirm password do not match');
       return;

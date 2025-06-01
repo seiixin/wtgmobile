@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Platform, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Platform, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList, StatusBar, Modal, BackHandler } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -102,17 +102,17 @@ const CustomDrawerContent = (props) => {
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
                     <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextGreen}>Home</Text>
+                    <Text style={styles.drawerTextGreen}>History</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
                     <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Bookmarks</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
                     <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
                 </TouchableOpacity>
@@ -150,10 +150,21 @@ const HistoryScreen = () => {
     const navigation = useNavigation();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    const [historyList, setHistoryList] = useState([]); // Ensure this is initialized as an empty array
-    const [hasSearched, setHasSearched] = useState(false); // Add this state
+    const [historyList, setHistoryList] = useState([]);
+    const [hasSearched, setHasSearched] = useState(false);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
-    
+    const [showLogoutModal, setShowLogoutModal] = useState(false); // <-- Add this line
+
+    // Handle Android hardware back button for logout confirmation
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            setShowLogoutModal(true);
+            return true;
+        });
+
+        return () => backHandler.remove();
+    }, []);
+
     const handleGraveClick = async (grave) => {
         try {
             // Get current history list from AsyncStorage
@@ -176,7 +187,7 @@ const HistoryScreen = () => {
         setSearchResults([]);
         setHasSearched(false);
 
-        navigation.navigate('GraveInformation', { grave });
+        navigation.navigate('GraveInformation', { grave, origin: 'History' });
     };
 
     // Function to handle search
@@ -207,7 +218,6 @@ const HistoryScreen = () => {
                         (item, index, self) =>
                             index === self.findIndex((t) => t._id === item._id)
                     );
-                    console.log('Cleaned History Data:', uniqueData);
                     setHistoryList(uniqueData);
                     // Save the cleaned data back to AsyncStorage
                     AsyncStorage.setItem('historyList', JSON.stringify(uniqueData));
@@ -216,12 +226,7 @@ const HistoryScreen = () => {
             .catch((error) => console.error('Error loading history:', error));
     }, []);
 
-    useEffect(() => {
-        console.log('History List Updated:', historyList.map(item => ({
-            ...item,
-            image: item.image ? item.image.substring(0, 50) + '...' : 'No image',
-        })));
-    }, [historyList]);
+
 
     return (
         <>
@@ -230,6 +235,55 @@ const HistoryScreen = () => {
                 backgroundColor="transparent"
                 translucent={true}
             />
+            {/* Logout Confirmation Modal */}
+            <Modal
+                visible={showLogoutModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowLogoutModal(false)}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' }}>
+                            Are you sure you want to log out?
+                        </Text>
+                        <View style={{ flexDirection: 'row', marginTop: 16 }}>
+                            <TouchableOpacity
+                                style={{ marginRight: 24, padding: 10 }}
+                                onPress={() => setShowLogoutModal(false)}
+                            >
+                                <Text style={{ color: '#38b6ff', fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{ padding: 10 }}
+                                onPress={async () => {
+                                    setShowLogoutModal(false);
+                                    // Remove userId and navigate to SignIn
+                                    await AsyncStorage.removeItem("userId");
+                                    navigation.reset({
+                                        index: 0,
+                                        routes: [{ name: 'SignIn' }],
+                                    });
+                                }}
+                            >
+                                <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 16 }}>Log out</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             <ImageBackground source={require('../assets/HistoryBgg.png')} style={styles.background}>
                 <View style={styles.container}>
                     {/* Header */}
@@ -238,17 +292,32 @@ const HistoryScreen = () => {
                         <TouchableOpacity onPress={() => navigation.openDrawer()}>
                             <Ionicons
                                 name="menu"
-                                size={24}
+                                size={RFValue(24, height)}
                                 color="black"
-                                style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                                style={{ marginLeft: wp('2%'), marginTop: hp('1%') }}
                             />
                         </TouchableOpacity>
                             <View style={styles.imageContainer}></View>
                         </View>
 
                         {/* Search Bar & Button Row Grouped in White Background */}
-                        <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
-                            <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+                        <View style={{
+    backgroundColor: 'white',
+    borderRadius: wp('2.5%'),
+    marginHorizontal: wp('6%'),
+    marginTop: hp('2.2%'),
+    marginBottom: 0,
+    paddingBottom: 0
+}}>
+                            <View style={[styles.searchBarContainer, {
+        backgroundColor: 'white',
+        borderRadius: wp('2.5%'),
+        marginHorizontal: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        paddingHorizontal: wp('2.5%'),
+        paddingTop: hp('1.2%')
+    }]}>
                                 <TextInput
                                     style={styles.searchBar}
                                     placeholder="Search by Fullname or Nickname"
@@ -265,13 +334,19 @@ const HistoryScreen = () => {
                                     
                                 />
                                 <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                                    <Ionicons name="search" size={20} color="white" />
+                                    <Ionicons name="search" size={20} color="black" />
                                 </TouchableOpacity>
                             </View>
                             
 
                             {/* Four Buttons (copied from Bookmarks.js) */}
-                            <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+                            <View style={[styles.buttonRow, {
+        backgroundColor: 'transparent',
+        borderRadius: 0,
+        marginBottom: -hp('3%'),
+        paddingHorizontal: wp('2.5%'),
+        marginTop: hp('2.5%')
+    }]}>
                                 <TouchableOpacity style={styles.actionButton}>
                                     <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
                                 </TouchableOpacity>
@@ -297,112 +372,133 @@ const HistoryScreen = () => {
                         </View>
                     </View>
 
-                    {/* Only show SectionList if search bar is empty OR search has been performed */}
-                    {searchQuery.trim().length === 0 ? (
-                        // Show history list when search bar is not focused or empty
-                        <SectionList
-                            style={{ marginTop: 26 }}
-                            sections={[
-                                { title: '', data: historyList, type: 'historyList' }
-                            ]}
-                            keyExtractor={(item, index) => `${item._id}-${index}`}
-                            renderSectionHeader={({ section }) => (
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                            )}
-                            renderItem={({ item, section }) => {
-                                const formattedDateOfBirth = item.dateOfBirth
-                                    ? new Intl.DateTimeFormat('en-US', {
-                                          month: 'long',
-                                          day: '2-digit',
-                                          year: 'numeric',
-                                  }).format(new Date(item.dateOfBirth))
-                                    : 'Unknown';
+                            <View style={styles.filterContainer}>
+            <Text style={styles.filterText}>History</Text>
+        </View>
+        <View style={styles.divider} />
 
-                                const formattedBurialDate = item.burial
-                                    ? new Intl.DateTimeFormat('en-US', {
-                                          month: 'long',
-                                          day: '2-digit',
-                                          year: 'numeric',
-                                  }).format(new Date(item.burial))
-                                    : 'Unknown';
+                    <View style={{ marginTop: hp('2.2%'), flex: 1 }}>
+                        {searchQuery.trim().length === 0 ? (
+                            <SectionList
+                                sections={[
+                                    { title: '', data: historyList, type: 'historyList' }
+                                ]}
+                                keyExtractor={(item, index) => `${item._id}-${index}`
+}
+                                renderSectionHeader={({ section }) => (
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                )}
+                                renderItem={({ item, section }) => {
+                                    const formattedDateOfBirth = item.dateOfBirth
+                                        ? new Intl.DateTimeFormat('en-US', {
+                                              month: 'long',
+                                              day: '2-digit',
+                                              year: 'numeric',
+                                      }).format(new Date(item.dateOfBirth))
+                                        : 'Unknown';
 
-                                return (
-                                    <TouchableOpacity
-                                        style={styles.card}
-                                        onPress={() => handleGraveClick(item)}
-                                    >
-                                        <Image
-                                            source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
-                                            style={styles.cardImage}
-                                        />
-                                        <View style={styles.cardContent}>
-                                            <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
-                                            <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
-                                            <Text style={styles.cardLocation}>
-                                                {item.phase}, Apartment {item.aptNo}
-                                            </Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                            ListEmptyComponent={() => (
-                                <Text style={styles.noResultsText}>No history found.</Text>
-                            )}
-                        />
-                    ) : hasSearched ? (
-                        // Show search results only after searching
-                        <SectionList
-                            style={{ marginTop: 26 }}
-                            sections={[
-                                { title: '', data: searchResults, type: 'searchResults' }
-                            ]}
-                            keyExtractor={(item, index) => `${item._id}-${index}`}
-                            renderSectionHeader={({ section }) => (
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                            )}
-                            renderItem={({ item, section }) => {
-                                const formattedDateOfBirth = item.dateOfBirth
-                                    ? new Intl.DateTimeFormat('en-US', {
-                                          month: 'long',
-                                          day: '2-digit',
-                                          year: 'numeric',
-                                  }).format(new Date(item.dateOfBirth))
-                                    : 'Unknown';
+                                    const formattedBurialDate = item.burial
+                                        ? new Intl.DateTimeFormat('en-US', {
+                                              month: 'long',
+                                              day: '2-digit',
+                                              year: 'numeric',
+                                      }).format(new Date(item.burial))
+                                        : 'Unknown';
 
-                                const formattedBurialDate = item.burial
-                                    ? new Intl.DateTimeFormat('en-US', {
-                                          month: 'long',
-                                          day: '2-digit',
-                                          year: 'numeric',
-                                  }).format(new Date(item.burial))
-                                    : 'Unknown';
+                                    return (
+                                        <TouchableOpacity
+                                            style={styles.card}
+                                            onPress={() => handleGraveClick(item)}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Image
+                                                source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                                style={styles.cardImage}
+                                            />
+                                            <View style={styles.cardContent}>
+                                                <Text
+                                                    style={styles.cardTitle}
+                                                    numberOfLines={1}
+                                                    ellipsizeMode="tail"
+                                                >
+                                                    {item.firstName}
+                                                    {item.nickname ? ` '${item.nickname}'` : ''}
+                                                    {` ${item.lastName}`}
+                                                </Text>
+                                                <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
+                                                <Text style={styles.cardLocation}>
+                                                    {item.phase}, Apartment {item.aptNo}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={styles.cardAction}
+                                                onPress={() => {/* your action here */}}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Ionicons name="return-up-forward" size={16} color="#fff" marginTop="18" />
+                                            </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    );
+                                }}
+                                contentContainerStyle={{ paddingBottom: 100 }}
+                                ListEmptyComponent={() => (
+                                    <Text style={styles.noResultsText}>No history found.</Text>
+                                )}
+                            />
+                        ) : hasSearched ? (
+                            // Show search results only after searching
+                            <SectionList
+                                sections={[
+                                    { title: '', data: searchResults, type: 'searchResults' }
+                                ]}
+                                keyExtractor={(item, index) => `${item._id}-${index}`
+}
+                                renderSectionHeader={({ section }) => (
+                                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                                )}
+                                renderItem={({ item, section }) => {
+                                    const formattedDateOfBirth = item.dateOfBirth
+                                        ? new Intl.DateTimeFormat('en-US', {
+                                              month: 'long',
+                                              day: '2-digit',
+                                              year: 'numeric',
+                                      }).format(new Date(item.dateOfBirth))
+                                        : 'Unknown';
 
-                                return (
-                                    <TouchableOpacity
-                                        style={styles.card}
-                                        onPress={() => handleGraveClick(item)} // <-- Use the same handler as historyList
-                                    >
-                                        <Image
-                                            source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
-                                            style={styles.cardImage}
-                                        />
-                                        <View style={styles.cardContent}>
-                                            <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
-                                            <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
-                                            <Text style={styles.cardLocation}>
-                                                {item.phase}, Apartment {item.aptNo}
-                                            </Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                            ListEmptyComponent={() => (
-                                <Text style={styles.noResultsText}>No results found.</Text>
-                            )}
-                        />
-                    ) : null}
+                                    const formattedBurialDate = item.burial
+                                        ? new Intl.DateTimeFormat('en-US', {
+                                              month: 'long',
+                                              day: '2-digit',
+                                              year: 'numeric',
+                                      }).format(new Date(item.burial))
+                                        : 'Unknown';
+
+                                    return (
+                                        <TouchableOpacity
+                                            style={styles.card}
+                                            onPress={() => handleGraveClick(item)}
+                                        >
+                                            <Image
+                                                source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
+                                                style={styles.cardImage}
+                                            />
+                                            <View style={styles.cardContent}>
+                                                <Text style={styles.cardTitle}>{item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}</Text>
+                                                <Text style={styles.cardDates}>{formattedDateOfBirth} - {formattedBurialDate}</Text>
+                                                <Text style={styles.cardLocation}>
+                                                    {item.phase}, Apartment {item.aptNo}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                }}
+                                contentContainerStyle={{ paddingBottom: 100 }}
+                                ListEmptyComponent={() => (
+                                    <Text style={styles.noResultsText}>No results found.</Text>
+                                )}
+                            />
+                        ) : null}
+                    </View>
                 </View>
             </ImageBackground>
         </>
@@ -415,7 +511,7 @@ const Drawer = createDrawerNavigator();
 const History = () => {
     return (
         <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />} screenOptions={{ headerShown: false }}>
-            <Drawer.Screen name="History" component={HistoryScreen} />
+            <Drawer.Screen name="HistoryScreen" component={HistoryScreen} />
         </Drawer.Navigator>
     );
 };
@@ -476,7 +572,6 @@ const styles = StyleSheet.create({
     },
     searchButton: {
         padding: wp('2.5%'),
-        backgroundColor: 'green',
         borderRadius: wp('1.5%'),
         marginLeft: wp('1.2%'),
     },
@@ -486,21 +581,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: hp('1.2%'),
         paddingHorizontal: wp('6%'),
+        marginTop: hp('7%'),
     },
     filterText: {
         fontSize: RFValue(18, height),
-        color: 'green',
-    },
-    filterButton: {
-        padding: wp('2%'),
-        borderRadius: wp('1.5%'),
-        backgroundColor: '#fff',
+        color: 'gray',
+        marginHorizontal: wp('2.5%'),
     },
     divider: {
         height: 2,
-        backgroundColor: 'green',
-        marginBottom: hp('2.5%'),
-        marginTop: -hp('0.6%'),
+        backgroundColor: 'gray',
+        marginHorizontal: wp('9%'),
     },
     content: {
         flex: 1,
@@ -508,50 +599,48 @@ const styles = StyleSheet.create({
         paddingHorizontal: wp('4%'),
         backgroundColor: 'white',
         paddingTop: hp('1.2%'),
+        
     },
     card: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: wp('2.5%'),
         marginBottom: hp('1.2%'),
-        padding: wp('2.5%'),
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
         alignItems: 'center',
+        marginHorizontal: wp('8%'),
     },
     cardImage: {
         width: wp('18%'),
         height: wp('18%'),
-        borderRadius: wp('2.5%'),
         marginRight: wp('2.5%'),
     },
     cardContent: {
         flex: 1,
     },
     cardTitle: {
-        fontSize: RFValue(18, height),
+        fontSize: RFValue(16, height),
         fontWeight: 'bold',
         color: '#333',
+        maxWidth: '95%', // or a fixed value like 180
     },
     cardDates: {
-        fontSize: RFValue(15, height),
+        fontSize: RFValue(11, height),
         color: '#666',
     },
     cardLocation: {
-        fontSize: RFValue(13, height),
+        fontSize: RFValue(9, height),
         color: '#999',
     },
     cardAction: {
         backgroundColor: 'green',
         padding: wp('2%'),
-        borderRadius: wp('2%'),
+        height: '100%',
+        
     },
 
-    navItem: {
-        alignItems: 'center',
-    },
     buttonRow: {
         bottom: hp('4%'),
         flexDirection: 'row',
@@ -570,8 +659,8 @@ const styles = StyleSheet.create({
         marginHorizontal: wp('1.2%'),
     },
     buttonImage: {
-        width: wp('5%'),
-        height: wp('5%'),
+        width: wp('4.5%'),
+        height: wp('4.5%'),
         resizeMode: 'contain',
     },
     IconDivider: {
@@ -668,7 +757,7 @@ const styles = StyleSheet.create({
         fontSize: RFValue(20, height),
         fontWeight: 'bold',
         color: '#12894f',
-        marginVertical: hp('1%'),
+        marginVertical: hp('-1%'),
         marginLeft: wp('3%'),
     },
     noResultsText: {

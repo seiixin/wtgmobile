@@ -14,23 +14,32 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
+    const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
     const handleSignOut = () => {
         Alert.alert(
             "Are you sure?",
             "Do you really want to log out?",
             [
-                { text: "Cancel", style: "cancel" },
                 {
-                    text: "Confirm", onPress: async () => {
+                    text: "Cancel",
+                    onPress: () => console.log("Sign out canceled"),
+                    style: "cancel",
+                },
+                {
+                    text: "Confirm",
+                    onPress: async () => {
                         try {
                             await AsyncStorage.removeItem("userId");
-                            navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'SignIn' }],
+                            });
                         } catch (error) {
                             console.error("Error during sign out:", error);
                         }
-                    }
-                }
+                    },
+                },
             ],
             { cancelable: false }
         );
@@ -51,80 +60,74 @@ const CustomDrawerContent = (props) => {
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-                     {/* Profile Section */}
-                     <View style={styles.profileSection}>
-  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Image
-      source={
-        user?.profileImage
-          ? { uri: user.profileImage }
-          : require('../assets/blankDP.jpg') // fallback local image
-      }
-      style={styles.profileImage}
-    />
-    <View style={{ marginLeft: 16 }}>
-      <Text style={styles.profileName}>
-        {user?.name
-          ? user.name.length > 16
-            ? `${user.name.slice(0, 16)}...`
-            : user.name
-          : "Loading..."}
-      </Text>
-      <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-      <TouchableOpacity
-        style={styles.editProfileButton}
-        onPress={() => navigation.navigate('EditProfile')}
-      >
-        <MaterialIcons name="edit" size={16} color="green" />
-        <Text style={styles.editProfileText}>Edit Profile</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</View>
-        
-                    {/* Drawer Items */}
-                    <View style={styles.menuSection}>
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
-                            <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextGreen}>Home</Text>
-                        </TouchableOpacity>
-        
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
-                            <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextYellow}>Bookmarks</Text>
-                        </TouchableOpacity>
-        
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
-                            <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
-                        </TouchableOpacity>
-        
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
-                            <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
-                        </TouchableOpacity>
-        
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
-                            <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextBlue}>Requested Services</Text>
-                        </TouchableOpacity>
-        
-                        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
-                            <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
-                            <Text style={styles.drawerTextBlue}>FAQs</Text>
-                        </TouchableOpacity>
-        
-                    </View>
-        
-                    {/* Sign Out Button */}
-                    <View style={styles.signOutSection}>
-                        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                            <FontAwesome name="sign-out" size={24} color="black" />
-                            <Text style={styles.signOutText}>Sign out</Text>
+            {/* Profile Section */}
+            <View style={styles.profileSection}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Image
+                        source={
+                            user?.profileImage
+                                ? { uri: user.profileImage }
+                                : require('../assets/blankDP.jpg')
+                        }
+                        style={styles.profileImage}
+                    />
+                    <View style={{ marginLeft: 16 }}>
+                        <Text style={styles.profileName}>
+                            {user?.name
+                                ? user.name.length > 16
+                                    ? `${user.name.slice(0, 16)}...`
+                                    : user.name
+                                : "Loading..."}
+                        </Text>
+                        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                        <TouchableOpacity
+                            style={styles.editProfileButton}
+                            onPress={() => navigation.navigate('EditProfile')}
+                        >
+                            <MaterialIcons name="edit" size={16} color="green" />
+                            <Text style={styles.editProfileText}>Edit Profile</Text>
                         </TouchableOpacity>
                     </View>
-                </DrawerContentScrollView>
-            );
+                </View>
+            </View>
+
+            {/* Drawer Items */}
+            <View style={styles.menuSection}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
+                    <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextGreen}>History</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
+                    <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Bookmarks</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
+                    <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
+                    <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
+                    <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextBlue}>Requested Services</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
+                    <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextBlue}>FAQs</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Sign Out Button */}
+            <View style={styles.signOutSection}>
+                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                    <FontAwesome name="sign-out" size={24} color="black" />
+                    <Text style={styles.signOutText}>Sign out</Text>
+                </TouchableOpacity>
+            </View>
+        </DrawerContentScrollView>
+    );
 };
 
 const faqCategories = [
@@ -216,7 +219,7 @@ const styles = StyleSheet.create({
         padding: wp('5%'),
         backgroundColor: '#fff',
         borderTopRightRadius: wp('25%'),
-        borderBottomRightRadius: wp('25%')
+        borderBottomRightRadius: wp('25%'),
     },
     profileSection: {
         alignItems: 'center',
@@ -255,22 +258,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: hp('1.2%'),
-        paddingHorizontal: wp('3.5%'),
+        paddingHorizontal: wp('4%'),
         borderRadius: wp('2.5%'),
     },
     drawerTextGreen: {
         fontSize: RFValue(18, height),
-        marginLeft: wp('3.5%'),
+        marginLeft: wp('4%'),
         color: '#12894f',
     },
     drawerTextYellow: {
         fontSize: RFValue(18, height),
-        marginLeft: wp('3.5%'),
+        marginLeft: wp('4%'),
         color: '#cb9717',
     },
     drawerTextBlue: {
         fontSize: RFValue(18, height),
-        marginLeft: wp('3.5%'),
+        marginLeft: wp('4%'),
         color: '#1580c2',
     },
     signOutSection: {
@@ -278,7 +281,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderColor: '#ccc',
         paddingTop: hp('1.2%'),
-        paddingBottom: hp('5%')
+        paddingBottom: hp('5%'),
     },
     signOutButton: {
         flexDirection: 'row',

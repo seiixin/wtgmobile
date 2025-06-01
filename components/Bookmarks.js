@@ -98,17 +98,17 @@ const handleSignOut = () => {
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
                     <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextGreen}>Home</Text>
+                    <Text style={styles.drawerTextGreen}>History</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
                     <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Bookmarks</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
                     <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
                 </TouchableOpacity>
@@ -209,7 +209,7 @@ const BookmarksScreen = () => {
         setSearchResults([]);
         setHasSearched(false);
 
-        navigation.navigate('GraveInformation', { grave });
+        navigation.navigate('GraveInformation', { grave, origin: 'Bookmarks' });
     };
 
     return (
@@ -221,17 +221,32 @@ const BookmarksScreen = () => {
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
             <Ionicons
                 name="menu"
-                size={24}
+                size={RFValue(24, height)}
                 color="black"
-                style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
+                style={{ marginLeft: wp('2%'), marginTop: hp('1%') }}
             />
         </TouchableOpacity>
         <View style={styles.imageContainer}></View>
     </View>
 
     {/* Search Bar & Button Row Grouped in White Background */}
-    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
-        <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
+    <View style={{
+        backgroundColor: 'white',
+        borderRadius: wp('2.5%'),
+        marginHorizontal: wp('6%'),
+        marginTop: hp('2.2%'),
+        marginBottom: 0,
+        paddingBottom: 0
+    }}>
+        <View style={[styles.searchBarContainer, {
+            backgroundColor: 'white',
+            borderRadius: wp('2.5%'),
+            marginHorizontal: 0,
+            marginTop: 0,
+            marginBottom: 0,
+            paddingHorizontal: wp('2.5%'),
+            paddingTop: hp('1.2%')
+        }]}>
             <TextInput
                 style={styles.searchBar}
                 placeholder="Search by Fullname or Nickname"
@@ -246,13 +261,17 @@ const BookmarksScreen = () => {
                 }}
             />
             <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                <Ionicons name="search" size={20} color="white" />
+                <Ionicons name="search" size={RFValue(20, height)} color="black" />
             </TouchableOpacity>
         </View>
-        <View style={styles.divider3} />
 
-        {/* Four Buttons */}
-        <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
+        <View style={[styles.buttonRow, {
+            backgroundColor: 'transparent',
+            borderRadius: 0,
+            marginBottom: -hp('3%'),
+            paddingHorizontal: wp('2.5%'),
+            marginTop: hp('2.5%')
+        }]}>
             <TouchableOpacity style={styles.actionButton}>
                 <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
             </TouchableOpacity>
@@ -272,11 +291,16 @@ const BookmarksScreen = () => {
     </View>
 </View>
 
+<View style={styles.filterContainer}>
+    <Text style={styles.filterText}>Bookmarks</Text>
+</View>
+<View style={styles.divider} />
 
-{searchQuery.trim().length === 0 ? (
+<View style={{ marginTop: hp('2.2%'), flex: 1 }}>
+    {/* SectionList here */}
+    {searchQuery.trim().length === 0 ? (
     // Show bookmarks list when search bar is empty
     <SectionList
-        style={{ marginTop: 26 }}
         sections={[
             { title: '', data: [...bookmarks].reverse(), type: 'bookmarks' } // Reverse for latest first
         ]}
@@ -301,18 +325,26 @@ const BookmarksScreen = () => {
                   }).format(new Date(item.burial))
                 : 'Unknown';
 
+            // Build the full name string
+            const fullName = `${item.firstName}${item.nickname ? ` '${item.nickname}'` : ''} ${item.lastName}`;
+
             return (
                 <TouchableOpacity
                     style={styles.card}
-                    onPress={() => navigation.navigate('GraveInformation', { grave: item })}
+                    onPress={() => navigation.navigate('GraveInformation', { grave: item, origin: 'Bookmarks' })}
+                    activeOpacity={0.8}
                 >
                     <Image
                         source={{ uri: item.image ? item.image : 'https://via.placeholder.com/70' }}
                         style={styles.cardImage}
                     />
                     <View style={styles.cardContent}>
-                        <Text style={styles.cardTitle}>
-                            {item.firstName}{item.nickname ? ` '${item.nickname}'` : ''} {item.lastName}
+                        <Text
+                            style={styles.cardTitle}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                        >
+                            {fullName}
                         </Text>
                         <Text style={styles.cardDates}>
                             {formattedDateOfBirth} - {formattedBurialDate}
@@ -321,6 +353,13 @@ const BookmarksScreen = () => {
                             {item.phase}, Apartment {item.aptNo}
                         </Text>
                     </View>
+                    <TouchableOpacity
+                        style={styles.cardAction}
+                        onPress={() => {/* your action here */}}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="return-up-forward" size={RFValue(16, height)} color="#fff" marginTop="18" />
+                    </TouchableOpacity>
                 </TouchableOpacity>
             );
         }}
@@ -332,7 +371,6 @@ const BookmarksScreen = () => {
 ) : hasSearched ? (
     // Show search results only after searching
     <SectionList
-        style={{ marginTop: 26 }}
         sections={[
             { title: '', data: searchResults, type: 'searchResults' }
         ]}
@@ -356,6 +394,9 @@ const BookmarksScreen = () => {
                       year: 'numeric',
                   }).format(new Date(item.burial))
                 : 'Unknown';
+
+            // Build the full name string
+            const fullName = `${item.firstName}${item.nickname ? ` '${item.nickname}'` : ''} ${item.lastName}`;
 
             return (
                 <TouchableOpacity
@@ -386,6 +427,7 @@ const BookmarksScreen = () => {
         )}
     />
 ) : null}
+</View>
                 </View>
             </ImageBackground>
     );
@@ -397,7 +439,7 @@ const Drawer = createDrawerNavigator();
 const Bookmarks = () => {
     return (
         <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />} screenOptions={{ headerShown: false }}>
-            <Drawer.Screen name="Bookmarks" component={BookmarksScreen} />
+            <Drawer.Screen name="BookmarksScreen" component={BookmarksScreen} />
         </Drawer.Navigator>
     );
 };
@@ -458,7 +500,6 @@ const styles = StyleSheet.create({
     },
     searchButton: {
         padding: wp('2.5%'),
-        backgroundColor: 'green',
         borderRadius: wp('1.5%'),
         marginLeft: wp('1.2%'),
     },
@@ -468,21 +509,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: hp('1.2%'),
         paddingHorizontal: wp('6%'),
+        marginTop: hp('7%'),
     },
     filterText: {
         fontSize: RFValue(18, height),
-        color: 'green',
-    },
-    filterButton: {
-        padding: wp('2%'),
-        borderRadius: wp('1.5%'),
-        backgroundColor: '#fff',
+        color: 'gray',
+        marginHorizontal: wp('2.5%'),
     },
     divider: {
         height: 2,
-        backgroundColor: 'green',
-        marginBottom: hp('2.5%'),
-        marginTop: -hp('0.6%'),
+        backgroundColor: 'gray',
+        marginHorizontal: wp('9%'),
     },
     content: {
         flex: 1,
@@ -494,41 +531,41 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: wp('2.5%'),
         marginBottom: hp('1.2%'),
-        padding: wp('2.5%'),
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
         alignItems: 'center',
+        marginHorizontal: wp('8%'),
     },
     cardImage: {
         width: wp('18%'),
         height: wp('18%'),
-        borderRadius: wp('2.5%'),
         marginRight: wp('2.5%'),
     },
     cardContent: {
         flex: 1,
     },
     cardTitle: {
-        fontSize: RFValue(18, height),
+        fontSize: RFValue(16, height),
         fontWeight: 'bold',
         color: '#333',
+        maxWidth: '95%',
     },
     cardDates: {
-        fontSize: RFValue(15, height),
+        fontSize: RFValue(11, height),
         color: '#666',
     },
     cardLocation: {
-        fontSize: RFValue(13, height),
+        fontSize: RFValue(9, height),
         color: '#999',
     },
     cardAction: {
         backgroundColor: 'green',
         padding: wp('2%'),
-        borderRadius: wp('2%'),
+        height: '100%',
+        
     },
     buttonRow: {
         bottom: hp('4%'),
@@ -548,21 +585,14 @@ const styles = StyleSheet.create({
         marginHorizontal: wp('1.2%'),
     },
     buttonImage: {
-        width: wp('5%'),
-        height: wp('5%'),
+        width: wp('4.5%'),
+        height: wp('4.5%'),
         resizeMode: 'contain',
     },
     IconDivider: {
         height: hp('6%'),
         width: 0.5,
         backgroundColor: 'gray',
-    },
-    divider3: {
-        height: 0.5,
-        width: '85%',
-        backgroundColor: 'gray',
-        marginHorizontal: wp('9%'),
-        bottom: hp('3.5%'),
     },
     drawerContainer: {
         flex: 1,
@@ -653,7 +683,7 @@ const styles = StyleSheet.create({
         fontSize: RFValue(20, height),
         fontWeight: 'bold',
         color: '#12894f',
-        marginVertical: hp('1%'),
+        marginVertical: hp('-1%'),
         marginLeft: wp('3%'),
     },
     noResultsText: {

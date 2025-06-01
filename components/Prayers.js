@@ -15,40 +15,37 @@ const { width, height } = Dimensions.get('window');
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
-// Inside the CustomDrawerContent component
-const handleSignOut = () => {
-    Alert.alert(
-        "Are you sure?",
-        "Do you really want to log out?",
-        [
-            {
-                text: "Cancel",
-                onPress: () => console.log("Sign out canceled"),
-                style: "cancel",
-            },
-            {
-                text: "Confirm",
-                onPress: async () => {
-                    try {
-                        // Clear user data from AsyncStorage
-                        await AsyncStorage.removeItem("userId");
+    const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
-                        // Navigate to the SignIn screen
-                        navigation.reset({
-                            index: 0, // Reset stack to the SignIn screen
-                            routes: [{ name: 'SignIn' }], // Navigate to SignIn
-                        });
-                    } catch (error) {
-                        console.error("Error during sign out:", error);
-                    }
+    const handleSignOut = () => {
+        Alert.alert(
+            "Are you sure?",
+            "Do you really want to log out?",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => console.log("Sign out canceled"),
+                    style: "cancel",
                 },
-            },
-        ],
-        { cancelable: false } // Disable dismissing the alert by tapping outside
-    );
-};
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        try {
+                            await AsyncStorage.removeItem("userId");
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'SignIn' }],
+                            });
+                        } catch (error) {
+                            console.error("Error during sign out:", error);
+                        }
+                    },
+                },
+            ],
+            { cancelable: false }
+        );
+    };
 
-    // ✅ Fetch user data whenever the drawer is focused (opened)
     useFocusEffect(
         React.useCallback(() => {
             AsyncStorage.getItem("userId")
@@ -59,74 +56,68 @@ const handleSignOut = () => {
                 .then(response => response.json())
                 .then(data => setUser(data))
                 .catch(error => console.error("Error fetching user:", error));
-        }, []) // Empty dependency ensures it re-runs when focused
+        }, [])
     );
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-             {/* Profile Section */}
-                        <View style={styles.profileSection}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Image
-                                    source={
-                                        user?.profileImage
-                                          ? { uri: user.profileImage }
-                                          : require('../assets/blankDP.jpg') // fallback local image
-                                    }
-                                    style={styles.profileImage}
-                                />
-                                <View style={{ marginLeft: 16 }}>
-                                    <Text style={styles.profileName}>
-                                      {user?.name
-                                        ? user.name.length > 16
-                                          ? `${user.name.slice(0, 16)}...`
-                                          : user.name
-                                        : "Loading..."}
-                                    </Text>
-                                    <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                                    <TouchableOpacity
-                                        style={styles.editProfileButton}
-                                        onPress={() => navigation.navigate('EditProfile')}
-                                    >
-                                        <MaterialIcons name="edit" size={16} color="green" />
-                                        <Text style={styles.editProfileText}>Edit Profile</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
+            {/* Profile Section */}
+            <View style={styles.profileSection}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Image
+                        source={
+                            user?.profileImage
+                                ? { uri: user.profileImage }
+                                : require('../assets/blankDP.jpg')
+                        }
+                        style={styles.profileImage}
+                    />
+                    <View style={{ marginLeft: 16 }}>
+                        <Text style={styles.profileName}>
+                            {user?.name
+                                ? user.name.length > 16
+                                    ? `${user.name.slice(0, 16)}...`
+                                    : user.name
+                                : "Loading..."}
+                        </Text>
+                        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+                        <TouchableOpacity
+                            style={styles.editProfileButton}
+                            onPress={() => navigation.navigate('EditProfile')}
+                        >
+                            <MaterialIcons name="edit" size={16} color="green" />
+                            <Text style={styles.editProfileText}>Edit Profile</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'HistoryTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
                     <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextGreen}>Home</Text>
+                    <Text style={styles.drawerTextGreen}>History</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'BookmarksTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
                     <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Bookmarks</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('MainTabs', { screen: 'PrayersTab' })}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
                     <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
                     <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
                     <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextBlue}>Requested Services</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
                     <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextBlue}>FAQs</Text>
                 </TouchableOpacity>
-
             </View>
 
             {/* Sign Out Button */}
@@ -194,7 +185,7 @@ const PrayersScreen = () => {
         setHasSearched(false);
 
         // Navigate to GraveInformation
-        navigation.navigate('GraveInformation', { grave });
+        navigation.navigate('GraveInformation', { grave, origin: 'Prayers' });
     };
 
     return (
@@ -225,46 +216,67 @@ const PrayersScreen = () => {
                     </View>
 
                     {/* Search Bar */}
-                    <View style={{ backgroundColor: 'white', borderRadius: 10, marginHorizontal: 10, marginTop: 18, marginBottom: 0, paddingBottom: 0 }}>
-                        <View style={[styles.searchBarContainer, { backgroundColor: 'white', borderRadius: 10, marginHorizontal: 0, marginTop: 0, marginBottom: 0, paddingHorizontal: 10, paddingTop: 10 }]}>
-                            <TextInput
-                                style={styles.searchBar}
-                                placeholder="Search by Fullname or Nickname"
-                                placeholderTextColor="gray"
-                                value={searchQuery}
-                                onChangeText={text => {
-                                    setSearchQuery(text);
-                                    if (text.trim() === '') {
-                                        setSearchResults([]);
-                                        setHasSearched(false);
-                                    }
-                                }}
-                            />
-                            <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                                <Ionicons name="search" size={20} color="white" />
-                            </TouchableOpacity>
-                        </View>
+                    <View style={{
+    backgroundColor: 'white',
+    borderRadius: wp('2.5%'),
+    marginHorizontal: wp('6%'),
+    marginTop: hp('2.2%'),
+    marginBottom: 0,
+    paddingBottom: 0
+}}>
+    <View style={[styles.searchBarContainer, {
+        backgroundColor: 'white',
+        borderRadius: wp('2.5%'),
+        marginHorizontal: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        paddingHorizontal: wp('2.5%'),
+        paddingTop: hp('1.2%')
+    }]}>
+        <TextInput
+            style={styles.searchBar}
+            placeholder="Search by Fullname or Nickname"
+            placeholderTextColor="gray"
+            value={searchQuery}
+            onChangeText={text => {
+                setSearchQuery(text);
+                if (text.trim() === '') {
+                    setSearchResults([]);
+                    setHasSearched(false);
+                }
+            }}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+            <Ionicons name="search" size={RFValue(20, height)} color="black" />
+        </TouchableOpacity>
+    </View>
 
 
-                        {/* Four Buttons */}
-                        <View style={[styles.buttonRow, { backgroundColor: 'transparent', borderRadius: 0, marginBottom: -20, paddingHorizontal: 10, marginTop: 25 }]}>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
-                            </TouchableOpacity>
-                            <View style={styles.IconDivider} />
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
-                            </TouchableOpacity>
-                            <View style={styles.IconDivider} />
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
-                            </TouchableOpacity>
-                            <View style={styles.IconDivider} />
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+    {/* Four Buttons */}
+    <View style={[styles.buttonRow, {
+        backgroundColor: 'transparent',
+        borderRadius: 0,
+        marginBottom: -hp('3%'),
+        paddingHorizontal: wp('2.5%'),
+        marginTop: hp('2.5%')
+    }]}>
+        <TouchableOpacity style={styles.actionButton}>
+            <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+        </TouchableOpacity>
+        <View style={styles.IconDivider} />
+        <TouchableOpacity style={styles.actionButton}>
+            <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+        </TouchableOpacity>
+        <View style={styles.IconDivider} />
+        <TouchableOpacity style={styles.actionButton}>
+            <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+        </TouchableOpacity>
+        <View style={styles.IconDivider} />
+        <TouchableOpacity style={styles.actionButton}>
+            <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
+        </TouchableOpacity>
+    </View>
+</View>
 
                 </View>
 
@@ -383,7 +395,7 @@ const Drawer = createDrawerNavigator();
 const Prayers = () => {
     return (
         <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} />} screenOptions={{ headerShown: false }}>
-            <Drawer.Screen name="Prayers" component={PrayersScreen} />
+            <Drawer.Screen name="PrayersScreen" component={PrayersScreen} />
         </Drawer.Navigator>
     );
 };
@@ -444,7 +456,6 @@ const styles = StyleSheet.create({
     },
     searchButton: {
         padding: wp('2.5%'),
-        backgroundColor: 'green',
         borderRadius: wp('1.5%'),
         marginLeft: wp('1.2%'),
     },
@@ -458,7 +469,7 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         backgroundColor: 'white',
-        top: '5%',
+        top: wp('14%'),
         borderTopLeftRadius: wp('5%'),
         borderTopRightRadius: wp('5%'),
         overflow: 'hidden',
@@ -469,6 +480,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: hp('1.2%'),
         paddingHorizontal: wp('6%'),
+        marginTop: hp('1%'),
     },
     filterText: {
         fontSize: RFValue(18, height),
@@ -525,8 +537,8 @@ const styles = StyleSheet.create({
         marginHorizontal: wp('1.2%'),
     },
     buttonImage: {
-        width: wp('5%'),
-        height: wp('5%'),
+        width: wp('4.5%'),
+        height: wp('4.5%'),
         resizeMode: 'contain',
     },
     IconDivider: {
@@ -538,6 +550,8 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: wp('5%'),
         backgroundColor: '#fff',
+        borderTopRightRadius: wp('25%'),
+        borderBottomRightRadius: wp('25%'),
     },
     profileSection: {
         alignItems: 'center',
