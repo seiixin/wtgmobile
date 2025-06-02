@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, FlatList, ImageBackground, Alert, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, FlatList, ImageBackground, Alert, StatusBar, Modal } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -14,7 +14,7 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
-    const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false); // <-- Add this line
 
     const handleSignOut = () => {
         Alert.alert(
@@ -57,6 +57,33 @@ const CustomDrawerContent = (props) => {
                 .catch(error => console.error("Error fetching user:", error));
         }, [])
     );
+
+    // Add polling effect to check if user still exists
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
@@ -126,6 +153,46 @@ const CustomDrawerContent = (props) => {
                     <Text style={styles.signOutText}>Sign out</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Account Removed Modal */}
+            <Modal
+                visible={accountRemovedModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {}}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                            Your account has been removed by the administrator.
+                        </Text>
+                        <TouchableOpacity
+                            style={{ padding: 10, marginTop: 16 }}
+                            onPress={() => {
+                                setAccountRemovedModal(false);
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'SignIn' }],
+                                });
+                            }}
+                        >
+                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </DrawerContentScrollView>
     );
 };

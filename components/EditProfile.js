@@ -18,6 +18,7 @@ const EditProfile = () => {
   const [imageCacheBuster, setImageCacheBuster] = useState(Date.now()); // Add this line
   const [newValue, setNewValue] = useState(""); // New state for updated field value
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const [accountRemovedModal, setAccountRemovedModal] = useState(false);
   const navigation = useNavigation();
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";  
 
@@ -36,6 +37,32 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
       })
       .catch(error => console.error("Error fetching user:", error))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let intervalId;
+    const checkUserExists = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+        if (!userId) return;
+        const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+        if (!response.ok) {
+          setAccountRemovedModal(true);
+          await AsyncStorage.removeItem("userId");
+          return;
+        }
+        const data = await response.json();
+        if (!data || data.error || data.message === "User not found") {
+          setAccountRemovedModal(true);
+          await AsyncStorage.removeItem("userId");
+        }
+      } catch (error) {
+        // Optionally handle network errors
+      }
+    };
+    intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+    return () => clearInterval(intervalId);
   }, []);
 
   if (loading) {
@@ -287,6 +314,44 @@ const uploadImage = async (imageUri) => {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+        <Modal
+  visible={accountRemovedModal}
+  transparent
+  animationType="fade"
+  onRequestClose={() => {}}
+>
+  <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+  <View style={{
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }}>
+    <View style={{
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 24,
+      alignItems: 'center',
+      width: '80%'
+    }}>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+        Your account has been removed by the administrator.
+      </Text>
+      <TouchableOpacity
+        style={{ padding: 10, marginTop: 16 }}
+        onPress={() => {
+          setAccountRemovedModal(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'SignIn' }],
+          });
+        }}
+      >
+        <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
       </ImageBackground>
     </>
   );

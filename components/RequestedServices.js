@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert, Dimensions } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert, Dimensions, StatusBar } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
@@ -18,6 +18,7 @@ const { width, height } = Dimensions.get('window');
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
 
     const handleSignOut = () => {
         Alert.alert(
@@ -63,6 +64,33 @@ const CustomDrawerContent = (props) => {
                 .catch(error => console.error("Error fetching user:", error));
         }, []) // Empty dependency ensures it re-runs when focused
     );
+
+    // Polling effect to check if user still exists
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
@@ -138,6 +166,46 @@ const CustomDrawerContent = (props) => {
                     <Text style={styles.signOutText}>Sign out</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Account Removed Modal */}
+            <Modal
+                visible={accountRemovedModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {}}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                            Your account has been removed by the administrator.
+                        </Text>
+                        <TouchableOpacity
+                            style={{ padding: 10, marginTop: 16 }}
+                            onPress={() => {
+                                setAccountRemovedModal(false);
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'SignIn' }],
+                                });
+                            }}
+                        >
+                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </DrawerContentScrollView>
     );
 };
@@ -567,8 +635,8 @@ const GradientNextButton = ({ onPress }) => (
   <Text
     style={{
       color:
-        transaction.status === 'paid' || transaction.status === 'Completed'
-          ? '#1976d2'
+        transaction.status === 'pending' || transaction.status === 'completed'
+          ? '#fab636'
           : '#fab636',
       fontWeight: 'bold',
       fontSize: wp('3.5%'),
@@ -580,9 +648,9 @@ const GradientNextButton = ({ onPress }) => (
     numberOfLines={1}
     ellipsizeMode="tail"
   >
-    {transaction.status === 'paid'
-      ? 'Completed'
-      : transaction.status || 'To Process'}
+    {transaction.status === 'pending'
+      ? 'completed'
+      : transaction.status || 'to Process'}
   </Text>
 </TouchableOpacity>
 
@@ -893,59 +961,104 @@ const GradientNextButton = ({ onPress }) => (
                   alert('User info not loaded. Please try again.');
                   return;
                 }
+
+                // --- DUPLICATE CHECK LOGIC START ---
+                // Fetch all transactions for this user
+                let transactions = [];
+                try {
+                  const res = await fetch(`${BASE_URL}/api/transactions/user/${userId}`);
+                  const data = await res.json();
+                  transactions = data.data || [];
+                } catch (e) {
+                  alert('Could not check for duplicate requests. Please try again.');
+                  return;
+                }
+
+                // Find services for this deceased that are not completed
+                const currentDeceased = graveDetails.deceasedName.trim().toLowerCase();
+                const ongoingServices = new Set();
+                transactions.forEach(tx => {
+                  if (
+                    tx.graveDetails &&
+                    tx.graveDetails.deceasedName &&
+                    tx.graveDetails.deceasedName.trim().toLowerCase() === currentDeceased &&
+                    tx.status !== 'completed' // <-- FIXED: only block if not completed
+                  ) {
+                    (tx.services || []).forEach(s => ongoingServices.add(s.serviceName));
+                  }
+                });
+
+                // Filter out services that are already ongoing for this deceased
+                const selectedToRequest = selectedServices
+                  .filter(s => s.selected && !ongoingServices.has(s.serviceName));
+
+                const duplicateServices = selectedServices
+                  .filter(s => s.selected && ongoingServices.has(s.serviceName))
+                  .map(s => s.serviceName);
+
+                if (selectedToRequest.length === 0) {
+                  alert(
+                    `You already have ongoing requests for all selected services for "${graveDetails.deceasedName}". Please wait until they are completed before requesting again.`
+                  );
+                  return;
+                }
+
+                if (duplicateServices.length > 0) {
+                  alert(
+                    `The following service(s) for "${graveDetails.deceasedName}" are still ongoing and cannot be requested again: ${duplicateServices.join(', ')}`
+                  );
+                }
+                // --- DUPLICATE CHECK LOGIC END ---
+
                 const payload = {
                   userId,
                   userName: userInfo.name,
                   userAvatar: userInfo.avatar,
                   graveDetails,
-                  services: selectedServices.filter(s => s.selected),
-                  total,
+                  services: selectedToRequest,
+                  total: selectedToRequest.reduce((sum, s) => sum + s.price, 0),
                   paymentMethod: selectedPayment,
                   status: 'pending',
                   orderTime: new Date(),
                 };
                 console.log('Submitting transaction:', payload);
-                fetch('https://walktogravemobile-backendserver.onrender.com/api/transactions', {
+                fetch(`${BASE_URL}/api/transactions`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(payload),
                 })
                   .then(res => res.json())
                   .then(async data => {
-                    if (selectedPayment === 'Cash') {
-    alert('Service successfully requested! Please proceed to the St. Joseph Cemetery office to complete payment on-site.');
-  } else {
-    alert('Request submitted!');
-  }
-  // 1. Clear the grave details fields
-  setGraveDetails({
-    deceasedName: '',
-    dateOfBurial: '',
-    dateOfBirth: '',
-    phaseBlk: '',
-    category: '',
-    apartmentNo: '',
-  });
+                    alert('Service successfully requested! Please proceed to the St. Joseph Cemetery office to complete payment on-site.');
+                    // 1. Clear the grave details fields
+                    setGraveDetails({
+                      deceasedName: '',
+                      dateOfBurial: '',
+                      dateOfBirth: '',
+                      phaseBlk: '',
+                      category: '',
+                      apartmentNo: '',
+                    });
 
-  fetchPaidTransactions();
+                    fetchPaidTransactions();
 
-  // Remove selected services from the database
-  const selectedToDelete = selectedServices.filter(service => service.selected);
-  await Promise.all(selectedToDelete.map(service =>
-    fetch(`https://walktogravemobile-backendserver.onrender.com/api/service-requests/${service._id}`, {
-      method: 'DELETE',
-    })
-  ));
+                    // Remove only the requested services from the cart in local state and backend
+                    await Promise.all(selectedToRequest.map(service =>
+                      fetch(`${BASE_URL}/api/service-requests/${service._id}`, {
+                        method: 'DELETE',
+                      })
+                    ));
 
-  // Remove only the selected services from the cart in local state
-  setSelectedServices(prev =>
-    prev.filter(service => !service.selected)
-  );
-  setTotal(prev =>
-    selectedServices.filter(service => !service.selected).reduce((sum, s) => sum + s.price, 0)
-  );
-  setActiveTab("Transactions"); // Redirect to Transactions tab
-})
+                    setSelectedServices(prev =>
+                      prev.filter(service => !selectedToRequest.some(s => s._id === service._id))
+                    );
+                    setTotal(prev =>
+                      selectedServices
+                        .filter(service => !selectedToRequest.some(s => s._id === service._id))
+                        .reduce((sum, s) => sum + s.price, 0)
+                    );
+                    setActiveTab("Transactions"); // Redirect to Transactions tab
+                  })
                   .catch(err => alert('Failed to submit request'));
               }}
               activeOpacity={0.8}

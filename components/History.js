@@ -19,7 +19,34 @@ const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
 
-    
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    // User not found or deleted
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     const handleSignOut = () => {
         Alert.alert(
@@ -141,6 +168,46 @@ const CustomDrawerContent = (props) => {
                     <Text style={styles.signOutText}>Sign out</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Account Removed Modal - New Feature */}
+            <Modal
+                visible={accountRemovedModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {}}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                Your account has been removed by the administrator.
+            </Text>
+            <TouchableOpacity
+                style={{ padding: 10, marginTop: 16 }}
+                onPress={() => {
+                    setAccountRemovedModal(false);
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'SignIn' }],
+                    });
+                }}
+            >
+                <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+            </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </DrawerContentScrollView>
     );
 };
@@ -765,6 +832,48 @@ const styles = StyleSheet.create({
         color: 'gray',
         marginTop: hp('30%'),
         fontSize: RFValue(16, height),
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: RFValue(18, height),
+        fontWeight: 'bold',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: RFValue(14, height),
+        color: '#333',
+        marginBottom: 24,
+        textAlign: 'center',
+    },
+    modalButton: {
+        backgroundColor: '#12894f',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8,
+        alignItems: 'center',
+        width: '100%',
+    },
+    modalButtonText: {
+        color: '#fff',
+        fontSize: RFValue(16, height),
+        fontWeight: 'bold',
     },
 });
 

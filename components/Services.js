@@ -33,7 +33,7 @@ const burialOptions = [
   { 
     id: 2, 
     name: "CHILD APT.", 
-    description: "optional for Lapida\n• 5 YEARS CONTRACT\n• NON-RENEWABLE", 
+    description: "optional for Lapida\n• 4 YEARS CONTRACT\n• NON-RENEWABLE", 
     image: require("../assets/child.png"),
     bgColor: "#c2dfef", // Light Red
     route: "ChildAptDetails",
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: wp('100%'),
-    height: hp('100%'),
+    height: hp('105%'),
     resizeMode: "cover",
   },
   container: {
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     marginBottom: hp('1%'),
   },
   headerTitle: {
-    fontSize: wp('7%'),
+    fontSize: wp('8%'),
     fontWeight: "bold",
     color: "#2D6A4F",
     marginTop: hp('3%'),

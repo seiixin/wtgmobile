@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from "react-native-responsive-fontsize";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,10 @@ const GraveInformation = () => {
     const [timeLeft, setTimeLeft] = useState(0);
     const timerRef = useRef(null);
     const modalContentRef = useRef(null); // Reference to the modal content
+
+    const [cameraModalVisible, setCameraModalVisible] = useState(false);
+    const [permission, requestPermission] = useCameraPermissions();
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
 
     const saveModalAsImage = async () => {
         try {
@@ -41,6 +46,19 @@ const GraveInformation = () => {
         }
     };
 
+    const handleScanMemory = async () => {
+  if (!permission || !permission.granted) {
+    const response = await requestPermission();
+    if (response.granted) {
+      navigation.navigate('QRScanner');
+    } else {
+      Alert.alert("Permission Denied", "Camera access is required to scan memories.");
+    }
+  } else {
+    navigation.navigate('QRScanner');
+  }
+};
+    
     const handleLightCandle = async () => {
         try {
             // Retrieve existing candle data from AsyncStorage
@@ -170,6 +188,32 @@ const GraveInformation = () => {
       return `${hours}:${minutes}:${seconds}`;
     };
 
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     return (
         <>
             <StatusBar
@@ -177,6 +221,44 @@ const GraveInformation = () => {
                 backgroundColor="transparent"
                 translucent={true}
             />
+            <Modal
+                visible={accountRemovedModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {}}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                            Your account has been removed by the administrator.
+                        </Text>
+                        <TouchableOpacity
+                            style={{ padding: 10, marginTop: 16 }}
+                            onPress={() => {
+                                setAccountRemovedModal(false);
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'SignIn' }],
+                                });
+                            }}
+                        >
+                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
             <View style={{ flex: 1 }}>
                 {/* Fixed Buttons */}
                 <TouchableOpacity
@@ -293,7 +375,7 @@ const GraveInformation = () => {
 
   <TouchableOpacity
     style={styles.scanMemoryButton}
-    onPress={() => navigation.navigate('QRScanner')}
+    onPress={handleScanMemory}
   >
     <LinearGradient
       colors={["#ffef5d", "#7ed957"]}
@@ -312,14 +394,6 @@ const GraveInformation = () => {
                     {/* Bottom Buttons */}
                     <View style={styles.bottomContainer}>
                         <View style={styles.bottomButtons}>
-                            {/* Update Details Button */}
-                            <TouchableOpacity style={styles.bottomButton}>
-                                <Image source={require("../assets/update.png")} style={styles.updateImage} />
-                                <Text style={styles.bottomButtonText}>Update Details</Text>
-                            </TouchableOpacity>
-
-                            {/* Divider */}
-                            <View style={styles.divider} />
 
                             {/* Prayers Button */}
                             <TouchableOpacity
@@ -785,6 +859,66 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: RFValue(10, height),
     fontWeight: 'bold',
+  },
+  permissionModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: wp('5%'),
+  },
+  permissionModalContent: {
+    width: "90%",
+    borderRadius: wp('5%'),
+    padding: wp('5%'),
+    alignItems: "center",
+    backgroundColor: "white",
+    elevation: 5,
+  },
+  permissionModalTitle: {
+    fontSize: RFValue(18, height),
+    fontWeight: "bold",
+    marginBottom: hp('1%'),
+    textAlign: "center",
+  },
+  permissionModalText: {
+    fontSize: RFValue(14, height),
+    marginBottom: hp('2%'),
+    textAlign: "center",
+    color: "#333",
+  },
+  permissionModalButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: hp('2%'),
+  },
+  permissionAllowButton: {
+    flex: 1,
+    backgroundColor: "#2E8B57",
+    borderRadius: wp('2.5%'),
+    paddingVertical: hp('1.5%'),
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: wp('2%'),
+  },
+  permissionCancelButton: {
+    flex: 1,
+    backgroundColor: "#f44336",
+    borderRadius: wp('2.5%'),
+    paddingVertical: hp('1.5%'),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  permissionAllowButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: RFValue(16, height),
+  },
+  permissionCancelButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: RFValue(16, height),
   },
 });
 

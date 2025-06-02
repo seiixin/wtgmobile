@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    View, Text, TextInput, ImageBackground, Dimensions, StyleSheet, Image, ScrollView, Animated, StatusBar
+    View, Text, TextInput, ImageBackground, Dimensions, StyleSheet, Image, ScrollView, Animated, StatusBar, Modal
 } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // <-- Add this import
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width, height } = Dimensions.get('window');
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com"; // <-- Add this if not present
 
 const PsalmReadingOffer = () => {
     const [deceasedName, setDeceasedName] = useState('');
@@ -22,6 +24,8 @@ const PsalmReadingOffer = () => {
 
     const slideAnim = useRef(new Animated.Value(600)).current;
     const navigation = useNavigation();
+
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
 
     const prayers = {
         english: {
@@ -60,6 +64,32 @@ const PsalmReadingOffer = () => {
         }).start();
     }, [deceasedName, language]);
 
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     return (
         <>
         <StatusBar
@@ -67,6 +97,44 @@ const PsalmReadingOffer = () => {
             backgroundColor="transparent"
             translucent={true}
         />
+        <Modal
+            visible={accountRemovedModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => {}}
+        >
+            <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+            <View style={{
+                flex: 1,
+                backgroundColor: 'rgba(0,0,0,0.4)',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <View style={{
+                    backgroundColor: '#fff',
+                    borderRadius: 12,
+                    padding: 24,
+                    alignItems: 'center',
+                    width: '80%'
+                }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                        Your account has been removed by the administrator.
+                    </Text>
+                    <TouchableOpacity
+                        style={{ padding: 10, marginTop: 16 }}
+                        onPress={() => {
+                            setAccountRemovedModal(false);
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'SignIn' }],
+                            });
+                        }}
+                    >
+                        <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
         <ImageBackground source={require('../assets/OfferBg.png')} style={styles.background}>
             {/* Header with Back Button */}
             <View style={styles.header}>

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, SectionList, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, FlatList, Dimensions, SectionList, ImageBackground, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, Platform, ScrollView, StatusBar, Modal } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import WaveCurve from './WaveCurve';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
 
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 const { width, height } = Dimensions.get('window');
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -16,38 +16,39 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
-// Inside the CustomDrawerContent component
-const handleSignOut = () => {
-    Alert.alert(
-        "Are you sure?",
-        "Do you really want to log out?",
-        [
-            {
-                text: "Cancel",
-                onPress: () => console.log("Sign out canceled"),
-                style: "cancel",
-            },
-            {
-                text: "Confirm",
-                onPress: async () => {
-                    try {
-                        // Clear user data from AsyncStorage
-                        await AsyncStorage.removeItem("userId");
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
 
-                        // Navigate to the SignIn screen
-                        navigation.reset({
-                            index: 0, // Reset stack to the SignIn screen
-                            routes: [{ name: 'SignIn' }], // Navigate to SignIn
-                        });
-                    } catch (error) {
-                        console.error("Error during sign out:", error);
-                    }
+    const handleSignOut = () => {
+        Alert.alert(
+            "Are you sure?",
+            "Do you really want to log out?",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => console.log("Sign out canceled"),
+                    style: "cancel",
                 },
-            },
-        ],
-        { cancelable: false } // Disable dismissing the alert by tapping outside
-    );
-};
+                {
+                    text: "Confirm",
+                    onPress: async () => {
+                        try {
+                            // Clear user data from AsyncStorage
+                            await AsyncStorage.removeItem("userId");
+
+                            // Navigate to the SignIn screen
+                            navigation.reset({
+                                index: 0, // Reset stack to the SignIn screen
+                                routes: [{ name: 'SignIn' }], // Navigate to SignIn
+                            });
+                        } catch (error) {
+                            console.error("Error during sign out:", error);
+                        }
+                    },
+                },
+            ],
+            { cancelable: false } // Disable dismissing the alert by tapping outside
+        );
+    };
 
     // ✅ Fetch user data whenever the drawer is focused (opened)
     useFocusEffect(
@@ -62,6 +63,33 @@ const handleSignOut = () => {
                 .catch(error => console.error("Error fetching user:", error));
         }, []) // Empty dependency ensures it re-runs when focused
     );
+
+    // Polling effect to check if user still exists
+    useEffect(() => {
+        let intervalId;
+        const checkUserExists = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                if (!response.ok) {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                    return;
+                }
+                const data = await response.json();
+                if (!data || data.error || data.message === "User not found") {
+                    setAccountRemovedModal(true);
+                    await AsyncStorage.removeItem("userId");
+                }
+            } catch (error) {
+                // Optionally handle network errors
+            }
+        };
+        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
@@ -137,6 +165,46 @@ const handleSignOut = () => {
                     <Text style={styles.signOutText}>Sign out</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Account Removed Modal */}
+            <Modal
+                visible={accountRemovedModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {}}
+            >
+                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        alignItems: 'center',
+                        width: '80%'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                            Your account has been removed by the administrator.
+                        </Text>
+                        <TouchableOpacity
+                            style={{ padding: 10, marginTop: 16 }}
+                            onPress={() => {
+                                setAccountRemovedModal(false);
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'SignIn' }],
+                                });
+                            }}
+                        >
+                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </DrawerContentScrollView>
     );
 };

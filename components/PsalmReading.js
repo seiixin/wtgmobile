@@ -1,15 +1,44 @@
-import React, { useState } from 'react';
-import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, StatusBar, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, StatusBar, Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width, height } = Dimensions.get('window');
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
 const PsalmReading = () => {
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState('PsalmReading');
+  const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+
+  useEffect(() => {
+    let intervalId;
+    const checkUserExists = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+        if (!userId) return;
+        const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+        if (!response.ok) {
+          setAccountRemovedModal(true);
+          await AsyncStorage.removeItem("userId");
+          return;
+        }
+        const data = await response.json();
+        if (!data || data.error || data.message === "User not found") {
+          setAccountRemovedModal(true);
+          await AsyncStorage.removeItem("userId");
+        }
+      } catch (error) {
+        // Optionally handle network errors
+      }
+    };
+    intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
     <>
@@ -18,6 +47,44 @@ const PsalmReading = () => {
         backgroundColor="transparent"
         translucent={true}
       />
+      <Modal
+        visible={accountRemovedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            alignItems: 'center',
+            width: '80%'
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+              Your account has been removed by the administrator.
+            </Text>
+            <TouchableOpacity
+              style={{ padding: 10, marginTop: 16 }}
+              onPress={() => {
+                setAccountRemovedModal(false);
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'SignIn' }],
+                });
+              }}
+            >
+              <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <ImageBackground
         source={require('../assets/PsalmReadingBG.png')}
         style={styles.background}
