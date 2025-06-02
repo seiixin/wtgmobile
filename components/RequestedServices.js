@@ -453,6 +453,58 @@ const GradientNextButton = ({ onPress }) => (
     fetchGraveDetails();
   }, [graveDetails.deceasedName]);
 
+  useEffect(() => {
+    let cartIntervalId;
+    let transactionsIntervalId;
+
+    // Poll for cart updates
+    const pollRequestedServices = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+      fetch(`${BASE_URL}/api/service-requests/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+          setRequestedServices(data.data);
+          setSelectedServices(data.data.map(service => ({ ...service, selected: true })));
+          const totalPrice = data.data.reduce((sum, service) => sum + service.price, 0);
+          setTotal(totalPrice);
+        })
+        .catch(() => {});
+    };
+
+    // Poll for transactions updates
+    const pollPaidTransactions = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) return;
+      fetch(`${BASE_URL}/api/transactions/user/${userId}`)
+        .then(async (response) => {
+          if (!response.ok) {
+            setPaidTransactions([]);
+            setTotalSpent(0);
+            return;
+          }
+          const data = await response.json();
+          setPaidTransactions(data.data || []);
+          const totalSpentAmount = (data.data || []).reduce((sum, transaction) => sum + (transaction.total || 0), 0);
+          setTotalSpent(totalSpentAmount);
+        })
+        .catch(() => {});
+    };
+
+    // Start polling when component mounts
+    cartIntervalId = setInterval(pollRequestedServices, 7000); // every 7 seconds
+    transactionsIntervalId = setInterval(pollPaidTransactions, 7000); // every 7 seconds
+
+    // Initial fetch
+    pollRequestedServices();
+    pollPaidTransactions();
+
+    return () => {
+      clearInterval(cartIntervalId);
+      clearInterval(transactionsIntervalId);
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Drawer Hamburger Button */}
@@ -635,9 +687,11 @@ const GradientNextButton = ({ onPress }) => (
   <Text
     style={{
       color:
-        transaction.status === 'pending' || transaction.status === 'completed'
-          ? '#fab636'
-          : '#fab636',
+        transaction.status === 'pending'
+        ? '#fab636'
+        : transaction.status === 'completed'
+        ? '#fab636'
+        : '#fab636',
       fontWeight: 'bold',
       fontSize: wp('3.5%'),
       minWidth: 90,
@@ -649,8 +703,10 @@ const GradientNextButton = ({ onPress }) => (
     ellipsizeMode="tail"
   >
     {transaction.status === 'pending'
-      ? 'completed'
-      : transaction.status || 'to Process'}
+      ? 'Pending'
+      : transaction.status === 'completed'
+      ? 'Completed'
+      : (transaction.status || 'To Process')}
   </Text>
 </TouchableOpacity>
 
