@@ -14,6 +14,14 @@ import { RFValue } from 'react-native-responsive-fontsize';
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const { width, height } = Dimensions.get('window');
 
+function generateReferenceNumber() {
+  const prefix = 'W2G';
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}${dateStr}${random}`;
+}
+
 // ✅ Custom Drawer Content
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
@@ -243,6 +251,8 @@ const RequestedServicesScreen = () => {
   const [expandedTransactionId, setExpandedTransactionId] = useState(null);
   const [burialPickerVisible, setBurialPickerVisible] = useState(false);
 const [deathPickerVisible, setDeathPickerVisible] = useState(false);
+const [receiptModalVisible, setReceiptModalVisible] = useState(false);
+const [receiptReferenceNumbers, setReceiptReferenceNumbers] = useState([]);
 
 const GradientNextButton = ({ onPress }) => (
   <TouchableOpacity style={{ width: '100%' }} onPress={onPress} activeOpacity={0.8}>
@@ -1066,17 +1076,21 @@ const GradientNextButton = ({ onPress }) => (
                 }
                 // --- DUPLICATE CHECK LOGIC END ---
 
-                const payload = {
-                  userId,
-                  userName: userInfo.name,
-                  userAvatar: userInfo.avatar,
-                  graveDetails,
-                  services: selectedToRequest,
-                  total: selectedToRequest.reduce((sum, s) => sum + s.price, 0),
-                  paymentMethod: selectedPayment,
-                  status: 'pending',
-                  orderTime: new Date(),
-                };
+    
+                const referenceNumber = generateReferenceNumber();
+
+const payload = {
+  userId,
+  userName: userInfo.name,
+  userAvatar: userInfo.avatar,
+  graveDetails,
+  services: selectedToRequest,
+  total: selectedToRequest.reduce((sum, s) => sum + s.price, 0),
+  paymentMethod: selectedPayment,
+  status: 'pending',
+  orderTime: new Date(),
+  referenceNumber, // <-- Add this line
+};
                 console.log('Submitting transaction:', payload);
                 fetch(`${BASE_URL}/api/transactions`, {
                   method: 'POST',
@@ -1085,7 +1099,6 @@ const GradientNextButton = ({ onPress }) => (
                 })
                   .then(res => res.json())
                   .then(async data => {
-                    alert('Service successfully requested! Please proceed to the St. Joseph Cemetery office to complete payment on-site.');
                     // 1. Clear the grave details fields
                     setGraveDetails({
                       deceasedName: '',
@@ -1099,11 +1112,22 @@ const GradientNextButton = ({ onPress }) => (
                     fetchPaidTransactions();
 
                     // Remove only the requested services from the cart in local state and backend
-                    await Promise.all(selectedToRequest.map(service =>
-                      fetch(`${BASE_URL}/api/service-requests/${service._id}`, {
-                        method: 'DELETE',
-                      })
-                    ));
+                    // 1. Collect reference numbers before deleting
+
+
+// 2. Remove only the requested services from the cart in local state and backend
+await Promise.all(selectedToRequest.map(service =>
+  fetch(`${BASE_URL}/api/service-requests/${service._id}`, {
+    method: 'DELETE',
+  })
+));
+
+// 3. Show reference number in modal
+  const refNumber = data.data.referenceNumber || referenceNumber;
+  if (refNumber) {
+    setReceiptReferenceNumbers([refNumber]);
+    setReceiptModalVisible(true);
+  }
 
                     setSelectedServices(prev =>
                       prev.filter(service => !selectedToRequest.some(s => s._id === service._id))
@@ -1161,6 +1185,101 @@ const GradientNextButton = ({ onPress }) => (
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* Modal for Receipt */}
+      <Modal
+        visible={receiptModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReceiptModalVisible(false)}
+      >
+        <View style={{
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }}>
+    <View style={{
+      backgroundColor: '#fff',
+      borderRadius: 18,
+      padding: 28,
+      alignItems: 'center',
+      width: '85%',
+      borderWidth: 3,
+      borderColor: '#fab636'
+    }}>
+      <View style={{
+        backgroundColor: '#1a5242',
+        borderRadius: 50,
+        width: 60,
+        height: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+        borderWidth: 3,
+        borderColor: '#fab636'
+      }}>
+        <Ionicons name="checkmark-done" size={38} color="#fff" />
+      </View>
+      <Text style={{
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1a5242',
+        marginBottom: 10,
+        textAlign: 'center'
+      }}>
+        Request Submitted!
+      </Text>
+      <Text style={{
+        fontSize: 16,
+        color: '#fab636',
+        fontWeight: 'bold',
+        marginBottom: 8,
+        textAlign: 'center'
+      }}>
+        Reference Number{receiptReferenceNumbers.length > 1 ? 's' : ''}:
+      </Text>
+      {receiptReferenceNumbers.map((ref, idx) => (
+        <Text key={idx} style={{
+          fontSize: 17,
+          color: '#1a5242',
+          fontWeight: 'bold',
+          marginBottom: 2,
+          letterSpacing: 1,
+          textAlign: 'center'
+        }}>
+          {ref}
+        </Text>
+      ))}
+      <Text style={{
+        fontSize: 15,
+        color: '#222',
+        marginTop: 16,
+        textAlign: 'center'
+      }}>
+        Please proceed to the St. Joseph Cemetery office to complete payment on-site.
+      </Text>
+      <TouchableOpacity
+        style={{
+          marginTop: 22,
+          backgroundColor: '#fab636',
+          borderRadius: 24,
+          paddingVertical: 10,
+          paddingHorizontal: 38,
+        }}
+        onPress={() => setReceiptModalVisible(false)}
+      >
+        <Text style={{
+          color: '#1a5242',
+          fontWeight: 'bold',
+          fontSize: 17,
+        }}>
+          OK
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </View>
       </Modal>
     </View>
   );
