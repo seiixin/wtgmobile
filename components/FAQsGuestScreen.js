@@ -20,6 +20,16 @@ const CustomDrawerContent = (props) => {
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
       <View style={styles.menuSection}>
+
+        <TouchableOpacity
+          style={styles.drawerItem}
+          onPress={() => {
+            props.navigation.navigate('HomeGuest');
+          }}
+        >
+          <Image source={require('../assets/home.png')} style={styles.drawerIcon} />
+          <Text style={styles.drawerTextBlue}>Home</Text>
+        </TouchableOpacity>
         {/* FAQs */}
         <TouchableOpacity
           style={styles.drawerItem}

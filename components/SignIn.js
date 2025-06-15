@@ -251,8 +251,7 @@ const SignInContent = ({
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.guestButton}
-          onPress={() => navigation.navigate("GuestScreen")}
-        >
+          onPress={() => navigation.navigate("HomeGuest")}>
           <Text style={styles.guestText}>Continue As Guest</Text>
         </TouchableOpacity>
       </View>

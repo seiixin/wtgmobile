@@ -126,6 +126,16 @@ const CustomDrawerContent = (props) => {
 
             {/* Drawer Items */}
             <View style={styles.menuSection}>
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Home')}>
+                    <Image source={require('../assets/home.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextGreen}>Home</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Notifications')}>
+                    <Image source={require('../assets/notificationIcon.png')} style={styles.drawerIcon} />
+                    <Text style={styles.drawerTextGreen}>Notification</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
                     <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextGreen}>History</Text>
@@ -146,10 +156,10 @@ const CustomDrawerContent = (props) => {
                     <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
+                {/* <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
                     <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
                     <Text style={styles.drawerTextBlue}>Requested Services</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
                     <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />

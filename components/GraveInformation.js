@@ -28,6 +28,8 @@ const GraveInformation = () => {
     const [cameraModalVisible, setCameraModalVisible] = useState(false);
     const [permission, requestPermission] = useCameraPermissions();
     const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+    const [isCandleModalVisible, setIsCandleModalVisible] = useState(false); // New state for candle modal
+    const [candleUsers, setCandleUsers] = useState([]); // New state for candle users
 
     const saveModalAsImage = async () => {
         try {
@@ -214,6 +216,20 @@ const GraveInformation = () => {
         return () => clearInterval(intervalId);
     }, []);
 
+    const fetchCandleUsers = async () => {
+      try {
+        const key = `candleUsers_${grave._id}`;
+        const usersJson = await AsyncStorage.getItem(key);
+        if (usersJson) {
+          setCandleUsers(JSON.parse(usersJson));
+        } else {
+          setCandleUsers([]);
+        }
+      } catch (e) {
+        setCandleUsers([]);
+      }
+    };
+
     return (
         <>
             <StatusBar
@@ -314,19 +330,30 @@ const GraveInformation = () => {
                             </Text>
                             <Text style={styles.location}>{grave.phase}, Apartment {grave.aptNo}</Text>
                         </View>
-                        <ImageBackground
-                            source={
-                                hasCandleBeenLit
-                                    ? require("../assets/CandleLighted.png")
-                                    : require("../assets/CandleLight.png")
-                            }
-                            style={styles.profileBottomLeftImage}
-                        >
-                            <View style={styles.candleCountContainer}>
-                                <Text style={styles.candleCountText}>{candleCount}</Text>
-                            </View>
-                        </ImageBackground>
-                        <Image source={require("../assets/WtG.png")} style={styles.profileBottomRightImage} />
+                        
+                        {/* Make the candle touchable */}
+                        <TouchableOpacity
+  onPress={async () => {
+    await fetchCandleUsers();
+    setIsCandleModalVisible(true);
+  }}
+  activeOpacity={0.7}
+  style={{ position: 'absolute', bottom: hp('-0.1%'), left: wp('1%') }}
+>
+  <ImageBackground
+    source={
+      hasCandleBeenLit
+        ? require("../assets/CandleLighted.png")
+        : require("../assets/CandleLight.png")
+    }
+    style={styles.profileBottomLeftImage}
+  >
+    <View style={styles.candleCountContainer}>
+      <Text style={styles.candleCountText}>{candleCount}</Text>
+    </View>
+  </ImageBackground>
+</TouchableOpacity>
+    <Image source={require("../assets/WtG.png")} style={styles.profileBottomRightImage} />
                     </View>
 
                     {/* Description */}
@@ -394,16 +421,27 @@ const GraveInformation = () => {
                     {/* Bottom Buttons */}
                     <View style={styles.bottomContainer}>
                         <View style={styles.bottomButtons}>
+  {/* Submit Memories Button */}
+  <TouchableOpacity
+    style={styles.bottomButton}
+    onPress={() => navigation.navigate("SubmitMemories", { grave })}
+  >
+    <Image source={require("../assets/submit-memories.png")} style={styles.memoryImage} />
+    <Text style={styles.bottomButtonText}>Submit Memories</Text>
+  </TouchableOpacity>
 
-                            {/* Prayers Button */}
-                            <TouchableOpacity
-                                style={styles.bottomButton}
-                                onPress={() => navigation.navigate("Prayers")}
-                            >
-                                <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
-                                <Text style={styles.bottomButtonText}>Prayers</Text>
-                            </TouchableOpacity>
-                        </View>
+  {/* Divider */}
+  <View style={styles.divider} />
+
+  {/* Prayers Button */}
+  <TouchableOpacity
+    style={styles.bottomButton}
+    onPress={() => navigation.navigate("Prayers")}
+  >
+    <Image source={require("../assets/prayer.png")} style={styles.prayerImage} />
+    <Text style={styles.bottomButtonText}>Prayers</Text>
+  </TouchableOpacity>
+</View>
 
                         {/* Bottom Container with Touchable Area */}
                         <TouchableOpacity
@@ -512,6 +550,68 @@ const GraveInformation = () => {
             </View>
         </View>
     </TouchableWithoutFeedback>
+</Modal>
+
+{/* Candle Users Modal */}
+<Modal
+  visible={isCandleModalVisible}
+  animationType="slide"
+  transparent
+  onRequestClose={() => setIsCandleModalVisible(false)}
+>
+  <View style={{
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.3)'
+  }}>
+    <View style={{
+      backgroundColor: '#fff',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: 32,
+      minHeight: 280,
+    }}>
+      {/* Handle */}
+      <View style={{
+        alignItems: 'center',
+        marginBottom: 12,
+      }}>
+        <View style={{
+          width: 40,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: '#e0e0e0',
+        }} />
+      </View>
+      {/* Candle count */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <Image source={require('../assets/Candle1.png')} style={{ width: 24, height: 24, marginRight: 8 }} />
+        <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#bfa12e' }}>{candleUsers.length}</Text>
+      </View>
+      {/* Divider */}
+      <View style={{
+        height: 1.5,
+        backgroundColor: '#e0e0e0',
+        marginBottom: 10,
+        width: '100%',
+        alignSelf: 'center'
+      }} />
+      {/* User list */}
+      <ScrollView>
+        {candleUsers.map((user, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+            <Image
+              source={user.avatar ? { uri: user.avatar } : require('../assets/blankDP.jpg')}
+              style={{ width: 40, height: 40, borderRadius: 20, marginRight: 14, borderWidth: 1, borderColor: '#eee' }}
+            />
+            <Text style={{ fontSize: 16, color: '#222' }}>{user.name}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  </View>
 </Modal>
                 </ScrollView>
             </View>
@@ -725,14 +825,20 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1.5,
-    height: "40%",
-    backgroundColor: "gray",
+    height: "60%",
+    backgroundColor: "#d3d3d3",
+    alignSelf: "center",
   },
   prayerImage: {
     width: wp('4.5%'),
     height: hp('3%'),
     resizeMode: "contain"
   },
+  memoryImage: {
+    width: wp('5%'),
+    height: hp('4%'),
+    resizeMode: "contain"
+  },  
   updateImage: {
     width: wp('5%'),
     height: hp('3%'),

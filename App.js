@@ -67,7 +67,9 @@ import GuestGraveSearch from './components/GuestGraveSearch';
 import GuestVirtualTributes from './components/GuestVirtualTributes';
 import GuestCemeteryServices from './components/GuestCemeteryServices';
 import GuestTechnicalSupport from './components/GuestTechnicaSuppport';
-
+import Home from './components/Home';
+import Notifications from './components/Notifications';
+import HomeGuest from './components/HomeGuest';
 
 // Create Navigators
 const Stack = createStackNavigator();
@@ -95,6 +97,7 @@ const MainStack = () => (
     <Stack.Screen name="Verification" component={Verification} />
 
     {/* Directly add History, Bookmarks, and Prayers */}
+    <Stack.Screen name="Home" component={Home} />
     <Stack.Screen name="Prayers" component={Prayers} />
     <Stack.Screen name="History" component={History} />
     <Stack.Screen name="Bookmarks" component={Bookmarks} />
@@ -146,6 +149,8 @@ const MainStack = () => (
     <Stack.Screen name="GuestVirtualTributes" component={GuestVirtualTributes} />
     <Stack.Screen name="GuestCemeteryServices" component={GuestCemeteryServices}/>
     <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
+    <Stack.Screen name="Notifications" component={Notifications} />
+    <Stack.Screen name="HomeGuest" component={HomeGuest} />
     
   </Stack.Navigator>
 );
@@ -183,6 +188,7 @@ export default function App() {
         <Stack.Screen name="Verification" component={Verification} />
 
         {/* Directly add History, Bookmarks, and Prayers */}
+        <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Prayers" component={Prayers} />
         <Stack.Screen name="History" component={History} />
         <Stack.Screen name="Bookmarks" component={Bookmarks} />
@@ -234,6 +240,10 @@ export default function App() {
         <Stack.Screen name="GuestVirtualTributes" component={GuestVirtualTributes} />
         <Stack.Screen name="GuestCemeteryServices" component={GuestCemeteryServices}/>
         <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
+        <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="HomeGuest" component={HomeGuest} />
+        
+        {/* Main Stack for the app */}
         
       </Stack.Navigator>
     </NavigationContainer>

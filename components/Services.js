@@ -441,6 +441,10 @@ const CustomDrawerContent = (props) => {
 </View>
 
       <View style={styles.menuSection}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Home')}>
+            <Image source={require('../assets/home.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextGreen}>Home</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
           <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
           <Text style={styles.drawerTextGreen}>History</Text>

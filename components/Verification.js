@@ -169,7 +169,7 @@ const Verification = () => {
 
   const handleConfirmation = () => {
     setIsVerified(false);
-    navigation.navigate('History'); // Navigate to the main app
+    navigation.navigate('Home'); // Navigate to the main app
   };
 
   const handleBackPress = () => {
