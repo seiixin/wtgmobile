@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import MapView, { Marker, Polygon } from 'react-native-maps';
@@ -14,16 +14,27 @@ const Map = () => {
 
   // State for user location
   const [userLocation, setUserLocation] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         let location = await Location.getCurrentPositionAsync({});
-        setUserLocation({
+        const coords = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-        });
+        };
+        setUserLocation(coords);
+
+        // Optionally animate to user location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            ...coords,
+            latitudeDelta: 0.002,
+            longitudeDelta: 0.002,
+          }, 1000);
+        }
       }
     })();
   }, []);
@@ -35,6 +46,7 @@ const Map = () => {
   return (
     <View style={{ flex: 1 }}>
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFillObject}
         initialRegion={{
           latitude,
@@ -46,7 +58,7 @@ const Map = () => {
         maxZoomLevel={20}
         zoomEnabled={true}
         scrollEnabled={true}
-        showsUserLocation={false}
+        showsUserLocation={true} 
       >
         <Marker
           coordinate={{ latitude, longitude }}
