@@ -296,7 +296,7 @@ const Register = () => {
               <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
               <View style={styles.container}>
                 <Text style={styles.header}>Register Account</Text>
-                <Text style={styles.subheader}>Register as a <Text style={{ fontWeight: 'bold', color: 'black' }}>relative user</Text> by filling out your information below.</Text>
+                <Text style={styles.subheader}>Register as a <Text style={{ fontWeight: 'bold', color: 'black' }}>visitor</Text> by filling out your information below.</Text>
 
                 {/* Name */}
                 <Text style={styles.label}>Name*</Text>
@@ -511,7 +511,7 @@ const Register = () => {
             <Image source={require('../assets/RegisLogo.png')} style={{ width: wp('35%'), height: hp('15%'), marginTop: hp('5%') }} />
             <View style={styles.container}>
               <Text style={styles.header}>Register Account</Text>
-              <Text style={styles.subheader}>Register as a <Text style={{ fontWeight: 'bold', color: 'black' }}>relative user</Text> by filling out your information below.</Text>
+              <Text style={styles.subheader}>Register as a <Text style={{ fontWeight: 'bold', color: 'black' }}>visitor</Text> by filling out your information below.</Text>
 
               {/* Name */}
               <Text style={styles.label}>Name*</Text>
@@ -766,7 +766,7 @@ const Register = () => {
                 {"\n\n"}
                 8. You agree not to misuse any features or attempt to disrupt the normal operation of the app.
                 {"\n\n"}
-                9. You must be a relative of the deceased to use this app and access its features.
+                9. You must be a visitor of the deceased to use this app and access its features.
                 {"\n\n"}
                 10. For more questions, please check our FAQs.
                 {"\n\n"}
