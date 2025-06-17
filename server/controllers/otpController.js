@@ -32,19 +32,23 @@ exports.sendOtp = async (req, res) => {
             from: 'walktograve@gmail.com',
             to: email,
             subject: 'WalkToGrave: Your One-Time Password (OTP)',
-            text: `Hello,
+            text: `Dear User,
 
-We received a request to verify your email address for WalkToGrave.
+We have received a request to verify your email address associated with your WalkToGrave account.
 
-Your One-Time Password (OTP) is: ${otp}
+Please use the One-Time Password (OTP) provided below to complete your verification process:
 
-This code will expire in 1 minute. Please do not share this code with anyone.
+OTP: ${otp}
 
-If you did not request this, you can safely ignore this email.
+⚠️ This code is valid for *1 minute* only. Kindly do not share this code with anyone for security reasons.
 
-Thank you,
-The WalkToGrave Team`,
-        };
+If you did not initiate this request, please disregard this email.
+
+Thank you for choosing WalkToGrave.
+
+Sincerely,  
+WalkToGrave Support Team`,
+};
 
         console.log('Sending email with options:', mailOptions);
 

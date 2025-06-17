@@ -1,40 +1,30 @@
-// const History = require('../models/History');
+const History = require('../models/History');
 
-// // ✅ Add to history ONLY when an item is clicked
-// const addToHistory = async (req, res) => {
-//     try {
-//         const { userId, searchedItem } = req.body;
+// Add a grave to user's history
+exports.addHistory = async (req, res) => {
+  const { userId, grave } = req.body;
+  if (!userId || !grave) return res.status(400).json({ error: 'userId and grave are required' });
 
-//         // Check if the item is already in history to prevent duplicates
-//         const existingEntry = await History.findOne({ userId, searchedItem });
+  // Remove duplicate (same grave for same user)
+  await History.deleteMany({ userId, 'grave._id': grave._id });
 
-//         if (!existingEntry) {
-//             await History.create({ userId, searchedItem });
-//         }
+  // Add new history entry
+  const newHistory = new History({ userId, grave });
+  await newHistory.save();
 
-//         res.status(201).json({ message: "Added to history" });
-//     } catch (error) {
-//         console.error("History Save Error:", error.message || error);
-//         res.status(500).json({ message: "Server Error", error: error.message || "Something went wrong" });
-//     }
-// };
+  res.status(201).json(newHistory);
+};
 
-// // ✅ Fetch user’s visited history
-// const getUserHistory = async (req, res) => {
-//     try {
-//         const userId = req.params.id;
+// Get user's history (most recent first)
+exports.getHistory = async (req, res) => {
+  const { userId } = req.params;
+  const history = await History.find({ userId }).sort({ searchedAt: -1 });
+  res.json(history);
+};
 
-//         const history = await History.find({ userId }).sort({ timestamp: -1 });
-
-//         if (!history.length) {
-//             return res.status(404).json({ message: "No history found for this user" });
-//         }
-
-//         res.json(history);
-//     } catch (error) {
-//         console.error("Fetch History Error:", error.message || error);
-//         res.status(500).json({ message: "Server Error", error: error.message || "Something went wrong" });
-//     }
-// };
-
-// module.exports = { addToHistory, getUserHistory };
+// Clear user's history
+exports.clearHistory = async (req, res) => {
+  const { userId } = req.params;
+  await History.deleteMany({ userId });
+  res.json({ message: 'History cleared' });
+};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Platform, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList, StatusBar, Modal, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Platform, FlatList, Dimensions, ImageBackground, Alert, ScrollView, SectionList, StatusBar, Modal, BackHandler, Button } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -244,26 +244,17 @@ const HistoryScreen = () => {
 
     const handleGraveClick = async (grave) => {
         try {
-            // Get current history list from AsyncStorage
-            const data = await AsyncStorage.getItem('historyList');
-            let historyList = data ? JSON.parse(data) : [];
-
-            // Remove if already exists, then add to top
-            historyList = historyList.filter(item => item._id !== grave._id);
-            historyList = [grave, ...historyList];
-
-            // Save updated history list
-            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
-            setHistoryList(historyList); // Update local state
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
+            await fetch(`${BASE_URL}/api/history/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, grave }),
+            });
+            // Optionally re-fetch history here if you want to update the list immediately
         } catch (error) {
-            console.error('Error updating history list:', error);
+            console.error('Error updating history:', error);
         }
-
-        // Reset search state after clicking a result
-        setSearchQuery('');
-        setSearchResults([]);
-        setHasSearched(false);
-
         navigation.navigate('GraveInformation', { grave, origin: 'History' });
     };
 
@@ -286,24 +277,32 @@ const HistoryScreen = () => {
     };
 
     useEffect(() => {
-        AsyncStorage.getItem('historyList')
-            .then((data) => {
-                if (data) {
-                    const parsedData = JSON.parse(data);
-                    // Remove duplicates based on `_id`
-                    const uniqueData = parsedData.filter(
-                        (item, index, self) =>
-                            index === self.findIndex((t) => t._id === item._id)
-                    );
-                    setHistoryList(uniqueData);
-                    // Save the cleaned data back to AsyncStorage
-                    AsyncStorage.setItem('historyList', JSON.stringify(uniqueData));
-                }
-            })
-            .catch((error) => console.error('Error loading history:', error));
+        const fetchHistory = async () => {
+            try {
+                const userId = await AsyncStorage.getItem('userId');
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/history/${userId}`);
+                const data = await response.json();
+                setHistoryList(data.map(h => h.grave)); // Each history entry has a .grave object
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        };
+        fetchHistory();
     }, []);
 
-
+    const clearHistory = async () => {
+        try {
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
+            await fetch(`${BASE_URL}/api/history/${userId}`, { method: 'DELETE' });
+            setHistoryList([]);
+            Alert.alert('History cleared');
+        } catch (error) {
+            Alert.alert('Error clearing history');
+            console.error('Error clearing history:', error);
+        }
+    };
 
     return (
         <>
@@ -576,6 +575,13 @@ const HistoryScreen = () => {
                             />
                         ) : null}
                     </View>
+                    <View style={{ alignItems: 'center', marginVertical: 10 }}>
+        <TouchableOpacity onPress={clearHistory}>
+          <Text style={{ color: 'gray', fontWeight: 'bold', fontSize: 16, bottom: hp('2%') }}>
+            Clear History
+          </Text>
+        </TouchableOpacity>
+      </View>
                 </View>
             </ImageBackground>
         </>
