@@ -22,8 +22,8 @@
     ],
     "android": {
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ],
       "package": "com.jairamsan.WalkToGrave"
     },

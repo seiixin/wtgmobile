@@ -11,6 +11,7 @@ const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
 const graveRoutes = require('./routes/graveRoutes');
 const otpRoutes = require('./routes/otpRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const historyRoutes = require('./routes/historyRoutes');
 
 dotenv.config();
 
@@ -46,3 +47,4 @@ app.use('/api/graves', graveRoutes);
 app.use('/uploads', express.static(uploadDir));
 app.use('/api/otp', otpRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/history', historyRoutes);

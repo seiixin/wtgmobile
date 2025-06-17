@@ -19,7 +19,7 @@ const GuestAccountandProfile = () => {
     },
     {
       question: "Can I edit my profile information?",
-      answer: "Yes, you can update your details in the Relative Profile Page under the settings menu.",
+      answer: "Yes, you can update your details in the Profile Page under the settings menu.",
     },
   ];
 
