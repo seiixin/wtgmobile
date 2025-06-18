@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // <-- Add this import
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
+import * as Speech from 'expo-speech';
 
 const { width, height } = Dimensions.get('window');
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com"; // <-- Add this if not present
@@ -72,6 +73,18 @@ const SpecialIntentionsOffer = () => {
             useNativeDriver: true
         }).start();
     }, [deceasedName, language]);
+
+    // Add this function for TTS
+    const speakPrayer = () => {
+        if (language !== 'Choose Language') {
+            const prayer = `${prayers[language].signOfTheCross} ${prayers[language].prayer.replace('[name]', deceasedName)}`;
+            Speech.speak(prayer, {
+                language: language === 'english' ? 'en-US' : 'fil-PH',
+                rate: 0.95,
+                pitch: 1.1,
+            });
+        }
+    };
 
     return (
         <>
@@ -184,6 +197,40 @@ const SpecialIntentionsOffer = () => {
                     <ImageBackground source={require('../assets/prayer_bg.png')} style={styles.prayerBackground}>
                         <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
                             <View style={styles.prayers}>
+                                {/* TTS Buttons */}
+                                <TouchableOpacity
+                                    style={{
+                                        alignSelf: 'center',
+                                        backgroundColor: '#006400',
+                                        borderRadius: 20,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 8,
+                                        marginBottom: 16,
+                                        flexDirection: 'row',
+                                        alignItems: 'center'
+                                    }}
+                                    onPress={speakPrayer}
+                                >
+                                    <Ionicons name="volume-high" size={22} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Read Prayers Aloud</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{
+                                        alignSelf: 'center',
+                                        backgroundColor: '#8B0000',
+                                        borderRadius: 20,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 8,
+                                        marginBottom: 16,
+                                        flexDirection: 'row',
+                                        alignItems: 'center'
+                                    }}
+                                    onPress={() => Speech.stop()}
+                                >
+                                    <Ionicons name="stop" size={22} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Stop Reading</Text>
+                                </TouchableOpacity>
+                                {/* Prayers */}
                                 <Text style={styles.prayerTitle}>The Sign of the Cross</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.signOfTheCross ?? 'Choose Language'}</Text>
 

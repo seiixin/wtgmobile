@@ -201,7 +201,7 @@ const SignInContent = ({
   <View style={styles.container}>
     <View style={styles.card}>
       <Text style={styles.title}>Sign In</Text>
-      <Text style={styles.subtitle}>Welcome back! Please Sign In.</Text>
+      <Text style={styles.subtitle}>Welcome back! Please Sign In as Visitor.</Text>
 
       <Text style={styles.label}>Email</Text>
       <TextInput

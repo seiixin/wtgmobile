@@ -12,6 +12,7 @@
   "dependencies": {
     "@expo-google-fonts/inter": "^0.3.0",
     "@expo/vector-icons": "^14.0.2",
+    "@google-cloud/text-to-speech": "^6.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/datetimepicker": "^8.3.0",
@@ -23,7 +24,7 @@
     "@react-navigation/drawer": "^7.3.9",
     "@react-navigation/native": "^7.1.9",
     "@react-navigation/stack": "7.2.10",
-    "axios": "1.9.0",
+    "axios": "^1.9.0",
     "cloudinary": "^1.41.3",
     "dotenv": "^16.5.0",
     "expo": "53.0.9",
@@ -38,6 +39,7 @@
     "expo-media-library": "~17.1.6",
     "expo-router": "^5.0.7",
     "expo-screen-orientation": "~8.1.6",
+    "expo-speech": "~13.1.7",
     "expo-status-bar": "^2.2.3",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^6.10.1",
@@ -58,6 +60,7 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0",
     "react-native-svg": "^15.11.2",
+    "react-native-tts": "^4.1.1",
     "react-native-vector-icons": "10.2.0",
     "react-native-view-shot": "^4.0.3",
     "react-navigation-stack": "2.10.4"
