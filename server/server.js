@@ -13,6 +13,7 @@ const otpRoutes = require('./routes/otpRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const ttsRoutes = require('./routes/ttsRoutes');
+const candleRoutes = require('./routes/candleRoutes');
 
 dotenv.config();
 
@@ -50,3 +51,4 @@ app.use('/api/otp', otpRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/tts', ttsRoutes);
+app.use('/api/candles', candleRoutes);

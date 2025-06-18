@@ -222,6 +222,8 @@ const CustomDrawerContent = (props) => {
     );
 };
 
+const HISTORY_KEY = 'userHistory';
+
 // ✅ History Screen with Search Functionality
 const HistoryScreen = () => {
     const navigation = useNavigation();
@@ -242,20 +244,47 @@ const HistoryScreen = () => {
         return () => backHandler.remove();
     }, []);
 
+    // Save grave to local history (no API)
     const handleGraveClick = async (grave) => {
         try {
-            const userId = await AsyncStorage.getItem('userId');
-            if (!userId) return;
-            await fetch(`${BASE_URL}/api/history/add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, grave }),
-            });
-            // Optionally re-fetch history here if you want to update the list immediately
+            let history = await AsyncStorage.getItem(HISTORY_KEY);
+            history = history ? JSON.parse(history) : [];
+            // Remove duplicate
+            history = history.filter(item => item._id !== grave._id);
+            // Add new at the start
+            history.unshift(grave);
+            await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            setHistoryList(history);
         } catch (error) {
             console.error('Error updating history:', error);
         }
         navigation.navigate('GraveInformation', { grave, origin: 'History' });
+    };
+
+    // Load history from local storage
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                let history = await AsyncStorage.getItem(HISTORY_KEY);
+                history = history ? JSON.parse(history) : [];
+                setHistoryList(history);
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        };
+        fetchHistory();
+    }, []);
+
+    // Clear local history
+    const clearHistory = async () => {
+        try {
+            await AsyncStorage.removeItem(HISTORY_KEY);
+            setHistoryList([]);
+            Alert.alert('History cleared');
+        } catch (error) {
+            Alert.alert('Error clearing history');
+            console.error('Error clearing history:', error);
+        }
     };
 
     // Function to handle search
@@ -273,34 +302,6 @@ const HistoryScreen = () => {
         } catch (error) {
             console.error('Error fetching search results:', error);
             setHasSearched(true); // Even on error, mark as searched to show "No results"
-        }
-    };
-
-    useEffect(() => {
-        const fetchHistory = async () => {
-            try {
-                const userId = await AsyncStorage.getItem('userId');
-                if (!userId) return;
-                const response = await fetch(`${BASE_URL}/api/history/${userId}`);
-                const data = await response.json();
-                setHistoryList(data.map(h => h.grave)); // Each history entry has a .grave object
-            } catch (error) {
-                console.error('Error loading history:', error);
-            }
-        };
-        fetchHistory();
-    }, []);
-
-    const clearHistory = async () => {
-        try {
-            const userId = await AsyncStorage.getItem('userId');
-            if (!userId) return;
-            await fetch(`${BASE_URL}/api/history/${userId}`, { method: 'DELETE' });
-            setHistoryList([]);
-            Alert.alert('History cleared');
-        } catch (error) {
-            Alert.alert('Error clearing history');
-            console.error('Error clearing history:', error);
         }
     };
 
@@ -576,12 +577,12 @@ const HistoryScreen = () => {
                         ) : null}
                     </View>
                     <View style={{ alignItems: 'center', marginVertical: 10 }}>
-        <TouchableOpacity onPress={clearHistory}>
-          <Text style={{ color: 'gray', fontWeight: 'bold', fontSize: 16, bottom: hp('2%') }}>
-            Clear History
-          </Text>
-        </TouchableOpacity>
-      </View>
+                        <TouchableOpacity onPress={clearHistory}>
+                            <Text style={{ color: 'gray', fontWeight: 'bold', fontSize: 16, bottom: hp('2%') }}>
+                                Clear History
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ImageBackground>
         </>
