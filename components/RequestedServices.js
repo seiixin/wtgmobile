@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ImageBackground, Modal, TextInput, Alert, Dimensions, StatusBar } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -10,6 +10,9 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
+import ViewShot from 'react-native-view-shot';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const { width, height } = Dimensions.get('window');
@@ -28,6 +31,8 @@ const CustomDrawerContent = (props) => {
     const [user, setUser] = useState(null);
     const [accountRemovedModal, setAccountRemovedModal] = useState(false);
 
+    
+    
     const handleSignOut = () => {
         Alert.alert(
             "Are you sure?",
@@ -253,7 +258,24 @@ const RequestedServicesScreen = () => {
 const [deathPickerVisible, setDeathPickerVisible] = useState(false);
 const [receiptModalVisible, setReceiptModalVisible] = useState(false);
 const [receiptReferenceNumbers, setReceiptReferenceNumbers] = useState([]);
-
+const [receiptGraveDetails, setReceiptGraveDetails] = useState(null);
+const [receiptServices, setReceiptServices] = useState([]);
+const receiptViewRef = useRef(null);
+const saveReceiptAsImage = async () => {
+  try {
+    const uri = await receiptViewRef.current.capture();
+    const permission = await MediaLibrary.requestPermissionsAsync();
+    if (permission.granted) {
+      await MediaLibrary.createAssetAsync(uri);
+      alert('Receipt saved to your gallery!');
+    } else {
+      alert('Permission denied to save image.');
+    }
+  } catch (error) {
+    alert('Failed to save receipt image.');
+    console.error(error);
+  }
+};
 const GradientNextButton = ({ onPress }) => (
   <TouchableOpacity style={{ width: '100%' }} onPress={onPress} activeOpacity={0.8}>
     <ImageBackground
@@ -722,44 +744,62 @@ const GradientNextButton = ({ onPress }) => (
 
                     {/* Expanded Details */}
                     {isExpanded && (
-                      <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 10, padding: 10 }}>
-                        <Text style={{ fontWeight: 'bold', marginBottom: 6 }}>Services:</Text>
-                        {transaction.services.map((service, idx) => (
-                          <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <Text style={{ color: '#333' }}>{service.serviceName}</Text>
-                            <Text style={{ color: '#333' }}>₱{service.price?.toLocaleString()}</Text>
-                          </View>
-                        ))}
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                          <Text style={{ color: '#888' }}>Payment Method</Text>
-                          <Text style={{ color: '#333', fontWeight: 'bold' }}>
-                            {transaction.paymentMethod === 'gcash' ? 'Gcash' : (transaction.paymentMethod || 'Cash')}
-                          </Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                          <Text style={{ color: '#888' }}>Order Time</Text>
-                          <Text style={{ color: '#333' }}>
-                            {transaction.orderTime ? new Date(transaction.orderTime).toLocaleDateString() + ' ' + new Date(transaction.orderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-  <Text style={{ color: '#888' }}>Payment Time</Text>
-  <Text style={{ color: '#333' }}>
-    {transaction.paymentTime
-      ? new Date(transaction.paymentTime).toLocaleDateString() + ' ' +
-        new Date(transaction.paymentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : ''}
-  </Text>
-</View>
-                        <View style={{ borderTopWidth: 1, borderColor: '#eee', marginVertical: 8 }} />
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: '#333', fontWeight: 'bold' }}>Total Payment:</Text>
-                          <Text style={{ fontWeight: 'bold', color: '#388e3c', fontSize: 16 }}>
-                            ₱{transaction.total?.toLocaleString()}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
+  <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 10, padding: 10 }}>
+    {/* Transaction Number */}
+    <Text style={{ fontWeight: 'bold', color: '#1a5242', fontSize: 16, marginBottom: 2 }}>
+      Reference Number: <Text style={{ color: '#333', fontWeight: 'normal' }}>{transaction.referenceNumber}</Text>
+    </Text>
+
+    {/* Grave Details */}
+    {transaction.graveDetails && (
+      <View style={{ marginBottom: 8 }}>
+        <Text style={{ fontWeight: 'bold', color: '#1a5242', fontSize: 16, marginBottom: 2 }}>Grave Details</Text>
+        <Text style={{ color: '#333', fontSize: 15 }}>Name: {transaction.graveDetails.deceasedName}</Text>
+        <Text style={{ color: '#333', fontSize: 15 }}>{transaction.graveDetails.phaseBlk}</Text>
+        <Text style={{ color: '#333', fontSize: 15 }}>Apartment {transaction.graveDetails.apartmentNo}</Text>
+      </View>
+    )}
+
+    {/* Services */}
+    <Text style={{ fontWeight: 'bold', color: '#1a5242', fontSize: 16, marginBottom: 2 }}>Requested Services</Text>
+    {transaction.services.map((service, idx) => (
+      <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+        <Text style={{ color: '#333' }}>{service.serviceName}</Text>
+        <Text style={{ color: '#333' }}>₱{service.price?.toLocaleString()}</Text>
+      </View>
+    ))}
+
+    {/* Payment Method, Order Time, Payment Time, Total */}
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+      <Text style={{ color: '#888' }}>Payment Method</Text>
+      <Text style={{ color: '#333', fontWeight: 'bold' }}>
+        {transaction.paymentMethod === 'gcash' ? 'Gcash' : (transaction.paymentMethod || 'Cash')}
+      </Text>
+    </View>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+      <Text style={{ color: '#888' }}>Order Time</Text>
+      <Text style={{ color: '#333' }}>
+        {transaction.orderTime ? new Date(transaction.orderTime).toLocaleDateString() + ' ' + new Date(transaction.orderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+      </Text>
+    </View>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+      <Text style={{ color: '#888' }}>Payment Time</Text>
+      <Text style={{ color: '#333' }}>
+        {transaction.paymentTime
+          ? new Date(transaction.paymentTime).toLocaleDateString() + ' ' +
+            new Date(transaction.paymentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : ''}
+      </Text>
+    </View>
+    <View style={{ borderTopWidth: 1, borderColor: '#eee', marginVertical: 8 }} />
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Text style={{ color: '#333', fontWeight: 'bold' }}>Total Payment:</Text>
+      <Text style={{ fontWeight: 'bold', color: '#388e3c', fontSize: 16 }}>
+        ₱{transaction.total?.toLocaleString()}
+      </Text>
+    </View>
+  </View>
+)}
 
                     {/* Expand/Collapse Button */}
                     <TouchableOpacity
@@ -1126,6 +1166,8 @@ await Promise.all(selectedToRequest.map(service =>
   const refNumber = data.data.referenceNumber || referenceNumber;
   if (refNumber) {
     setReceiptReferenceNumbers([refNumber]);
+    setReceiptGraveDetails({ ...graveDetails }); // Save a copy of the grave details at submission
+    setReceiptServices(selectedToRequest.map(s => ({ ...s }))); // Save a copy of the requested services
     setReceiptModalVisible(true);
   }
 
@@ -1200,87 +1242,142 @@ await Promise.all(selectedToRequest.map(service =>
     justifyContent: 'center',
     alignItems: 'center'
   }}>
-    <View style={{
-      backgroundColor: '#fff',
-      borderRadius: 18,
-      padding: 28,
-      alignItems: 'center',
-      width: '85%',
-      borderWidth: 3,
-      borderColor: '#fab636'
-    }}>
+    <ViewShot ref={receiptViewRef} options={{ format: 'png', quality: 0.9 }}>
       <View style={{
-        backgroundColor: '#1a5242',
-        borderRadius: 50,
-        width: 60,
-        height: 60,
+        backgroundColor: '#fff',
+        borderRadius: 18,
+        padding: 28,
         alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 12,
+        width: '85%',
         borderWidth: 3,
         borderColor: '#fab636'
       }}>
-        <Ionicons name="checkmark-done" size={38} color="#fff" />
-      </View>
-      <Text style={{
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1a5242',
-        marginBottom: 10,
-        textAlign: 'center'
-      }}>
-        Request Submitted!
-      </Text>
-      <Text style={{
-        fontSize: 16,
-        color: '#fab636',
-        fontWeight: 'bold',
-        marginBottom: 8,
-        textAlign: 'center'
-      }}>
-        Reference Number{receiptReferenceNumbers.length > 1 ? 's' : ''}:
-      </Text>
-      {receiptReferenceNumbers.map((ref, idx) => (
-        <Text key={idx} style={{
-          fontSize: 17,
-          color: '#1a5242',
+        <View style={{
+          backgroundColor: '#1a5242',
+          borderRadius: 50,
+          width: 60,
+          height: 60,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 12,
+          borderWidth: 3,
+          borderColor: '#fab636'
+        }}>
+          <Ionicons name="checkmark-done" size={38} color="#fff" />
+        </View>
+        <Text style={{
+          fontSize: 22,
           fontWeight: 'bold',
-          marginBottom: 2,
-          letterSpacing: 1,
+          color: '#1a5242',
+          marginBottom: 10,
           textAlign: 'center'
         }}>
-          {ref}
+          Request Submitted!
         </Text>
-      ))}
-      <Text style={{
-        fontSize: 15,
-        color: '#222',
-        marginTop: 16,
-        textAlign: 'center'
-      }}>
-        Please proceed to the St. Joseph Cemetery office to complete payment on-site.
-      </Text>
-      <TouchableOpacity
-        style={{
-          marginTop: 22,
-          backgroundColor: '#fab636',
-          borderRadius: 24,
-          paddingVertical: 10,
-          paddingHorizontal: 38,
-        }}
-        onPress={() => setReceiptModalVisible(false)}
-      >
         <Text style={{
-          color: '#1a5242',
+          fontSize: 16,
+          color: '#fab636',
           fontWeight: 'bold',
-          fontSize: 17,
+          marginBottom: 8,
+          textAlign: 'center'
         }}>
-          OK
+          Reference Number:
         </Text>
-      </TouchableOpacity>
-    </View>
+        {receiptReferenceNumbers.map((ref, idx) => (
+          <Text key={idx} style={{
+            fontSize: 17,
+            color: '#1a5242',
+            fontWeight: 'bold',
+            marginBottom: 2,
+            letterSpacing: 1,
+            textAlign: 'center'
+          }}>
+            {ref}
+          </Text>
+        ))}
+
+        {/* Grave Details */}
+        {receiptGraveDetails && (
+          <View style={{ marginTop: 10, marginBottom: 10, alignSelf: 'stretch' }}>
+            <Text style={{ fontWeight: 'bold', color: '#1a5242', fontSize: 16, marginBottom: 2 }}>Grave Details</Text>
+            <Text style={{ color: '#333', fontSize: 15 }}>Name: {receiptGraveDetails.deceasedName}</Text>
+            <Text style={{ color: '#333', fontSize: 15 }}>Phase/Block: {receiptGraveDetails.phaseBlk}</Text>
+            <Text style={{ color: '#333', fontSize: 15 }}>Apartment: {receiptGraveDetails.apartmentNo}</Text>
+          </View>
+        )}
+
+        {/* Requested Services */}
+        <View style={{ marginBottom: 10, alignSelf: 'stretch' }}>
+          <Text style={{ fontWeight: 'bold', color: '#1a5242', fontSize: 16, marginBottom: 2 }}>Requested Services</Text>
+          {receiptServices.map((service, idx) => (
+            <Text key={idx} style={{ color: '#333', fontSize: 15 }}>
+              • {service.serviceName}
+            </Text>
+          ))}
+        </View>
+
+        {/* Total Payment */}
+        <Text style={{
+          fontSize: 16,
+          color: '#fab636',
+          fontWeight: 'bold',
+          marginTop: 8,
+          marginBottom: 8,
+          textAlign: 'center'
+        }}>
+          Total Payment: ₱{receiptServices.reduce((sum, s) => sum + s.price, 0).toLocaleString()}
+        </Text>
+
+        <Text style={{
+          fontSize: 15,
+          color: '#222',
+          marginTop: 16,
+          textAlign: 'center'
+        }}>
+          Please proceed to the St. Joseph Cemetery office to complete payment on-site.
+        </Text>
+      </View>
+    </ViewShot>
+    <TouchableOpacity
+      style={{
+        marginTop: 18,
+        backgroundColor: '#fab636',
+        borderRadius: 24,
+        paddingVertical: 10,
+        paddingHorizontal: 38,
+      }}
+      onPress={saveReceiptAsImage}
+    >
+      <Text style={{
+        color: '#1a5242',
+        fontWeight: 'bold',
+        fontSize: 17,
+      }}>
+        Download Receipt
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={{
+        marginTop: 12,
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        paddingVertical: 10,
+        paddingHorizontal: 38,
+        borderWidth: 1,
+        borderColor: '#fab636'
+      }}
+      onPress={() => setReceiptModalVisible(false)}
+    >
+      <Text style={{
+        color: '#1a5242',
+        fontWeight: 'bold',
+        fontSize: 17,
+      }}>
+        OK
+      </Text>
+    </TouchableOpacity>
   </View>
-      </Modal>
+</Modal>
     </View>
   );
 };
