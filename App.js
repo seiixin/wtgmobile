@@ -70,6 +70,7 @@ import GuestTechnicalSupport from './components/GuestTechnicaSuppport';
 import Home from './components/Home';
 import Notifications from './components/Notifications';
 import HomeGuest from './components/HomeGuest';
+import SubmitMemories from './components/SubmitMemories';
 
 // Create Navigators
 const Stack = createStackNavigator();
@@ -151,6 +152,7 @@ const MainStack = () => (
     <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
     <Stack.Screen name="Notifications" component={Notifications} />
     <Stack.Screen name="HomeGuest" component={HomeGuest} />
+    <Stack.Screen name="SubmitMemories" component={SubmitMemories} />
     
   </Stack.Navigator>
 );
@@ -242,6 +244,7 @@ export default function App() {
         <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="HomeGuest" component={HomeGuest} />
+        <Stack.Screen name="SubmitMemories" component={SubmitMemories} />
         
         {/* Main Stack for the app */}
         
