@@ -1,12 +1,22 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, ImageBackground, ScrollView, StatusBar, Dimensions } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const { width, height } = Dimensions.get("window");
 
 const AdultDetails = () => {
-   const navigation = useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const burialService = route.params?.burialService;
+
+  if (!burialService) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>No details available.</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -29,9 +39,13 @@ const AdultDetails = () => {
 
         {/* Profile Image with Background */}
         <View style={styles.profileImageContainer}>
-          <Image source={require("../assets/adult.png")} style={styles.image} />
+          {burialService.icon ? (
+            <Image source={{ uri: burialService.icon }} style={styles.image} />
+          ) : (
+            <Image source={require("../assets/adult.png")} style={styles.image} />
+          )}
         </View>
-        <Text style={styles.headerTitle}>ADULT</Text>
+        <Text style={styles.headerTitle}>{burialService.serviceName || "ADULT"}</Text>
 
         {/* Pricing Details */}
         <View style={styles.detailsContainer}>
@@ -45,27 +59,29 @@ const AdultDetails = () => {
         </View>
 
         <View style={styles.detailsContainer1}>
-          <Text style={styles.contractText}>• 5 YEARS CONTRACT</Text>
-          <Text style={styles.renewableText}>• RENEWABLE</Text>
+          {burialService.contractYears && (
+            <Text style={styles.contractText}>• {burialService.contractYears} YEARS CONTRACT</Text>
+          )}
+          <Text style={styles.renewableText}>
+            • {burialService.renewable ? "RENEWABLE" : "NON-RENEWABLE"}
+          </Text>
         </View>
 
-        {/* Options */}
+        {/* Pricing Layers */}
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          <View style={styles.optionContainer}>
-            <View style={styles.textContainer}>
-              <Text style={styles.optionTitle}>ORDINARY</Text>
-              <Text style={styles.checkboxText}>with Lapida</Text>
-            </View>
-            <Text style={styles.optionPrice}>₱9,000.00</Text>
-          </View>
-
-          <View style={styles.optionContainer}>
-            <View style={styles.textContainer}>
-              <Text style={styles.optionTitle}>EXTRA LARGE (XL)</Text>
-              <Text style={styles.checkboxText}>with Lapida</Text>
-            </View>
-            <Text style={styles.optionPrice}>₱12,000.00</Text>
-          </View>
+          {burialService.pricingLayers && burialService.pricingLayers.length > 0 ? (
+            burialService.pricingLayers.map((layer, idx) => (
+              <View key={idx} style={styles.optionContainer}>
+                <View style={styles.textContainer}>
+                  <Text style={styles.optionTitle}>{layer.label}</Text>
+                  <Text style={styles.checkboxText}>{layer.description}</Text>
+                </View>
+                <Text style={styles.optionPrice}>{layer.price}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={{ color: "#555", textAlign: "center" }}>No pricing details available.</Text>
+          )}
         </ScrollView>
       </ImageBackground>
     </>

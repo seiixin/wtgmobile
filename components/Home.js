@@ -164,6 +164,15 @@ function HomeScreen() {
   const navigation = useNavigation();
   const [userName, setUserName] = useState('');
 
+  const [cemeteryInfo, setCemeteryInfo] = useState(null);
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/cemeteryinfo`)
+      .then(res => res.json())
+      .then(data => setCemeteryInfo(data))
+      .catch(() => setCemeteryInfo(null));
+  }, []);
+
   useEffect(() => {
     const fetchUserName = async () => {
       try {
@@ -181,6 +190,22 @@ function HomeScreen() {
     };
     fetchUserName();
   }, []);
+
+  function abbreviateDays(daysStr) {
+    if (!daysStr) return '';
+    // Split by '-', trim, abbreviate, and join back
+    return daysStr
+      .split('-')
+      .map(day => {
+        const trimmed = day.trim();
+        // Only abbreviate if it's a day name
+        if (trimmed.length >= 3) {
+          return trimmed.slice(0, 3) + '.';
+        }
+        return trimmed;
+      })
+      .join(' - ');
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -219,10 +244,14 @@ function HomeScreen() {
         <View style={styles.infoDivider} />
         <View style={styles.infoRow}>
           <View style={styles.infoPill}>
-            <Text style={styles.infoPillText}>Tues - Sun</Text>
+            <Text style={styles.infoPillText}>
+            {cemeteryInfo ? abbreviateDays(cemeteryInfo.officeDays) : '...'}
+            </Text>
           </View>
           <View style={styles.infoPill}>
-            <Text style={styles.infoPillText}>8 AM - 4 PM</Text>
+            <Text style={styles.infoPillText}>
+              {cemeteryInfo ? cemeteryInfo.officeHours : '...'}
+            </Text>
           </View>
         </View>
       </ImageBackground>
@@ -235,30 +264,42 @@ function HomeScreen() {
       >
         <Text style={styles.infoTitle}>Cemetery Visiting Hours</Text>
         <View style={styles.infoDivider} />
-       <View style={styles.infoRow}>
+        <View style={styles.infoRow}>
           <View style={styles.infoPill}>
-            <Text style={styles.infoPillText}>Mon - Sun</Text>
+            <Text style={styles.infoPillText}>
+            {cemeteryInfo ? abbreviateDays(cemeteryInfo.visitingDays) : '...'}
+            </Text>
           </View>
           <View style={styles.infoPill}>
-            <Text style={styles.infoPillText}>6 AM - 6 PM</Text>
+            <Text style={styles.infoPillText}>
+              {cemeteryInfo ? cemeteryInfo.visitingHours : '...'}
+            </Text>
           </View>
         </View>
       </ImageBackground>
 
       {/* Cemetery Details */}
       <View style={styles.cemeteryCard}>
-        <Text style={styles.cemeteryTitle}>St. Joseph Catholic Cemetery</Text>
+        <Text style={styles.cemeteryTitle}>
+          {cemeteryInfo ? cemeteryInfo.cemeteryName : '...'}
+        </Text>
         <View style={styles.row}>
           <Ionicons name="location-sharp" size={18} color="#4CAF50" />
-          <Text style={styles.cemeteryText}>Pulang Lupa I, Las Piñas City</Text>
+          <Text style={styles.cemeteryText}>
+            {cemeteryInfo ? cemeteryInfo.address : '...'}
+          </Text>
         </View>
         <View style={styles.row}>
           <MaterialIcons name="phone" size={18} color="#4CAF50" />
-          <Text style={styles.cemeteryText}>8-363-23-43</Text>
+          <Text style={styles.cemeteryText}>
+            {cemeteryInfo ? cemeteryInfo.telephone : '...'}
+          </Text>
         </View>
         <View style={styles.row}>
           <MaterialIcons name="smartphone" size={18} color="#4CAF50" />
-          <Text style={styles.cemeteryText}>09694204497</Text>
+          <Text style={styles.cemeteryText}>
+            {cemeteryInfo ? cemeteryInfo.mobile : '...'}
+          </Text>
         </View>
       </View>
 
@@ -268,14 +309,18 @@ function HomeScreen() {
           <Text style={styles.staffTitle}>Office Head</Text>
           <View style={styles.row}>
             <Ionicons name="person" size={16} color="#4CAF50" />
-            <Text style={styles.staffName}>Conrado B. Torres</Text>
+            <Text style={styles.staffName}>
+              {cemeteryInfo ? cemeteryInfo.officeHead : '...'}
+            </Text>
           </View>
         </View>
         <View style={styles.staffCol}>
           <Text style={styles.staffTitle}>Office Assistant</Text>
           <View style={styles.row}>
             <Ionicons name="person" size={16} color="#4CAF50" />
-            <Text style={styles.staffName}>Boss Mike</Text>
+            <Text style={styles.staffName}>
+              {cemeteryInfo ? cemeteryInfo.adminAssistant : '...'}
+            </Text>
           </View>
         </View>
       </View>

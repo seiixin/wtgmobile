@@ -101,11 +101,22 @@ const MaintenanceDetails = [
   }
 ];
 
+const maintenanceServiceImages = {
+  "Yearly Grave Cleaning": require("../assets/YearlyIMG.png"),
+  "Electricity Use": require("../assets/ElectricityIMG.png"),
+  "Construction Permit": require("../assets/PermitIMG.png"),
+  "Niche Demolition": require("../assets/DemolitionIMG.png"),
+  "Lot for Lease Existing Fee": require("../assets/LotIMG.png"),
+  "Gravestone QR": require("../assets/GravestoneQrIMG.png"),
+};
+
 const ServicesScreen = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmationVisible, setConfirmationVisible] = useState(false);
   const [requestedServices, setRequestedServices] = useState([]);
+  const [burialServices, setBurialServices] = useState([]);
+  const [maintenanceServices, setMaintenanceServices] = useState([]);
   const navigation = useNavigation();
 
   // Fetch requested services for the logged-in user in real-time
@@ -127,13 +138,23 @@ const ServicesScreen = () => {
     fetchRequestedServices();
   }, [modalVisible, confirmationVisible]);
 
+  useEffect(() => {
+    fetch('https://walktogravemobile-backendserver.onrender.com/api/burial-services')
+      .then(res => res.json())
+      .then(data => setBurialServices(data))
+      .catch(() => setBurialServices([]));
+
+    fetch('https://walktogravemobile-backendserver.onrender.com/api/maintenance-services')
+      .then(res => res.json())
+      .then(data => setMaintenanceServices(data))
+      .catch(() => setMaintenanceServices([]));
+  }, []);
+
+  
   const handleServicePress = async (service) => {
     await fetchRequestedServices(); // Always get latest before showing modal
-    const selectedDetail = MaintenanceDetails.find((detail) => detail.title === service.name);
-    if (selectedDetail) {
-      setSelectedService(selectedDetail);
-      setModalVisible(true);
-    }
+    setSelectedService(service);    // Use the dynamic service from backend
+    setModalVisible(true);
   };
 
   // Add this helper function inside your ServicesScreen component (or above the return)
@@ -188,26 +209,42 @@ const ServicesScreen = () => {
 
         <Text style={styles.sectionTitle}>Maintenance and Construction Services</Text>
         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-          {services.map((service) => (
-            <TouchableOpacity key={service.id} onPress={() => handleServicePress(service)} style={styles.serviceCard}>
-              <Image source={service.image} style={styles.serviceImage} />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+  {maintenanceServices.map((service) => (
+    <TouchableOpacity
+      key={service._id}
+      onPress={() => handleServicePress(service)}
+      style={styles.serviceCard}
+      activeOpacity={0.85}
+    >
+      <View style={styles.cardShadow}>
+        <Image
+          source={maintenanceServiceImages[service.serviceName] || require("../assets/defaultBg.png")}
+          style={styles.serviceImage}
+        />
+        <View style={styles.serviceNameOverlay}>
+          <Text style={styles.serviceNameText}>{service.serviceName}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  ))}
+</ScrollView>
 
         <Text style={styles.sectionTitle1}>Burial Services</Text>
         <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollViewContent}>
-          {burialOptions.map((option) => (
-            <View key={option.id} style={[styles.burialCard, { backgroundColor: option.bgColor }]}>
-              <Image source={option.image} style={styles.burialImage} />
+          {burialServices.map((option) => (
+            <View key={option._id} style={[styles.burialCard, { backgroundColor: "#e2efc2" }]}>
+              <Image source={option.icon ? { uri: option.icon } : require("../assets/adult.png")} style={styles.burialImage} />
               <View style={styles.burialInfo}>
-                <Text style={styles.burialTitle}>{option.name}</Text>
-                <Text style={styles.burialDescription}>{option.description}</Text>
+                <Text style={styles.burialTitle}>{option.serviceName}</Text>
+                <Text style={styles.burialDescription}>
+                  {option.contractYears ? `${option.contractYears} YEARS CONTRACT` : ''}
+                  {option.renewable ? '\n• RENEWABLE' : '\n• NON-RENEWABLE'}
+                </Text>
               </View>
               <View style={styles.buttonContainer}>
                 <TouchableOpacity 
                   style={styles.button} 
-                  onPress={() => navigation.navigate(option.route)}
+                  onPress={() => navigation.navigate('AdultDetails', { burialService: option })}
                 >
                   <Text style={styles.buttonText}>View details</Text>
                 </TouchableOpacity>
@@ -217,37 +254,48 @@ const ServicesScreen = () => {
         </ScrollView>
 
         <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
-          {/* StatusBar for modal: dark-content with dark background */}
-          {modalVisible && (
-            <StatusBar
-              barStyle="dark-content"
-              backgroundColor="transparent" // Same as overlay: dark with ~80% opacity
-              translucent={true}
-            />
-          )}
-          <View
-            style={[
-              styles.modalContent,
-              selectedService && selectedService.description && selectedService.description.length > 120
-                ? { height: hp('50%') }
-                : { height: hp('45%') }
-            ]}
-          >
+          <View style={[styles.modalContent, { alignItems: 'center', paddingTop: hp('3%'), paddingBottom: hp('2%'), height: undefined, minHeight: hp('38%') }]}>
+            {/* Drag indicator */}
+            <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: '#e0e0e0', marginBottom: hp('2%') }} />
             {selectedService && (
               <>
-                <View style={styles.divider} />
-                <Image source={selectedService.image} style={styles.modalImage} />
-                <Text style={styles.modalTitle}>{selectedService.title}</Text>
-                <Text style={styles.modalPricing}>{selectedService.pricing}</Text>
-                <ScrollView
-                  style={{ width: '100%', flex: 1 }}
-                  contentContainerStyle={{
-                    flexGrow: 1,
-                    justifyContent: 'center', // Center vertically
-                  }}
-                >
-                  {selectedService && renderBullets(selectedService.description)}
-                </ScrollView>
+                {/* Icon */}
+                {selectedService.icon && (
+                  <View style={{ backgroundColor: '#f6f6f6', borderRadius: 50, padding: 18, marginBottom: hp('2%') }}>
+                    <Image source={{ uri: selectedService.icon }} style={{ width: 54, height: 54, resizeMode: 'contain' }} />
+                  </View>
+                )}
+                {/* Service Name */}
+                <Text style={{ fontSize: wp('5.2%'), fontWeight: 'bold', color: '#222', marginBottom: hp('1%'), textAlign: 'center', fontFamily: 'Inter_700Bold' }}>
+                  {selectedService.serviceName}
+                </Text>
+                {/* Pricing */}
+                {selectedService.price && (
+                  <Text style={{ fontSize: wp('4.2%'), fontWeight: 'bold', color: '#222', marginBottom: hp('1.5%'), textAlign: 'center', fontFamily: 'Inter_700Bold' }}>
+                  ₱ {selectedService.price}
+                  </Text>
+                )}
+                {/* Maintenance Type */}
+                {selectedService.maintenanceType && (
+                  <Text style={{ fontSize: wp('3.8%'), color: '#888', marginBottom: hp('1%'), textAlign: 'center', fontFamily: 'Inter_400Regular' }}>
+                    {selectedService.maintenanceType.charAt(0).toUpperCase() + selectedService.maintenanceType.slice(1)} Service
+                  </Text>
+                )}
+                {/* Short Description as Bullets */}
+                <View style={{ width: '100%', marginTop: hp('1%'), marginBottom: hp('2%'), paddingHorizontal: wp('2%') }}>
+                  {selectedService.shortDescription
+                    ? selectedService.shortDescription
+                        .split('\n')
+                        .filter(line => line.trim().length > 0)
+                        .map((line, idx) => (
+                          <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 }}>
+                            <Text style={{ color: '#222', fontSize: wp('4.1%'), marginRight: 6, lineHeight: 22 }}>•</Text>
+                            <Text style={{ color: '#222', fontSize: wp('4.1%'), flex: 1, lineHeight: 22 }}>{line.replace(/^•\s*/, '')}</Text>
+                          </View>
+                        ))
+                    : null}
+                </View>
+                {/* Request Service Button */}
                 <TouchableOpacity 
                   onPress={async () => {
                     try {
@@ -256,14 +304,12 @@ const ServicesScreen = () => {
                         Alert.alert("Error", "You must be logged in to request a service.");
                         return;
                       }
-                      // Always check latest from DB before submitting
                       await fetchRequestedServices();
-                      if (requestedServices.includes(selectedService.title)) {
+                      if (requestedServices.includes(selectedService.serviceName)) {
                         Alert.alert("Already Requested", "You have already requested this service.");
                         setModalVisible(false);
                         return;
                       }
-                      // API call to add the service request to the database
                       const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/service-requests', {
                         method: 'POST',
                         headers: {
@@ -271,8 +317,8 @@ const ServicesScreen = () => {
                         },
                         body: JSON.stringify({
                           userId,
-                          serviceName: selectedService.title,
-                          price: parseFloat(selectedService.pricing.replace(/[^0-9.]/g, '')),
+                          serviceName: selectedService.serviceName,
+                          price: parseFloat(selectedService.price.replace(/[^0-9.]/g, '')),
                         }),
                       });
 
@@ -280,7 +326,7 @@ const ServicesScreen = () => {
 
                       if (response.ok) {
                         Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
-                        await fetchRequestedServices(); // Refresh after submit
+                        await fetchRequestedServices();
                       } else {
                         console.error("Error submitting request:", data.message);
                         Alert.alert("Error", data.message || "Failed to submit the service request.");
@@ -292,7 +338,7 @@ const ServicesScreen = () => {
 
                     setModalVisible(false);
                   }} 
-                  style={styles.requestButton}
+                  style={[styles.requestButton, { marginTop: hp('2.5%') }]}
                 >
                   <LinearGradient
                     colors={["#ffef5d", "#7ed957"]}
@@ -549,24 +595,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: wp('4%'),
     marginHorizontal: wp('2%'),
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: wp('2.5%'),
-    elevation: 5,
     backgroundColor: "transparent",
+  },
+  cardShadow: {
+    borderRadius: wp('4%'),
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
+    backgroundColor: "#fff",
   },
   serviceImage: {
     width: wp('32%'),
     height: wp('26%'),
-    marginBottom: hp('0.5%'),
-    marginRight: wp('1%'),
-    resizeMode: "contain",
+    resizeMode: "cover",
+    justifyContent: 'flex-end',
   },
-  serviceText: {
-    fontSize: wp('3%'),
+  serviceNameOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingVertical: hp('1.2%'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  serviceNameText: {
+    color: "#fff",
+    fontSize: wp('4.2%'),
     fontWeight: "bold",
     textAlign: "center",
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Inter_700Bold',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   burialCard: {
     flexDirection: "row",
