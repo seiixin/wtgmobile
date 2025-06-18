@@ -14,193 +14,179 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const CustomDrawerContent = (props) => {
     const navigation = useNavigation();
     const [user, setUser] = useState(null);
-    const [accountRemovedModal, setAccountRemovedModal] = useState(false); // <-- Add this line
-
+    const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+    const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+  
     const handleSignOut = () => {
-        Alert.alert(
-            "Are you sure?",
-            "Do you really want to log out?",
-            [
-                {
-                    text: "Cancel",
-                    onPress: () => console.log("Sign out canceled"),
-                    style: "cancel",
-                },
-                {
-                    text: "Confirm",
-                    onPress: async () => {
-                        try {
-                            await AsyncStorage.removeItem("userId");
-                            navigation.reset({
-                                index: 0,
-                                routes: [{ name: 'SignIn' }],
-                            });
-                        } catch (error) {
-                            console.error("Error during sign out:", error);
-                        }
-                    },
-                },
-            ],
-            { cancelable: false }
-        );
-    };
-
-    useFocusEffect(
-        React.useCallback(() => {
-            AsyncStorage.getItem("userId")
-                .then(userId => {
-                    if (!userId) return Promise.reject("No user ID found");
-                    return fetch(`${BASE_URL}/api/users/${userId}`);
-                })
-                .then(response => response.json())
-                .then(data => setUser(data))
-                .catch(error => console.error("Error fetching user:", error));
-        }, [])
-    );
-
-    // Add polling effect to check if user still exists
-    useEffect(() => {
-        let intervalId;
-        const checkUserExists = async () => {
-            try {
-                const userId = await AsyncStorage.getItem("userId");
-                if (!userId) return;
-                const response = await fetch(`${BASE_URL}/api/users/${userId}`);
-                if (!response.ok) {
-                    setAccountRemovedModal(true);
-                    await AsyncStorage.removeItem("userId");
-                    return;
-                }
-                const data = await response.json();
-                if (!data || data.error || data.message === "User not found") {
-                    setAccountRemovedModal(true);
-                    await AsyncStorage.removeItem("userId");
-                }
-            } catch (error) {
-                // Optionally handle network errors
+      Alert.alert(
+        "Are you sure?",
+        "Do you really want to log out?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Confirm",
+            onPress: async () => {
+              await AsyncStorage.removeItem("userId");
+              navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
             }
-        };
-        intervalId = setInterval(checkUserExists, 5000); // Check every 5 seconds
-
-        return () => clearInterval(intervalId);
-    }, []);
-
-    return (
-        <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-            {/* Profile Section */}
-            <View style={styles.profileSection}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image
-                        source={
-                            user?.profileImage
-                                ? { uri: user.profileImage }
-                                : require('../assets/blankDP.jpg')
-                        }
-                        style={styles.profileImage}
-                    />
-                    <View style={{ marginLeft: 16 }}>
-                        <Text style={styles.profileName}>
-                            {user?.name
-                                ? user.name.length > 16
-                                    ? `${user.name.slice(0, 16)}...`
-                                    : user.name
-                                : "Loading..."}
-                        </Text>
-                        <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
-                        <TouchableOpacity
-                            style={styles.editProfileButton}
-                            onPress={() => navigation.navigate('EditProfile')}
-                        >
-                            <MaterialIcons name="edit" size={16} color="green" />
-                            <Text style={styles.editProfileText}>Edit Profile</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-
-            {/* Drawer Items */}
-            <View style={styles.menuSection}>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Home')}>
-                    <Image source={require('../assets/home.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextGreen}>Home</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
-                    <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextGreen}>History</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
-                    <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextYellow}>Bookmarks</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
-                    <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
-                    <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
-                </TouchableOpacity>
-                {/* <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('RequestedServices')}>
-                    <Image source={require('../assets/requestedServicesIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextBlue}>Requested Services</Text>
-                </TouchableOpacity> */}
-                <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
-                    <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
-                    <Text style={styles.drawerTextBlue}>FAQs</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Sign Out Button */}
-            <View style={styles.signOutSection}>
-                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                    <FontAwesome name="sign-out" size={24} color="black" />
-                    <Text style={styles.signOutText}>Sign out</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Account Removed Modal */}
-            <Modal
-                visible={accountRemovedModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => {}}
-            >
-                <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
-                <View style={{
-                    flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.4)',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <View style={{
-                        backgroundColor: '#fff',
-                        borderRadius: 12,
-                        padding: 24,
-                        alignItems: 'center',
-                        width: '80%'
-                    }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
-                            Your account has been removed by the administrator.
-                        </Text>
-                        <TouchableOpacity
-                            style={{ padding: 10, marginTop: 16 }}
-                            onPress={() => {
-                                setAccountRemovedModal(false);
-                                navigation.reset({
-                                    index: 0,
-                                    routes: [{ name: 'SignIn' }],
-                                });
-                            }}
-                        >
-                            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-        </DrawerContentScrollView>
+          }
+        ],
+        { cancelable: false }
+      );
+    };
+  
+    useFocusEffect(
+      React.useCallback(() => {
+        AsyncStorage.getItem("userId")
+          .then(userId => {
+            if (!userId) return Promise.reject("No user ID found");
+            return fetch(`${BASE_URL}/api/users/${userId}`);
+          })
+          .then(response => response.json())
+          .then(data => setUser(data))
+          .catch(error => {});
+      }, [])
     );
-};
-
+  
+    // Polling effect to check if user still exists
+    useEffect(() => {
+      let intervalId;
+      const checkUserExists = async () => {
+        try {
+          const userId = await AsyncStorage.getItem("userId");
+          if (!userId) return;
+          const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+          if (!response.ok) {
+            setAccountRemovedModal(true);
+            await AsyncStorage.removeItem("userId");
+            return;
+          }
+          const data = await response.json();
+          if (!data || data.error || data.message === "User not found") {
+            setAccountRemovedModal(true);
+            await AsyncStorage.removeItem("userId");
+          }
+        } catch (error) {}
+      };
+      intervalId = setInterval(checkUserExists, 5000);
+      return () => clearInterval(intervalId);
+    }, []);
+  
+    return (
+      <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Image
+              source={
+                user?.profileImage
+                  ? { uri: user.profileImage }
+                  : require('../assets/blankDP.jpg')
+              }
+              style={styles.profileImage}
+            />
+            <View style={{ marginLeft: 16 }}>
+              <Text style={styles.profileName}>
+                {user?.name
+                  ? user.name.length > 16
+                    ? `${user.name.slice(0, 16)}...`
+                    : user.name
+                  : "Loading..."}
+              </Text>
+              <Text style={styles.profileLocation}>{user?.city || "Loading..."}</Text>
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={() => navigation.navigate('EditProfile')}
+              >
+                <MaterialIcons name="edit" size={16} color="green" />
+                <Text style={styles.editProfileText}>Edit Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+  
+        {/* Drawer Items */}
+        <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Home')}>
+            <Image source={require('../assets/home.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextGreen}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Notifications')}>
+            <Image source={require('../assets/notificationIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextGreen}>Notification</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('History')}>
+            <Image source={require('../assets/homeIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextGreen}>History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Bookmarks')}>
+            <Image source={require('../assets/bookmarkIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextYellow}>Bookmarks</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Prayers')}>
+            <Image source={require('../assets/prayersIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextYellow}>Prayers for the Deceased</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Services')}>
+            <Image source={require('../assets/servicesIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextYellow}>Services & Maintenance</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('FAQs')}>
+            <Image source={require('../assets/aboutIcon.png')} style={styles.drawerIcon} />
+            <Text style={styles.drawerTextBlue}>FAQs</Text>
+          </TouchableOpacity>
+        </View>
+  
+        {/* Sign Out Button */}
+        <View style={styles.signOutSection}>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <FontAwesome name="sign-out" size={24} color="black" />
+            <Text style={styles.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+  
+        {/* Account Removed Modal */}
+        <Modal
+          visible={accountRemovedModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => {}}
+        >
+          <StatusBar backgroundColor="rgba(0,0,0,0.4)" barStyle="light-content" translucent />
+          <View style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <View style={{
+              backgroundColor: '#fff',
+              borderRadius: 12,
+              padding: 24,
+              alignItems: 'center',
+              width: '80%'
+            }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, textAlign: 'center', color: 'red' }}>
+                Your account has been removed by the administrator.
+              </Text>
+              <TouchableOpacity
+                style={{ padding: 10, marginTop: 16 }}
+                onPress={() => {
+                  setAccountRemovedModal(false);
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'SignIn' }],
+                  });
+                }}
+              >
+                <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </DrawerContentScrollView>
+    );
+  };
 const faqCategories = [
   { id: "1", title: "General Questions", icon: "help-circle-outline" },
   { id: "2", title: "Account & Profile", icon: "person-outline" },

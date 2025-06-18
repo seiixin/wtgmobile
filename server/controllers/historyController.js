@@ -1,18 +1,22 @@
 const History = require('../models/History');
 
-// Add a grave to user's history
+// Add a grave to user's history (unique per user+grave)
 exports.addHistory = async (req, res) => {
   const { userId, grave } = req.body;
-  if (!userId || !grave) return res.status(400).json({ error: 'userId and grave are required' });
+  if (!userId || !grave || !grave._id) {
+    return res.status(400).json({ error: 'userId and grave with _id are required' });
+  }
 
-  // Remove duplicate (same grave for same user)
+  // Remove any existing entry for this user and grave
   await History.deleteMany({ userId, 'grave._id': grave._id });
 
   // Add new history entry
   const newHistory = new History({ userId, grave });
   await newHistory.save();
 
-  res.status(201).json(newHistory);
+  // Return the updated history list (most recent first)
+  const history = await History.find({ userId }).sort({ searchedAt: -1 });
+  res.status(201).json(history);
 };
 
 // Get user's history (most recent first)
