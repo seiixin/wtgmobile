@@ -10,7 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import MapView, { Polygon, Marker } from 'react-native-maps';
+import MapView, { Polygon, Marker, Overlay } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 
@@ -124,8 +124,16 @@ const Map = () => {
             />
           )}
 
-          {/* --- Your yellow boundary polygons --- */}
-          <Polygon
+          <Overlay
+          image={require('../assets/Map.png')} // adjust path if different
+          bounds={[
+            [14.470560, 120.975015], // bottom-left
+            [14.473053, 120.977249], // top-right
+          ]}
+        />
+
+
+          {/* <Polygon
             coordinates={[
               { latitude: 14.4712738, longitude: 120.9752554 },
               { latitude: 14.4713177, longitude: 120.9752223 },
@@ -213,7 +221,7 @@ const Map = () => {
             fillColor="rgba(255, 255, 0, 0.3)"
             strokeWidth={2}
           />
-          {/* Left Side */}
+
           <Polygon
             coordinates={[
               { latitude: 14.4706415, longitude: 120.9753584 },
@@ -224,8 +232,8 @@ const Map = () => {
             strokeColor="rgb(237, 237, 237)"
             fillColor="rgba(237, 237, 237, 0.5)"
             strokeWidth={2}
-          />
-          <Marker
+          /> */}
+          {/* <Marker
             coordinate={{ latitude: 14.47067, longitude: 120.97540 }} // Approximate center
             anchor={{ x: 0.5, y: 1.5 }}
           >
@@ -389,11 +397,11 @@ const Map = () => {
             <Text style={{ fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.7)', padding: 1, borderRadius: 4 }}>
               Phase 2 Block 7 Adult
             </Text>
-          </Marker>
+          </Marker> */}
           {/* --- End yellow boundary polygons --- */}
 
           {/* Apartment Box Polygon Example */}
-          <Polygon
+          {/* <Polygon
             coordinates={[
               { latitude: 14.472631, longitude: 120.976238 },
               { latitude: 14.472241, longitude: 120.975821 },
@@ -403,10 +411,10 @@ const Map = () => {
             strokeColor="rgb(237, 237, 237)"
             fillColor="rgba(237, 237, 237, 0.5)"
             strokeWidth={1}
-          />
+          /> */}
 
           {/* Apartment Box Polygon Example */}
-          <Polygon
+          {/* <Polygon
             coordinates={[
               { latitude: 14.472172, longitude: 120.975773 },
               { latitude: 14.472172, longitude: 120.975813 },
@@ -428,7 +436,7 @@ const Map = () => {
             strokeColor="rgb(237, 237, 237)"
             fillColor="rgba(237, 237, 237, 0.5)"
             strokeWidth={1}
-          />
+          /> */}
 
           
 
@@ -437,7 +445,7 @@ const Map = () => {
           
 
           {/* Apartment Box 4 (Green) */}
-          <Polygon
+          {/* <Polygon
             coordinates={[
               { latitude: 14.471223, longitude: 120.975358 },
               { latitude: 14.471188, longitude: 120.975319 },
@@ -447,7 +455,7 @@ const Map = () => {
              strokeColor="rgb(237, 237, 237)"
             fillColor="rgba(237, 237, 237, 0.5)"
             strokeWidth={1}
-          />
+          /> */}
 
           {/* Apartment Box 5 */}
           
