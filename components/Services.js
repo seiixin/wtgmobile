@@ -151,10 +151,23 @@ const ServicesScreen = () => {
   }, []);
 
   
+  // Open modal only after selectedService is set
+  useEffect(() => {
+    let timeout;
+    if (selectedService) {
+      timeout = setTimeout(() => setModalVisible(true), 0); // next tick
+    }
+    return () => clearTimeout(timeout);
+  }, [selectedService]);
+
+  // When closing modal, clear selectedService after animation
+  const handleModalHide = () => {
+    setSelectedService(null);
+  };
+
   const handleServicePress = async (service) => {
-    await fetchRequestedServices(); // Always get latest before showing modal
-    setSelectedService(service);    // Use the dynamic service from backend
-    setModalVisible(true);
+    await fetchRequestedServices();
+    setSelectedService(service);
   };
 
   // Add this helper function inside your ServicesScreen component (or above the return)
@@ -253,11 +266,22 @@ const ServicesScreen = () => {
           ))}
         </ScrollView>
 
-        <RNModal isVisible={modalVisible} onBackdropPress={() => setModalVisible(false)} style={styles.modal}>
+        <RNModal
+          isVisible={modalVisible}
+          onBackdropPress={() => setModalVisible(false)}
+          onModalHide={handleModalHide}
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          animationInTiming={350}
+          animationOutTiming={250}
+          style={styles.modal}
+          useNativeDriver
+        >
           <View style={[styles.modalContent, { alignItems: 'center', paddingTop: hp('3%'), paddingBottom: hp('2%'), height: undefined, minHeight: hp('38%') }]}>
             {/* Drag indicator */}
             <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: '#e0e0e0', marginBottom: hp('2%') }} />
-            {selectedService && (
+            {/* Only render modal content if selectedService is available */}
+            {selectedService ? (
               <>
                 {/* Icon */}
                 {selectedService.icon && (
@@ -295,62 +319,8 @@ const ServicesScreen = () => {
                         ))
                     : null}
                 </View>
-                {/* Request Service Button */}
-                <TouchableOpacity 
-                  onPress={async () => {
-                    try {
-                      const userId = await AsyncStorage.getItem('userId');
-                      if (!userId) {
-                        Alert.alert("Error", "You must be logged in to request a service.");
-                        return;
-                      }
-                      await fetchRequestedServices();
-                      if (requestedServices.includes(selectedService.serviceName)) {
-                        Alert.alert("Already Requested", "You have already requested this service.");
-                        setModalVisible(false);
-                        return;
-                      }
-                      const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/service-requests', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          userId,
-                          serviceName: selectedService.serviceName,
-                          price: parseFloat(selectedService.price.replace(/[^0-9.]/g, '')),
-                        }),
-                      });
-
-                      const data = await response.json();
-
-                      if (response.ok) {
-                        Alert.alert("Request Submitted", "Your service request has been submitted successfully.");
-                        await fetchRequestedServices();
-                      } else {
-                        console.error("Error submitting request:", data.message);
-                        Alert.alert("Error", data.message || "Failed to submit the service request.");
-                      }
-                    } catch (error) {
-                      console.error("Error submitting request:", error);
-                      Alert.alert("Error", "An error occurred while submitting the service request.");
-                    }
-
-                    setModalVisible(false);
-                  }} 
-                  style={[styles.requestButton, { marginTop: hp('2.5%') }]}
-                >
-                  <LinearGradient
-                    colors={["#ffef5d", "#7ed957"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.requestServiceGradient}
-                  >
-                    <Text style={styles.requestButtonText}>Request Service</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
               </>
-            )}
+            ) : null}
           </View>
         </RNModal>
 
@@ -579,7 +549,6 @@ const styles = StyleSheet.create({
     fontSize: wp('4%'),
     color: "#a6a6a6",
     marginLeft: wp('5%'),
-    marginTop: hp('3%'),
     fontFamily: 'Inter_400Regular',
   },
   horizontalScroll: {

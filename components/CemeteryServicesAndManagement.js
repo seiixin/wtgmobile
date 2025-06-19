@@ -1,27 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet, StatusBar } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
 const CemeteryServicesAndManagement = () => {
   const navigation = useNavigation();
   const [openIndex, setOpenIndex] = useState(null);
+  const [faqs, setFaqs] = useState([]);
 
-  const faqs = [
-    {
-      question: "Does this app provide burial service details?",
-      answer: "Yes, the app includes burial service options, pricing details, and contact information for cemetery management.",
-    },
-    {
-      question: "Which burial options include price details in the app?",
-      answer: "The BONE and PRIVATE burial options trigger a dropdown to display pricing details.",
-    },
-    {
-      question: "Can cemetery administrators update grave records?",
-      answer: "Yes, authorized personnel can update grave information through the admin panel.",
-    },
-  ];
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=Cemetery Services and Maintenance`)
+      .then(res => res.json())
+      .then(data => setFaqs(data))
+      .catch(() => setFaqs([]));
+  }, []);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -47,12 +42,12 @@ const CemeteryServicesAndManagement = () => {
 
           <View style={styles.faqContainer}>
             {faqs.map((item, index) => (
-              <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
-                <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
-                  <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
-                  <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray"  marginLeft={wp('5%')}/>
-                </TouchableOpacity>
-                {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
+              <View key={item._id || index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
+                  <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
+                      <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
+                      <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')} />
+                  </TouchableOpacity>
+                  {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
               </View>
             ))}
           </View>

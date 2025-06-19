@@ -1,27 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet, StatusBar } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
 const VirtualTributes = () => {
   const navigation = useNavigation();
   const [openIndex, setOpenIndex] = useState(null);
+  const [faqs, setFaqs] = useState([]);
 
-  const faqs = [
-    {
-      question: "What is the virtual tribute feature?",
-      answer: "Virtual tributes allow users to light a candle, leave a prayer, or share a memory digitally on a loved one’s grave profile.",
-    },
-    {
-      question: "How often can I light a candle?",
-      answer: "You can light a candle once every 24 hours, and the number of times you’ve lit a candle is displayed on the grave profile.",
-    },
-    {
-      question: "Can I share memories or messages on a grave profile?",
-      answer: "Yes, registered users can post messages, prayers, or share special moments with the deceased.",
-    },
-  ];
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=Virtual Tributes & Features`)
+      .then(res => res.json())
+      .then(data => setFaqs(data))
+      .catch(() => setFaqs([]));
+  }, []);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -47,12 +42,12 @@ const VirtualTributes = () => {
 
           <View style={styles.faqContainer}>
             {faqs.map((item, index) => (
-              <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
-                <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
-                  <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
-                  <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray"  marginLeft={wp('5%')}/>
-                </TouchableOpacity>
-                {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
+              <View key={item._id || index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
+                  <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
+                      <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
+                      <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')} />
+                  </TouchableOpacity>
+                  {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
               </View>
             ))}
           </View>

@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet, StatusBar } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
 const GeneralQuestions = () => {
     const navigation = useNavigation();
     const [openIndex, setOpenIndex] = useState(null);
+    const [faqs, setFaqs] = useState([]);
 
-    const faqs = [
-        { question: "What is Walk to Grave?", answer: "Walk to Grave is a mobile application that helps users locate graves, navigate cemeteries, and pay virtual tributes to their loved ones." },
-        { question: "Who can use the app?", answer: "Anyone can use the app, including family members of the deceased, and visitors." },
-        { question: "What are the office hours of the cemetery?", answer: "The cemetery office is open from 8:00 AM to 4:00 PM, Tuesday to Sunday." },
-        { question: "When is the cemetery open for visiting?", answer: "Visiting hours are from 6:00 AM to 6:00 PM daily." },
-        { question: "Who is the Office Head of the cemetery?", answer: "The cemetery office head is Mr. Conrado B. Torres." },
-        { question: "Who can I contact for technical assistance?", answer: "For technical support, you can reach out to walktograve@gmail.com." },
-        { question: "How can I contact the cemetery office?", answer: "You can contact the cemetery office via phone at +63 9694204497 or email at walktograve@gmail.com." },
-    ];
+    useEffect(() => {
+        fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=General Questions`)
+            .then(res => res.json())
+            .then(data => setFaqs(data))
+            .catch(() => setFaqs([]));
+    }, []);
 
     const toggleFAQ = (index) => {
         setOpenIndex(openIndex === index ? null : index);
@@ -42,13 +42,13 @@ const GeneralQuestions = () => {
 
             <View style={styles.faqContainer}>
                 {faqs.map((item, index) => (
-                    <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}> 
-                        <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
-                            <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
-                            <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')} />
-                        </TouchableOpacity>
-                        {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
-                    </View>
+                    <View key={item._id || index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
+                    <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
+                        <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
+                        <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')} />
+                    </TouchableOpacity>
+                    {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
+                </View>
                 ))}
             </View>
         </ScrollView>

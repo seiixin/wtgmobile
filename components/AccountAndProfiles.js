@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ImageBackground, StyleSheet, StatusBar } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+
 const AccountAndProfile = () => {
   const navigation = useNavigation();
   const [openIndex, setOpenIndex] = useState(null);
+  const [faqs, setFaqs] = useState([]);
 
-  const faqs = [
-    { question: "How do I create an account?", answer: "You can register by clicking on Register button located in the Sign In page. For more options you can Sign In using Google, Facebook, and X." },
-    { question: "What if I forget my password?", answer: "You can reset your password by selecting 'Forgot Password?' on the login page and following the OTP verification process." },
-    { question: "Can I edit my profile information?", answer: "Yes, you can update your details in Edit Profile section under the settings menu." },
-  ];
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=Account and Profile`)
+      .then(res => res.json())
+      .then(data => setFaqs(data))
+      .catch(() => setFaqs([]));
+  }, []);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -38,12 +42,12 @@ const AccountAndProfile = () => {
 
           <View style={styles.faqContainer}>
             {faqs.map((item, index) => (
-              <View key={index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
-                <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
-                  <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
-                  <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray"  marginLeft={wp('5%')} />
-                </TouchableOpacity>
-                {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
+              <View key={item._id || index} style={[styles.faqItem, openIndex === index && styles.faqItemOpen]}>
+                  <TouchableOpacity style={styles.faqHeader} onPress={() => toggleFAQ(index)}>
+                      <Text style={[styles.faqQuestion, openIndex === index && styles.activeQuestion]} numberOfLines={2} ellipsizeMode="tail">{item.question}</Text>
+                      <AntDesign name={openIndex === index ? "up" : "down"} size={wp('4.5%')} color="gray" marginLeft={wp('5%')} />
+                  </TouchableOpacity>
+                  {openIndex === index && <Text style={styles.faqAnswer}>{item.answer}</Text>}
               </View>
             ))}
           </View>
