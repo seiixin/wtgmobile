@@ -247,27 +247,42 @@ const HistoryScreen = () => {
     // Save grave to local history (no API)
     const handleGraveClick = async (grave) => {
         try {
-            let history = await AsyncStorage.getItem(HISTORY_KEY);
-            history = history ? JSON.parse(history) : [];
-            // Remove duplicate
-            history = history.filter(item => item._id !== grave._id);
-            // Add new at the start
-            history.unshift(grave);
-            await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-            setHistoryList(history);
+            const userId = await AsyncStorage.getItem("userId");
+            console.log("userId:", userId, "type:", typeof userId);
+            console.log("grave:", grave); // 👈 Add this line
+        if (!grave._id) {
+            Alert.alert("Error", "Grave data missing _id.");
+            return;
+        }
+            // Save to backend
+            const response = await fetch(`${BASE_URL}/api/history`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, grave }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Backend error:", errorText);
+                throw new Error("Failed to save history");
+            }
+            const updatedHistory = await response.json();
+            setHistoryList(updatedHistory.map(h => h.grave));
+            navigation.navigate('GraveInformation', { grave, origin: 'History' });
         } catch (error) {
             console.error('Error updating history:', error);
         }
-        navigation.navigate('GraveInformation', { grave, origin: 'History' });
     };
 
     // Load history from local storage
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                let history = await AsyncStorage.getItem(HISTORY_KEY);
-                history = history ? JSON.parse(history) : [];
-                setHistoryList(history);
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/history/${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch history");
+                const history = await response.json();
+                setHistoryList(history.map(h => h.grave)); // Extract grave objects
             } catch (error) {
                 console.error('Error loading history:', error);
             }
@@ -278,7 +293,9 @@ const HistoryScreen = () => {
     // Clear local history
     const clearHistory = async () => {
         try {
-            await AsyncStorage.removeItem(HISTORY_KEY);
+            const userId = await AsyncStorage.getItem("userId");
+            if (!userId) return;
+            await fetch(`${BASE_URL}/api/history/${userId}`, { method: "DELETE" });
             setHistoryList([]);
             Alert.alert('History cleared');
         } catch (error) {

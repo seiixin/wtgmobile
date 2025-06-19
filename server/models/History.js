@@ -6,4 +6,6 @@ const historySchema = new mongoose.Schema({
   searchedAt: { type: Date, default: Date.now }
 });
 
+historySchema.index({ userId: 1, "grave._id": 1 }, { unique: true });
+
 module.exports = mongoose.model('History', historySchema);

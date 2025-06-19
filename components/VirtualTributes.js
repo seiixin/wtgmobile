@@ -12,7 +12,7 @@ const VirtualTributes = () => {
   const [faqs, setFaqs] = useState([]);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=Virtual Tributes & Features`)
+    fetch(`${BASE_URL}/api/cemeteryinfo/faqs?category=Virtual Tributes and Features`)
       .then(res => res.json())
       .then(data => setFaqs(data))
       .catch(() => setFaqs([]));
