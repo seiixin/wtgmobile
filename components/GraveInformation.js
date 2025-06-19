@@ -62,45 +62,42 @@ const GraveInformation = () => {
 };
     
     const handleLightCandle = async () => {
-        try {
-            // Retrieve existing candle data from AsyncStorage
-            const existingCandleData = await AsyncStorage.getItem('candleData');
-            const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+    if (!userId) {
+      Alert.alert("Error", "User not logged in.");
+      return;
+    }
+    const existingCandleData = await AsyncStorage.getItem('candleData');
+    const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
 
-            // Check if the grave already has candle data
-            const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
+    // Get or create user-specific candle data
+    const userCandleData = candleData[userId] || {};
+    const graveCandleData = userCandleData[grave._id] || { lastLit: null, count: 0 };
 
-            // Get the current timestamp
-            const now = new Date().getTime();
+    const now = new Date().getTime();
 
-            // Check if the user can light a candle (1-day interval)
-            if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
-              Alert.alert('Candle Already Lit', 'You can light another candle after 24 hours.');
-              return;
-            }
+    if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
+      Alert.alert('Candle Already Lit', 'You can light another candle after 24 hours.');
+      return;
+    }
 
-            // Update the candle data for the grave
-            const updatedCandleData = {
-                ...candleData,
-                [grave._id]: {
-                    lastLit: now,
-                    count: graveCandleData.count + 1, // Increment the candle count
-                },
-            };
-
-            // Save the updated candle data to AsyncStorage
-            await AsyncStorage.setItem('candleData', JSON.stringify(updatedCandleData));
-
-            // Update the local state
-            setHasCandleBeenLit(true);
-            setCandleCount(graveCandleData.count + 1); // Update the counter in the UI
-
-            // Show the memorial candle greeting
-            setIsCandleLit(true); // This will open the modal
-        } catch (error) {
-            console.error('Error lighting candle:', error);
-        }
+    // Update the candle data for this user and grave
+    userCandleData[grave._id] = {
+      lastLit: now,
+      count: graveCandleData.count + 1,
     };
+    candleData[userId] = userCandleData;
+
+    await AsyncStorage.setItem('candleData', JSON.stringify(candleData));
+
+    setHasCandleBeenLit(true);
+    setCandleCount(graveCandleData.count + 1);
+    setIsCandleLit(true);
+  } catch (error) {
+    console.error('Error lighting candle:', error);
+  }
+};
 
     const handleBookmark = async () => {
         try {
@@ -129,20 +126,23 @@ const GraveInformation = () => {
 
     useEffect(() => {
         const loadCandleData = async () => {
-            try {
-                const existingCandleData = await AsyncStorage.getItem('candleData');
-                const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+    if (!userId) return;
+    const existingCandleData = await AsyncStorage.getItem('candleData');
+    const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
+    const userCandleData = candleData[userId] || {};
+    const graveCandleData = userCandleData[grave._id] || { lastLit: null, count: 0 };
 
-                // Get the candle data for the current grave
-                const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
-
-                // Update the local state
-                setHasCandleBeenLit(graveCandleData.lastLit && new Date().getTime() - graveCandleData.lastLit < 24 * 60 * 60 * 1000);
-                setCandleCount(graveCandleData.count);
-            } catch (error) {
-                console.error('Error loading candle data:', error);
-            }
-        };
+    setHasCandleBeenLit(
+      graveCandleData.lastLit &&
+      new Date().getTime() - graveCandleData.lastLit < 24 * 60 * 60 * 1000
+    );
+    setCandleCount(graveCandleData.count);
+  } catch (error) {
+    console.error('Error loading candle data:', error);
+  }
+};
 
         const checkBookmark = async () => {
             try {
@@ -159,25 +159,28 @@ const GraveInformation = () => {
     }, [grave._id]);
 
     useEffect(() => {
+      let intervalId;
+      const updateTimer = async () => {
+        const userId = await AsyncStorage.getItem("userId");
+        if (!userId) return;
+        const data = await AsyncStorage.getItem('candleData');
+        const candleData = data ? JSON.parse(data) : {};
+        const userCandleData = candleData[userId] || {};
+        const graveCandleData = userCandleData[grave._id] || { lastLit: null, count: 0 };
+        if (graveCandleData.lastLit) {
+          const now = Date.now();
+          const nextAvailable = graveCandleData.lastLit + 24 * 60 * 60 * 1000;
+          const diff = nextAvailable - now;
+          setTimeLeft(diff > 0 ? diff : 0);
+        }
+      };
       if (hasCandleBeenLit) {
-        const updateTimer = () => {
-          AsyncStorage.getItem('candleData').then(data => {
-            const candleData = data ? JSON.parse(data) : {};
-            const graveCandleData = candleData[grave._id] || { lastLit: null, count: 0 };
-            if (graveCandleData.lastLit) {
-              const now = Date.now();
-              const nextAvailable = graveCandleData.lastLit + 24 * 60 * 60 * 1000;
-              const diff = nextAvailable - now;
-              setTimeLeft(diff > 0 ? diff : 0);
-            }
-          });
-        };
         updateTimer();
-        timerRef.current = setInterval(updateTimer, 1000);
-        return () => clearInterval(timerRef.current);
+        intervalId = setInterval(updateTimer, 1000);
+        return () => clearInterval(intervalId);
       } else {
         setTimeLeft(0);
-        if (timerRef.current) clearInterval(timerRef.current);
+        if (intervalId) clearInterval(intervalId);
       }
     }, [hasCandleBeenLit, grave._id]);
 
