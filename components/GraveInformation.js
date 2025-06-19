@@ -12,6 +12,7 @@ import { RFValue } from "react-native-responsive-fontsize";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
 const { width, height } = Dimensions.get('window');
+const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 
 const GraveInformation = () => {
     const route = useRoute();
@@ -30,6 +31,7 @@ const GraveInformation = () => {
     const [accountRemovedModal, setAccountRemovedModal] = useState(false);
     const [isCandleModalVisible, setIsCandleModalVisible] = useState(false); // New state for candle modal
     const [candleUsers, setCandleUsers] = useState([]); // New state for candle users
+    const [totalCandleCount, setTotalCandleCount] = useState(0);
 
     const saveModalAsImage = async () => {
         try {
@@ -64,17 +66,19 @@ const GraveInformation = () => {
     const handleLightCandle = async () => {
   try {
     const userId = await AsyncStorage.getItem("userId");
+    const userName = await AsyncStorage.getItem("userName"); // Or get from your user state
+    const userAvatar = await AsyncStorage.getItem("userAvatar"); // Or get from your user state
+
     if (!userId) {
       Alert.alert("Error", "User not logged in.");
       return;
     }
+
+    // Check local timer (per user)
     const existingCandleData = await AsyncStorage.getItem('candleData');
     const candleData = existingCandleData ? JSON.parse(existingCandleData) : {};
-
-    // Get or create user-specific candle data
     const userCandleData = candleData[userId] || {};
     const graveCandleData = userCandleData[grave._id] || { lastLit: null, count: 0 };
-
     const now = new Date().getTime();
 
     if (graveCandleData.lastLit && now - graveCandleData.lastLit < 24 * 60 * 60 * 1000) {
@@ -82,20 +86,43 @@ const GraveInformation = () => {
       return;
     }
 
-    // Update the candle data for this user and grave
+    // 1. Call backend to increment shared candle count
+    const response = await fetch(`${BASE_URL}/api/candles/light`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        graveId: grave._id,
+        graveType: grave.graveType, // Make sure this is set in your grave object!
+        userId,
+        userName: userName || "Anonymous",
+        userAvatar: userAvatar || ""
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      Alert.alert("Error", data.error || "Failed to light candle.");
+      return;
+    }
+
+    // 2. Update local candle data (per user)
     userCandleData[grave._id] = {
       lastLit: now,
       count: graveCandleData.count + 1,
     };
     candleData[userId] = userCandleData;
-
     await AsyncStorage.setItem('candleData', JSON.stringify(candleData));
 
     setHasCandleBeenLit(true);
     setCandleCount(graveCandleData.count + 1);
     setIsCandleLit(true);
+
+    // 3. Refetch total candle count from backend
+    fetchTotalCandleCount();
+
   } catch (error) {
     console.error('Error lighting candle:', error);
+    Alert.alert("Error", "An error occurred while lighting the candle.");
   }
 };
 
@@ -233,6 +260,20 @@ const GraveInformation = () => {
       }
     };
 
+    const fetchTotalCandleCount = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/candles/candle-count/${grave.graveType}/${grave._id}`);
+        const data = await response.json();
+        setTotalCandleCount(data.CandleCount || 0);
+      } catch (error) {
+        setTotalCandleCount(0);
+      }
+    };
+
+    useEffect(() => {
+      fetchTotalCandleCount();
+    }, [grave._id, grave.graveType, isCandleLit]);
+
     return (
         <>
             <StatusBar
@@ -352,7 +393,7 @@ const GraveInformation = () => {
     style={styles.profileBottomLeftImage}
   >
     <View style={styles.candleCountContainer}>
-      <Text style={styles.candleCountText}>{candleCount}</Text>
+      <Text style={styles.candleCountText}>{totalCandleCount}</Text>
     </View>
   </ImageBackground>
 </TouchableOpacity>
@@ -494,7 +535,7 @@ const GraveInformation = () => {
           </View>
         </View>
         <Text style={styles.candleCount}>
-          Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
+          Together we lit {totalCandleCount} candle{totalCandleCount > 1 ? 's' : ''} for{' '}
           <Text style={styles.boldText}>{grave.firstName} {grave.lastName}{grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>
         </Text>
         <Text style={styles.encourageText}>
@@ -529,7 +570,7 @@ const GraveInformation = () => {
                   </View>
                 </View>
                 <Text style={styles.candleCount}>
-                  Together we lit {candleCount} candle{candleCount > 1 ? 's' : ''} for{' '}
+                  Together we lit {totalCandleCount} candle{totalCandleCount > 1 ? 's' : ''} for{' '}
                   <Text style={styles.boldText}>{grave.firstName} {grave.lastName} {grave.nickname ? `, also known as '${grave.nickname}'` : ''}.</Text>.
                 </Text>
                 <Text style={styles.encourageText}>
@@ -589,9 +630,11 @@ const GraveInformation = () => {
         }} />
       </View>
       {/* Candle count */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-        <Image source={require('../assets/Candle1.png')} style={{ width: 24, height: 24, marginRight: 8 }} />
-        <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#bfa12e' }}>{candleUsers.length}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+        <Image source={require('../assets/Candle1.png')} style={{ width: 22, height: 22, marginRight: 6 }} />
+        <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#bfa12e' }}>
+          {totalCandleCount} candle{totalCandleCount !== 1 ? 's' : ''} lit
+        </Text>
       </View>
       {/* Divider */}
       <View style={{

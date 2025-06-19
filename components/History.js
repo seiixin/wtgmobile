@@ -267,7 +267,7 @@ const HistoryScreen = () => {
             }
             const updatedHistory = await response.json();
             setHistoryList(updatedHistory.map(h => h.grave));
-            navigation.navigate('GraveInformation', { grave, origin: 'History' });
+            navigation.navigate('GraveInformation', { grave: { ...grave, graveType: 'adult' }, origin: 'History' });
         } catch (error) {
             console.error('Error updating history:', error);
         }
