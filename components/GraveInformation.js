@@ -126,30 +126,39 @@ const GraveInformation = () => {
   }
 };
 
-    const handleBookmark = async () => {
-        try {
-            const existingBookmarks = await AsyncStorage.getItem('bookmarks');
-            let bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
+const handleBookmark = async () => {
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+    if (!userId) {
+      Alert.alert("Error", "User not logged in.");
+      return;
+    }
 
-            if (isBookmarked) {
-                // Remove from bookmarks
-                bookmarks = bookmarks.filter((item) => item._id !== grave._id);
-                await AsyncStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-                setIsBookmarked(false);
-                Alert.alert('Removed', 'This grave has been removed from your bookmarks.');
-            } else {
-                // Add to bookmarks
-                if (!bookmarks.some((item) => item._id === grave._id)) {
-                    bookmarks.push(grave);
-                    await AsyncStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-                    setIsBookmarked(true);
-                    Alert.alert('Bookmarked', 'This grave has been added to your bookmarks.');
-                }
-            }
-        } catch (error) {
-            console.error('Error toggling bookmark:', error);
-        }
-    };
+    if (isBookmarked) {
+      // Fetch all bookmarks for this user
+      const response = await fetch(`${BASE_URL}/api/bookmarks?userId=${userId}`);
+      const bookmarks = await response.json();
+      // Find the bookmark for this grave
+      const bookmark = bookmarks.find(b => b.grave && b.grave._id === grave._id);
+      if (bookmark) {
+        await fetch(`${BASE_URL}/api/bookmarks/${bookmark._id}`, { method: "DELETE" });
+        setIsBookmarked(false);
+        Alert.alert('Removed', 'This grave has been removed from your bookmarks.');
+      }
+    } else {
+      // Add bookmark with full grave object
+      await fetch(`${BASE_URL}/api/bookmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, grave }),
+      });
+      setIsBookmarked(true);
+      Alert.alert('Bookmarked', 'This grave has been added to your bookmarks.');
+    }
+  } catch (error) {
+    console.error('Error toggling bookmark:', error);
+  }
+};
 
     useEffect(() => {
         const loadCandleData = async () => {
@@ -173,9 +182,11 @@ const GraveInformation = () => {
 
         const checkBookmark = async () => {
             try {
-                const existingBookmarks = await AsyncStorage.getItem('bookmarks');
-                const bookmarks = existingBookmarks ? JSON.parse(existingBookmarks) : [];
-                setIsBookmarked(bookmarks.some((item) => item._id === grave._id));
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/bookmarks?userId=${userId}`);
+                const bookmarks = await response.json();
+                setIsBookmarked(bookmarks.some(b => b.grave && b.grave._id === grave._id));
             } catch (error) {
                 console.error('Error checking bookmark:', error);
             }

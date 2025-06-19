@@ -252,42 +252,53 @@ const BookmarksScreen = () => {
     useEffect(() => {
         const loadBookmarks = async () => {
             try {
-                const storedBookmarks = await AsyncStorage.getItem('bookmarks');
-                const bookmarks = storedBookmarks ? JSON.parse(storedBookmarks) : [];
-                setBookmarks(bookmarks); // Set bookmarks state
-                setSearchResults(bookmarks); // Use searchResults to display bookmarks
+                const userId = await AsyncStorage.getItem("userId");
+                if (!userId) return;
+                const response = await fetch(`${BASE_URL}/api/bookmarks?userId=${userId}`);
+                const bookmarks = await response.json();
+                // Filter out bookmarks with missing grave
+                const validGraves = bookmarks
+                    .map(b => b.grave)
+                    .filter(g => g && g._id); // Only keep graves that exist and have _id
+                setBookmarks(validGraves);
+                setSearchResults(validGraves);
             } catch (error) {
                 console.error('Error loading bookmarks:', error);
             }
         };
 
-        const unsubscribe = navigation.addListener('focus', loadBookmarks); // Reload bookmarks when screen is focused
-
-        return unsubscribe; // Cleanup the listener on unmount
+        const unsubscribe = navigation.addListener('focus', loadBookmarks);
+        return unsubscribe;
     }, [navigation]);
 
     const handleResultCardClick = async (grave) => {
         try {
-            // Get current history list from AsyncStorage
-            const data = await AsyncStorage.getItem('historyList');
-            let historyList = data ? JSON.parse(data) : [];
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
 
-            // Remove if already exists, then add to top
-            historyList = historyList.filter(item => item._id !== grave._id);
-            historyList = [grave, ...historyList];
+            // Add to history in the backend
+            await fetch(`${BASE_URL}/api/history`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, grave }),
+            });
 
-            // Save updated history list
-            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
+            // Add graveType if missing (optional, based on your data)
+            let graveWithType = { ...grave };
+            if (!graveWithType.graveType && graveWithType.category) {
+                if (graveWithType.category.includes('Adult')) graveWithType.graveType = 'adult';
+                else if (graveWithType.category.includes('Child')) graveWithType.graveType = 'child';
+                else if (graveWithType.category.includes('Bone')) graveWithType.graveType = 'bone';
+            }
+
+            setSearchQuery('');
+            setSearchResults([]);
+            setHasSearched(false);
+
+            navigation.navigate('GraveInformation', { grave: graveWithType, origin: 'Bookmarks' });
         } catch (error) {
             console.error('Error updating history list:', error);
         }
-
-        // Reset search state
-        setSearchQuery('');
-        setSearchResults([]);
-        setHasSearched(false);
-
-        navigation.navigate('GraveInformation', { grave, origin: 'Bookmarks' });
     };
 
     return (
@@ -382,11 +393,13 @@ const BookmarksScreen = () => {
         sections={[
             { title: '', data: [...bookmarks].reverse(), type: 'bookmarks' } // Reverse for latest first
         ]}
-        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+        keyExtractor={(item, index) => item && item._id ? `${item._id}-${index}` : `invalid-${index}`}
         renderSectionHeader={({ section }) => (
             <Text style={styles.sectionTitle}>{section.title}</Text>
         )}
         renderItem={({ item, section }) => {
+            if (!item || !item._id) return null;
+
             const formattedDateOfBirth = item.dateOfBirth
                 ? new Intl.DateTimeFormat('en-US', {
                       month: 'long',
@@ -452,11 +465,13 @@ const BookmarksScreen = () => {
         sections={[
             { title: '', data: searchResults, type: 'searchResults' }
         ]}
-        keyExtractor={(item, index) => `${item._id || item.id}-${index}`}
+        keyExtractor={(item, index) => item && item._id ? `${item._id}-${index}` : `invalid-${index}`}
         renderSectionHeader={({ section }) => (
             <Text style={styles.sectionTitle}>{section.title}</Text>
         )}
         renderItem={({ item, section }) => {
+            if (!item || !item._id) return null;
+
             const formattedDateOfBirth = item.dateOfBirth
                 ? new Intl.DateTimeFormat('en-US', {
                       month: 'long',

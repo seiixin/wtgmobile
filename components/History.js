@@ -248,12 +248,10 @@ const HistoryScreen = () => {
     const handleGraveClick = async (grave) => {
         try {
             const userId = await AsyncStorage.getItem("userId");
-            console.log("userId:", userId, "type:", typeof userId);
-            console.log("grave:", grave); // 👈 Add this line
-        if (!grave._id) {
-            Alert.alert("Error", "Grave data missing _id.");
-            return;
-        }
+            if (!grave._id) {
+                Alert.alert("Error", "Grave data missing _id.");
+                return;
+            }
             // Save to backend
             const response = await fetch(`${BASE_URL}/api/history`, {
                 method: "POST",
@@ -267,7 +265,16 @@ const HistoryScreen = () => {
             }
             const updatedHistory = await response.json();
             setHistoryList(updatedHistory.map(h => h.grave));
-            navigation.navigate('GraveInformation', { grave: { ...grave, graveType: 'adult' }, origin: 'History' });
+
+            // Dynamically set graveType
+            let graveWithType = { ...grave };
+            if (!graveWithType.graveType && graveWithType.category) {
+                if (graveWithType.category.includes('Adult')) graveWithType.graveType = 'adult';
+                else if (graveWithType.category.includes('Child')) graveWithType.graveType = 'child';
+                else if (graveWithType.category.includes('Bone')) graveWithType.graveType = 'bone';
+            }
+
+            navigation.navigate('GraveInformation', { grave: graveWithType, origin: 'History' });
         } catch (error) {
             console.error('Error updating history:', error);
         }
