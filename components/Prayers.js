@@ -236,27 +236,33 @@ const PrayersScreen = () => {
 
     const handleResultCardClick = async (grave) => {
         try {
-            // Get current history list from AsyncStorage
-            const data = await AsyncStorage.getItem('historyList');
-            let historyList = data ? JSON.parse(data) : [];
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
 
-            // Remove if already exists, then add to top
-            historyList = historyList.filter(item => item._id !== grave._id);
-            historyList = [grave, ...historyList];
+            // Add to history in the backend
+            await fetch(`${BASE_URL}/api/history`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, grave }),
+            });
 
-            // Save updated history list
-            await AsyncStorage.setItem('historyList', JSON.stringify(historyList));
+            // Add graveType if missing (based on category)
+            let graveWithType = { ...grave };
+            if (!graveWithType.graveType && graveWithType.category) {
+                if (graveWithType.category.includes('Adult')) graveWithType.graveType = 'adult';
+                else if (graveWithType.category.includes('Child')) graveWithType.graveType = 'child';
+                else if (graveWithType.category.includes('Bone')) graveWithType.graveType = 'bone';
+            }
+
+            setSearchQuery('');
+            setSearchResults([]);
+            setHasSearched(false);
+
+            // Navigate to GraveInformation, passing the grave object
+            navigation.navigate('GraveInformation', { grave: graveWithType, origin: 'Prayers' });
         } catch (error) {
             console.error('Error updating history list:', error);
         }
-
-        // Reset search state
-        setSearchQuery('');
-        setSearchResults([]);
-        setHasSearched(false);
-
-        // Navigate to GraveInformation
-        navigation.navigate('GraveInformation', { grave, origin: 'Prayers' });
     };
 
     return (
