@@ -10,7 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Polygon, Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 
@@ -123,6 +123,334 @@ const Map = () => {
               onError={err => console.warn('Directions error:', err)}
             />
           )}
+
+          {/* --- Your yellow boundary polygons --- */}
+          <Polygon
+            coordinates={[
+              { latitude: 14.4712738, longitude: 120.9752554 },
+              { latitude: 14.4713177, longitude: 120.9752223 },
+              { latitude: 14.4711547, longitude: 120.9749755 },
+              { latitude: 14.4711062, longitude: 120.9750054 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4710110, longitude: 120.9750829 },
+              { latitude: 14.4711809, longitude: 120.9752351 },
+              { latitude: 14.4712170, longitude: 120.9751881 },
+              { latitude: 14.4710357, longitude: 120.9750397 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4709652, longitude: 120.9751253 },
+              { latitude: 14.4711328, longitude: 120.9752790 },
+              { latitude: 14.4711581, longitude: 120.9752371 },
+              { latitude: 14.4709941, longitude: 120.9750865 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4709198, longitude: 120.9751824 },
+              { latitude: 14.4709526, longitude: 120.9751408 },
+              { latitude: 14.4711278, longitude: 120.9752971 },
+              { latitude: 14.4710916, longitude: 120.9753381 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4708747, longitude: 120.9752319 },
+              { latitude: 14.4709053, longitude: 120.9751906 },
+              { latitude: 14.4710805, longitude: 120.9753503 },
+              { latitude: 14.4710459, longitude: 120.9753907 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4708056, longitude: 120.9752623 },
+              { latitude: 14.4708327, longitude: 120.9752218 },
+              { latitude: 14.4710364, longitude: 120.9754043 },
+              { latitude: 14.4710039, longitude: 120.9754331 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4710962, longitude: 120.9750204 },
+              { latitude: 14.4710728, longitude: 120.9750361 },
+              { latitude: 14.4711356, longitude: 120.9751044 },
+              { latitude: 14.4711521, longitude: 120.9750836 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          <Polygon
+            coordinates={[
+              { latitude: 14.4707701, longitude: 120.9753142 },
+              { latitude: 14.4707942, longitude: 120.9752814 },
+              { latitude: 14.4709925, longitude: 120.9754558 },
+              { latitude: 14.4709717, longitude: 120.9754818 },
+            ]}
+            strokeColor="rgba(255, 215, 0, 0.9)"
+            fillColor="rgba(255, 255, 0, 0.3)"
+            strokeWidth={2}
+          />
+          {/* Left Side */}
+          <Polygon
+            coordinates={[
+              { latitude: 14.4706415, longitude: 120.9753584 },
+              { latitude: 14.4706101, longitude: 120.9754280 },
+              { latitude: 14.4706471, longitude: 120.9754494 },
+              { latitude: 14.4706809, longitude: 120.9753777 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.47067, longitude: 120.97540 }} // Approximate center
+            anchor={{ x: 0.5, y: 1.5 }}
+          >
+            <Text style={{
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 4,
+              fontSize: 12,
+            }}>
+              Phase 2 Block 1 Adult
+            </Text>
+          </Marker>
+          <Polygon
+            coordinates={[
+              { latitude: 14.4707113, longitude: 120.9753944 },
+              { latitude: 14.4706825, longitude: 120.9754614 },
+              { latitude: 14.4707185, longitude: 120.9754804 },
+              { latitude: 14.4707503, longitude: 120.9754123 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.47072, longitude: 120.97543 }} // Approximate center
+            anchor={{ x: 0.5, y: 1.5 }}
+          >
+            <Text style={{
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 4,
+              fontSize: 12,
+            }}>
+              Phase 2 Block 2 Adult
+            </Text>
+          </Marker>
+          <Polygon
+            coordinates={[
+              { latitude: 14.4707839, longitude: 120.9754299 },
+              { latitude: 14.4707521, longitude: 120.9754963 },
+              { latitude: 14.4707859, longitude: 120.9755128 },
+              { latitude: 14.4708244, longitude: 120.9754500 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.47079, longitude: 120.97547 }} // Approximate center
+            anchor={{ x: 0.5, y: 1.5 }}
+          >
+            <Text style={{
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 4,
+              fontSize: 12,
+            }}>
+              Phase 2 Block 3 Adult
+            </Text>
+          </Marker>
+
+          <Polygon
+            coordinates={[
+              { latitude: 14.4708442, longitude: 120.9754601 },
+              { latitude: 14.4708133, longitude: 120.9755257 },
+              { latitude: 14.4708467, longitude: 120.9755457 },
+              { latitude: 14.4708818, longitude: 120.9754787 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.47085, longitude: 120.97550 }} // Approximate center
+            anchor={{ x: 0.5, y: 1.5 }}
+          >
+            <Text style={{
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 4,
+              fontSize: 12,
+            }}>
+              Phase 2 Block 4 Adult
+            </Text>
+          </Marker>
+          <Polygon
+            coordinates={[
+              { latitude: 14.4709076, longitude: 120.9754930 },
+              { latitude: 14.4708741, longitude: 120.9755600 },
+              { latitude: 14.4709076, longitude: 120.9755786 },
+              { latitude: 14.4709449, longitude: 120.9755093 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.47091, longitude: 120.97554 }} // Center of the polygon
+            anchor={{ x: 0.5, y: 1.5 }}
+          >
+            <Text style={{
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 4,
+              fontSize: 12,
+            }}>
+              Phase 2 Block 5 Adult
+            </Text>
+          </Marker>
+          <Polygon
+            coordinates={[
+              { latitude: 14.4709682, longitude: 120.9755212 },
+              { latitude: 14.4709340, longitude: 120.9755886 },
+              { latitude: 14.4709738, longitude: 120.9756096 },
+              { latitude: 14.4710072, longitude: 120.9755395 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+            <Marker
+              coordinate={{ latitude: 14.47097, longitude: 120.97557 }} // Center of the polygon
+              anchor={{ x: 0.5, y: 1.5 }}
+            >
+              <Text style={{
+                fontWeight: 'bold',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 4,
+                fontSize: 12,
+              }}>
+                Phase 2 Block 6 Adult
+              </Text>
+            </Marker>
+          <Polygon
+            coordinates={[
+              { latitude: 14.4710334, longitude: 120.9755535 },
+              { latitude: 14.4710002, longitude: 120.9756226 },
+              { latitude: 14.4710405, longitude: 120.9756425 },
+              { latitude: 14.4710720, longitude: 120.9755728 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={2}
+          />
+          <Marker
+            coordinate={{ latitude: 14.471045, longitude: 120.97560 }} // Center of your polygon
+            anchor={{ x: 0.5, y: 1.5 }} // Adjusts label position above the marker
+          >
+            <Text style={{ fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.7)', padding: 1, borderRadius: 4 }}>
+              Phase 2 Block 7 Adult
+            </Text>
+          </Marker>
+          {/* --- End yellow boundary polygons --- */}
+
+          {/* Apartment Box Polygon Example */}
+          <Polygon
+            coordinates={[
+              { latitude: 14.472631, longitude: 120.976238 },
+              { latitude: 14.472241, longitude: 120.975821 },
+              { latitude: 14.472212, longitude: 120.975855 },
+              { latitude: 14.472600, longitude: 120.976277 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={1}
+          />
+
+          {/* Apartment Box Polygon Example */}
+          <Polygon
+            coordinates={[
+              { latitude: 14.472172, longitude: 120.975773 },
+              { latitude: 14.472172, longitude: 120.975813 },
+              { latitude: 14.471590, longitude: 120.975545 },
+              { latitude: 14.471620, longitude: 120.975507 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={1}
+          />
+
+          <Polygon
+            coordinates={[
+              { latitude: 14.471570, longitude: 120.975481 },
+              { latitude: 14.471549, longitude: 120.975515 },
+              { latitude: 14.471336, longitude: 120.975333 },
+              { latitude: 14.471367, longitude: 120.975303 },
+            ]}
+            strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={1}
+          />
+
+          
+
+          
+
+          
+
+          {/* Apartment Box 4 (Green) */}
+          <Polygon
+            coordinates={[
+              { latitude: 14.471223, longitude: 120.975358 },
+              { latitude: 14.471188, longitude: 120.975319 },
+              { latitude: 14.471073, longitude: 120.975482 },
+              { latitude: 14.471110, longitude: 120.975502 },
+            ]}
+             strokeColor="rgb(237, 237, 237)"
+            fillColor="rgba(237, 237, 237, 0.5)"
+            strokeWidth={1}
+          />
+
+          {/* Apartment Box 5 */}
+          
         </MapView>
       ) : loading ? (
         <View style={styles.loading}>
