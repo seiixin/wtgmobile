@@ -1,215 +1,229 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import MapView, { Marker, Polygon } from 'react-native-maps';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+  Platform,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
+
+const { width, height } = Dimensions.get('window');
+
+const GOOGLE_MAPS_APIKEY = 'AIzaSyD-WfvI52mgLSrJQWC00LetbkAzgLhncYA';
 
 const Map = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const { grave } = route.params || {};
 
-  // Default coordinates if grave is missing or incomplete
-  const latitude = grave?.latitude || 14.471161;
-  const longitude = grave?.longitude || 120.975398;
+  // Use grave latitude/longitude from API, fallback to default
+  const graveLocation = {
+    latitude: grave?.latitude || 14.471161,
+    longitude: grave?.longitude || 120.975398,
+  };
 
-  // State for user location
   const [userLocation, setUserLocation] = useState(null);
-  const mapRef = useRef(null);
+  const [region, setRegion] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [duration, setDuration] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        let location = await Location.getCurrentPositionAsync({});
-        const coords = {
+    const getLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Permission to access location was denied');
+          setLoading(false);
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const userLoc = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         };
-        setUserLocation(coords);
+        setUserLocation(userLoc);
 
-        // Optionally animate to user location
-        if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            ...coords,
-            latitudeDelta: 0.002,
-            longitudeDelta: 0.002,
-          }, 1000);
-        }
+        const midLat = (userLoc.latitude + graveLocation.latitude) / 2;
+        const midLng = (userLoc.longitude + graveLocation.longitude) / 2;
+        const latDelta = Math.abs(userLoc.latitude - graveLocation.latitude) + 0.002;
+        const lngDelta = Math.abs(userLoc.longitude - graveLocation.longitude) + 0.002;
+
+        setRegion({
+          latitude: midLat,
+          longitude: midLng,
+          latitudeDelta: latDelta,
+          longitudeDelta: lngDelta,
+        });
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Location error:', err);
+        setLoading(false);
       }
-    })();
+    };
+
+    getLocation();
   }, []);
 
-  // Smaller deltas for a closer zoom
-  const latitudeDelta = 0.002;
-  const longitudeDelta = 0.002;
+  const handleNavigate = () => {
+    if (!graveLocation) return;
+
+    const url = Platform.select({
+      ios: `http://maps.apple.com/?daddr=${graveLocation.latitude},${graveLocation.longitude}`,
+      android: `google.navigation:q=${graveLocation.latitude},${graveLocation.longitude}&mode=w`,
+    });
+
+    Linking.openURL(url).catch(err => console.error('Error opening navigation:', err));
+  };
 
   return (
-    <View style={{ flex: 1 }}>
-      <MapView
-        ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
-        initialRegion={{
-          latitude,
-          longitude,
-          latitudeDelta,
-          longitudeDelta,
-        }}
-        minZoomLevel={18}
-        maxZoomLevel={20}
-        zoomEnabled={true}
-        scrollEnabled={true}
-        showsUserLocation={true} 
-      >
-        <Marker
-          coordinate={{ latitude, longitude }}
-          title={grave?.firstName ? `${grave.firstName} ${grave.lastName}` : "Grave Location"}
-          description={grave?.location || ""}
-          pinColor="red"
-        />
-        {userLocation && (
-          <Marker
-            coordinate={userLocation}
-            title="Your Location"
-            pinColor="blue"
-          />
+    <View style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backButtonText}>{'←'}</Text>
+      </TouchableOpacity>
+      {region ? (
+        <MapView
+          style={styles.map}
+          region={region}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+        >
+          <Marker coordinate={graveLocation} title="Grave Location">
+            <Text>🪦</Text>
+          </Marker>
+
+          {userLocation && (
+            <Marker coordinate={userLocation} title="You are here">
+              <Text>📍</Text>
+            </Marker>
+          )}
+
+          {userLocation && (
+            <MapViewDirections
+              origin={userLocation}
+              destination={graveLocation}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={4}
+              strokeColor="#1976D2"
+              mode="WALKING"
+              onReady={result => {
+                setDistance(result.distance);
+                setDuration(result.duration);
+              }}
+              onError={err => console.warn('Directions error:', err)}
+            />
+          )}
+        </MapView>
+      ) : loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="#1976D2" />
+          <Text>Fetching your location...</Text>
+        </View>
+      ) : (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>Unable to fetch GPS. Please enable location.</Text>
+        </View>
+      )}
+
+      {/* Bottom Card */}
+      <View style={styles.bottomCard}>
+        <Text style={styles.name}>
+          {grave?.firstName} {grave?.lastName} {grave?.nickname ? `(${grave.nickname})` : ''}
+        </Text>
+        <Text style={styles.dates}>
+          {grave?.dateOfBirth ? new Date(grave.dateOfBirth).toLocaleDateString() : ''} -{' '}
+          {grave?.burial ? new Date(grave.burial).toLocaleDateString() : ''}
+        </Text>
+        <Text style={styles.location}>
+          {grave?.aptNo ? `Apartment ${grave.aptNo} | ` : ''}
+          {grave?.phase ? `Phase ${grave.phase} | ` : ''}
+          {grave?.block ? `Block ${grave.block}` : ''}
+        </Text>
+        {distance && duration && (
+          <Text style={styles.pathInfo}>
+            Distance: {distance.toFixed(2)} km | Time: {Math.ceil(duration)} min walk
+          </Text>
         )}
-
-        {/* Apartment Box Polygon Example */}
-        <Polygon
-          coordinates={[
-            { latitude: 14.472631, longitude: 120.976238 },
-            { latitude: 14.472241, longitude: 120.975821 },
-            { latitude: 14.472212, longitude: 120.975855},
-            { latitude: 14.472600, longitude: 120.976277 },
-          ]}
-          strokeColor="rgb(237, 237, 237)"
-          fillColor="rgb(237, 237, 237)"
-          strokeWidth={1}
-        />
-
-
-        {/* Apartment Box Polygon Example */}
-        <Polygon
-          coordinates={[
-            { latitude: 14.472172, longitude: 120.975773 },
-            { latitude: 14.472172, longitude: 120.975813 },
-            { latitude: 14.471590, longitude: 120.975545},
-            { latitude: 14.471620, longitude: 120.975507 },
-            
-          ]}
-          strokeColor="rgb(237, 237, 237)"
-          fillColor="rgb(237, 237, 237)"
-          strokeWidth={1}
-        />
-
-        <Polygon
-          coordinates={[
-            { latitude: 14.471570, longitude: 120.975481 },
-            { latitude: 14.471549, longitude: 120.975515 },
-            { latitude: 14.471336, longitude: 120.975333 },
-            { latitude: 14.471367, longitude: 120.975303 },
-            
-          ]}
-          strokeColor="rgb(237, 237, 237)"
-          fillColor="rgb(237, 237, 237)"
-          strokeWidth={1}
-        />
-
-
-        {/* Apartment Box 1 near 14.471146, 120.975215 */}
-  <Polygon
-    coordinates={[
-      { latitude: 14.471084, longitude: 120.975068 },
-      { latitude: 14.471138, longitude: 120.975127 },
-      { latitude: 14.471125, longitude: 120.975140 },
-      { latitude: 14.471071, longitude: 120.975082 },
-    ]}
-    strokeColor="rgb(237, 237, 237)"
-    fillColor="rgb(237, 237, 237)"
-    strokeWidth={1}
-  />
-
-  {/* Apartment Box 2 near 14.471146, 120.975215 */}
-  <Polygon
-    coordinates={[
-      { latitude: 14.471062, longitude: 120.975093 },
-      { latitude: 14.471117, longitude: 120.975148 },
-      { latitude: 14.471103, longitude: 120.975163 },
-      { latitude: 14.471049, longitude: 120.975107 },
-    ]}
-    strokeColor="rgb(237, 237, 237)"
-    fillColor="rgb(237, 237, 237)"
-    strokeWidth={1}
-  />
-
-<Polygon
-    coordinates={[
-      { latitude: 14.471277, longitude: 120.975304 },
-      { latitude: 14.471240, longitude: 120.975338 },
-      { latitude: 14.471127, longitude: 120.975214 },
-      { latitude: 14.471157, longitude: 120.975174 },
-    ]}
-    strokeColor="rgb(237, 237, 237)"
-    fillColor="rgb(237, 237, 237)"
-    strokeWidth={1}
-  />
-
-<Polygon
-    coordinates={[
-      { latitude: 14.471223, longitude: 120.975358 },
-      { latitude: 14.471188, longitude: 120.975319 },
-      { latitude: 14.471073, longitude: 120.975482 },
-      { latitude: 14.471110, longitude: 120.975502 },
-    ]}
-    strokeColor="rgb(67, 209, 1)"
-    fillColor="rgb(67, 209, 1)"
-    strokeWidth={1}
-  />
-
-<Polygon
-    coordinates={[
-      { latitude: 14.471048, longitude: 120.975431 },
-      { latitude: 14.470878, longitude: 120.975287 },
-      { latitude: 14.470854, longitude: 120.975318 },
-      { latitude: 14.471022, longitude: 120.975459 },
-    ]}
-    strokeColor="rgb(237, 237, 237)"
-    fillColor="rgb(237, 237, 237)"
-    strokeWidth={1}
-  />
-
-  
-
-        {/* You can add more Polygon components for more apartment boxes */}
-      </MapView>
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          {grave ? `${grave.firstName || ""} ${grave.lastName || ""}` : "No grave data"}
-        </Text>
-        <Text style={styles.infoText}>
-          {grave?.location || ""}
-        </Text>
+        <TouchableOpacity onPress={handleNavigate} style={styles.navigateButton}>
+          <Text style={styles.navigateButtonText}>🧭 Navigate to Grave</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  infoContainer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 20,
+  container: { flex: 1 },
+  map: {
+    width,
+    height,
   },
-  infoText: {
-    color: 'white',
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 5,
+  },
+  backButtonText: {
+    fontSize: 22,
+    color: '#1976D2',
+    fontWeight: 'bold',
+  },
+  bottomCard: {
+    position: 'absolute',
+    bottom: 0,
+    backgroundColor: '#fff',
+    width: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    elevation: 10,
+  },
+  name: { fontSize: 18, fontWeight: 'bold', marginBottom: 2 },
+  dates: { fontSize: 14, color: '#444' },
+  location: { fontSize: 13, color: '#777' },
+  pathInfo: { fontSize: 13, color: '#1976D2', marginTop: 10 },
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
     fontSize: 16,
+    color: '#f00',
+    paddingHorizontal: 20,
     textAlign: 'center',
+  },
+  navigateButton: {
+    marginTop: 15,
+    backgroundColor: '#1976D2',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  navigateButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 
