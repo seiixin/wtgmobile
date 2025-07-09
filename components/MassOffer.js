@@ -8,8 +8,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Make sure this is imported
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
+import { Buffer } from 'buffer';
 
 const { width, height } = Dimensions.get('window');
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -23,6 +25,9 @@ const MassOffer = () => {
         { label: 'Tagalog', value: 'tagalog' }
     ]);
     const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentAudio, setCurrentAudio] = useState(null);
+    const isPlayingRef = useRef(false);
     const slideAnim = useRef(new Animated.Value(600)).current;
     const navigation = useNavigation();
 
@@ -112,20 +117,99 @@ Amen.`,
     }, []);
 
     // Add this function for TTS
-    const speakPrayer = () => {
+    const speakPrayer = async () => {
         if (language !== 'Choose Language') {
-            const prayer = [
-                prayers[language].signOfTheCross,
-                prayers[language].prayer,
-                prayers[language].prayer2
-            ].join(' ');
-            Speech.speak(prayer, {
-                language: language === 'english' ? 'en-US' : 'fil-PH',
-                rate: 0.95,
-                pitch: 1.1,
+            const prayerTexts = [
+                prayers[language]?.signOfTheCross,
+                prayers[language]?.prayer,
+                prayers[language]?.prayer2
+            ].filter(Boolean); // Remove undefined/empty
+            setIsPlaying(true);
+            isPlayingRef.current = true;
+            try {
+                for (const text of prayerTexts) {
+                    if (!isPlayingRef.current) break;
+                    await playGoogleTTS(text, 0);
+                }
+            } catch (error) {
+                // Optionally handle error
+            } finally {
+                setIsPlaying(false);
+                isPlayingRef.current = false;
+            }
+        }
+    };
+
+    const playGoogleTTS = async (text, pauseDuration = 500) => {
+        try {
+            const response = await fetch(`${BASE_URL}/api/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text,
+                    languageCode: language === 'english' ? 'en-US' : 'fil-PH',
+                    voiceName: language === 'english' ? 'en-US-Standard-J' : 'fil-PH-Wavenet-D'
+                }),
+            });
+
+            if (!response.ok) throw new Error('TTS request failed');
+
+            const audioArrayBuffer = await response.arrayBuffer();
+            const audioBase64 = Buffer.from(audioArrayBuffer).toString('base64');
+            const audioUri = `data:audio/mp3;base64,${audioBase64}`;
+
+            const { sound } = await Audio.Sound.createAsync(
+                { uri: audioUri },
+                { shouldPlay: true }
+            );
+            setCurrentAudio(sound);
+
+            return new Promise((resolve) => {
+                sound.setOnPlaybackStatusUpdate((status) => {
+                    if (status.didJustFinish) {
+                        sound.unloadAsync();
+                        setTimeout(resolve, pauseDuration);
+                    }
+                });
+            });
+        } catch (error) {
+            // Fallback to expo-speech
+            return new Promise((resolve) => {
+                Speech.speak(text, {
+                    language: language === 'english' ? 'en-US' : 'fil-PH',
+                    rate: 0.95,
+                    pitch: 1.1,
+                    onDone: () => setTimeout(resolve, pauseDuration),
+                    onError: () => resolve()
+                });
             });
         }
     };
+
+    const stopPrayer = async () => {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        if (currentAudio) {
+            await currentAudio.stopAsync();
+            await currentAudio.unloadAsync();
+            setCurrentAudio(null);
+        }
+        await Speech.stop();
+    };
+
+    useEffect(() => {
+        const requestAudioPermissions = async () => {
+            await Audio.requestPermissionsAsync();
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: false,
+                staysActiveInBackground: false,
+                playsInSilentModeIOS: true,
+                shouldDuckAndroid: true,
+                playThroughEarpieceAndroid: false,
+            });
+        };
+        requestAudioPermissions();
+    }, []);
 
     return (
         <>
@@ -175,7 +259,13 @@ Amen.`,
         <ImageBackground source={require('../assets/OfferBg.png')} style={styles.background}>
             {/* Header with Back Button */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity
+                    onPress={async () => {
+                        await stopPrayer();
+                        navigation.goBack();
+                    }}
+                    style={styles.backButton}
+                >
                     <Ionicons name="arrow-back" size={wp('7%')} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Mass Intentions</Text>
@@ -252,26 +342,31 @@ Amen.`,
                                         alignItems: 'center'
                                     }}
                                     onPress={speakPrayer}
+                                    disabled={isPlaying}
                                 >
                                     <Ionicons name="volume-high" size={22} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Read Prayers Aloud</Text>
+                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                                        {isPlaying ? 'Playing...' : 'Read Prayers Aloud'}
+                                    </Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={{
-                                        alignSelf: 'center',
-                                        backgroundColor: '#8B0000',
-                                        borderRadius: 20,
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 8,
-                                        marginBottom: 16,
-                                        flexDirection: 'row',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={() => Speech.stop()}
-                                >
-                                    <Ionicons name="stop" size={22} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Stop Reading</Text>
-                                </TouchableOpacity>
+                                {isPlaying && (
+                                    <TouchableOpacity
+                                        style={{
+                                            alignSelf: 'center',
+                                            backgroundColor: '#8B0000',
+                                            borderRadius: 20,
+                                            paddingHorizontal: 12,
+                                            paddingVertical: 8,
+                                            marginBottom: 16,
+                                            flexDirection: 'row',
+                                            alignItems: 'center'
+                                        }}
+                                        onPress={stopPrayer}
+                                    >
+                                        <Ionicons name="stop" size={22} color="#fff" style={{ marginRight: 8 }} />
+                                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Stop Reading</Text>
+                                    </TouchableOpacity>
+                                )}
                                 {/* Prayers */}
                                 <Text style={styles.prayerTitle}>The Sign of the Cross</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.signOfTheCross ?? 'Choose Language'}</Text>

@@ -34,3 +34,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Google Cloud service account key
+inner-bonus-465405-f3-008391c55b91.json

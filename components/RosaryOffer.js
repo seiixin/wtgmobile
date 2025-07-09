@@ -10,6 +10,9 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { RFValue } from 'react-native-responsive-fontsize';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
+import { encode as btoa } from 'base-64';
+import { Buffer } from 'buffer';
 
 const { width, height } = Dimensions.get('window');
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -23,6 +26,9 @@ const RosaryOffer = () => {
         { label: 'Tagalog', value: 'tagalog' }
     ]);
     const [accountRemovedModal, setAccountRemovedModal] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentAudio, setCurrentAudio] = useState(null);
+    const isPlayingRef = useRef(false);
 
     const slideAnim = useRef(new Animated.Value(600)).current;
     const navigation = useNavigation();
@@ -75,21 +81,121 @@ const RosaryOffer = () => {
         return () => clearInterval(intervalId);
     }, []);
 
-    // Replace the speakPrayer function with:
-    const speakPrayer = () => {
+    const speakPrayer = async () => {
+        console.log('speakPrayer called');
+        console.log('language:', language);
         if (language !== 'Choose Language') {
-            const prayer = [
-                prayers[language].signOfTheCross,
-                prayers[language].apostlesCreed,
-                prayers[language].ourFather
-            ].join(' ');
-            Speech.speak(prayer, {
-                language: language === 'english' ? 'en-US' : 'fil-PH',
-                rate: 0.95,
-                pitch: 1.1,
-            });
+            const prayerTexts = [
+                { title: 'The Sign of the Cross', text: prayers[language]?.signOfTheCross },
+                { title: 'The Apostles\' Creed', text: prayers[language]?.apostlesCreed },
+                { title: 'The Our Father', text: prayers[language]?.ourFather }
+            ];
+            console.log('prayerTexts:', prayerTexts);
+            setIsPlaying(true);
+            isPlayingRef.current = true;
+            try {
+                for (const prayer of prayerTexts) {
+                    if (!isPlayingRef.current) break;
+                    console.log('Playing:', prayer.title);
+                    await playGoogleTTS(prayer.text, 0);
+                }
+            } catch (error) {
+                console.log('Prayer error:', error);
+            } finally {
+                setIsPlaying(false);
+                isPlayingRef.current = false;
+            }
+        } else {
+            console.log('No language selected');
         }
     };
+
+    const playGoogleTTS = async (text, pauseDuration = 2000) => {
+        console.log('playGoogleTTS called for:', text.slice(0, 30));
+                try {
+                    console.log('Requesting TTS for:', text);
+                    const response = await fetch(`${BASE_URL}/api/tts`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        text,
+                        languageCode: language === 'english' ? 'en-US' : 'fil-PH',
+                        voiceName: language === 'english' ? 'en-US-Standard-I' : 'fil-PH-Wavenet-D'
+                    }),
+                    });
+
+                    if (!response.ok) {
+                        console.log('TTS request failed:', response.status);
+                        throw new Error('TTS request failed');
+                    }
+
+                    const audioArrayBuffer = await response.arrayBuffer();
+                    console.log('Received audio buffer:', audioArrayBuffer.byteLength);
+
+                    const audioBase64 = Buffer.from(audioArrayBuffer).toString('base64');
+                    const audioUri = `data:audio/mp3;base64,${audioBase64}`;
+                    console.log('Audio URI:', audioUri.slice(0, 100)); // Log first 100 chars
+
+                    const { sound } = await Audio.Sound.createAsync(
+                        { uri: audioUri },
+                        { shouldPlay: true }
+                    );
+                    console.log('Audio loaded and playing');
+
+                    setCurrentAudio(sound);
+
+                    return new Promise((resolve) => {
+                        sound.setOnPlaybackStatusUpdate((status) => {
+                            if (status.didJustFinish) {
+                                sound.unloadAsync();
+                                setTimeout(resolve, pauseDuration);
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    console.error('TTS Error:', error);
+                    // Fallback to expo-speech
+                    return new Promise((resolve) => {
+                        Speech.speak(text, {
+                            language: language === 'english' ? 'en-US' : 'fil-PH',
+                            rate: 0.9,
+                            pitch: 0.80,
+                            volume: 0.9,
+                            onDone: () => setTimeout(resolve, pauseDuration),
+                            onError: () => resolve()
+                        });
+                    });
+                }
+            };
+
+    const stopPrayer = async () => {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        // Stop current audio
+        if (currentAudio) {
+            await currentAudio.stopAsync();
+            await currentAudio.unloadAsync();
+            setCurrentAudio(null);
+        }
+        // Stop expo-speech as fallback
+        await Speech.stop();
+    };
+
+    useEffect(() => {
+        const requestAudioPermissions = async () => {
+            await Audio.requestPermissionsAsync();
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: false,
+                staysActiveInBackground: false,
+                playsInSilentModeIOS: true,
+                shouldDuckAndroid: true,
+                playThroughEarpieceAndroid: false,
+            });
+        };
+
+        requestAudioPermissions();
+    }, []);
 
     return (
         <>
@@ -139,7 +245,13 @@ const RosaryOffer = () => {
         <ImageBackground source={require('../assets/OfferBg.png')} style={styles.background}>
             {/* Header with Back Button */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity
+                    onPress={async () => {
+                        await stopPrayer();
+                        navigation.goBack();
+                    }}
+                    style={styles.backButton}
+                >
                     <Ionicons name="arrow-back" size={wp('7%')} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Prayers of the Holy Rosary</Text>
@@ -202,46 +314,49 @@ const RosaryOffer = () => {
                     <ImageBackground source={require('../assets/prayer_bg.png')} style={styles.prayerBackground}>
                         <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
                             <View style={styles.prayers}>
-                                {/* TTS Button */}
+                                {/* Read Aloud Button at the TOP */}
                                 <TouchableOpacity
                                     style={{
                                         alignSelf: 'center',
-                                        backgroundColor: '#006400',
-                                        borderRadius: 28,
-                                        paddingHorizontal: 36,
-                                        paddingVertical: 14,
                                         marginBottom: 20,
+                                        backgroundColor: '#006400',
+                                        borderRadius: 20,
+                                        padding: 12,
                                         flexDirection: 'row',
                                         alignItems: 'center'
                                     }}
                                     onPress={speakPrayer}
+                                    disabled={isPlaying}
                                 >
-                                    <Ionicons name="volume-high" size={28} color="#fff" style={{ marginRight: 12 }} />
-                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 20 }}>Read Prayers Aloud</Text>
+                                    <Ionicons name="volume-high" size={18} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                                        {isPlaying ? 'Playing...' : 'Read All Aloud'}
+                                    </Text>
                                 </TouchableOpacity>
-                                {/* Add this Stop Button below */}
-                                <TouchableOpacity
-                                    style={{
-                                        alignSelf: 'center',
-                                        backgroundColor: '#8B0000',
-                                        borderRadius: 20,
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 8,
-                                        marginBottom: 16,
-                                        flexDirection: 'row',
-                                        alignItems: 'center'
-                                    }}
-                                    onPress={() => Speech.stop()}
-                                >
-                                    <Ionicons name="stop" size={22} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Stop Reading</Text>
-                                </TouchableOpacity>
+                                {isPlaying && (
+                                    <TouchableOpacity
+                                        style={{
+                                            alignSelf: 'center',
+                                            marginBottom: 10,
+                                            backgroundColor: '#a00',
+                                            borderRadius: 20,
+                                            padding: 12,
+                                            flexDirection: 'row',
+                                            alignItems: 'center'
+                                        }}
+                                        onPress={stopPrayer}
+                                    >
+                                        <Ionicons name="stop" size={18} color="#fff" style={{ marginRight: 8 }} />
+                                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                                            Stop
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                                {/* Prayers */}
                                 <Text style={styles.prayerTitle}>The Sign of the Cross</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.signOfTheCross ?? 'Choose Language'}</Text>
-
                                 <Text style={styles.prayerTitle}>The Apostles' Creed</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.apostlesCreed ?? ''}</Text>
-
                                 <Text style={styles.prayerTitle}>The Our Father</Text>
                                 <Text style={styles.prayerText}>{prayers[language]?.ourFather ?? ''}</Text>
                             </View>
