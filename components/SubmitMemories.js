@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +53,9 @@ const templateConfigs = {
 
 export default function SubmitMemories() {
   const navigation = useNavigation();
+  const route = useRoute(); // Add this import at the top
+  const { grave } = route.params || {}; // Get the grave data passed from GraveInformation
+  
   const [step, setStep] = useState(1);
   const [selectedTemplate, setSelectedTemplate] = useState(Object.keys(templateConfigs)[0]);
   const [form, setForm] = useState({
@@ -60,47 +64,173 @@ export default function SubmitMemories() {
     burial: '',
     message1: '',
     caption2: '',
-    images: [],
+    images: [null, null, null, null, null],
     video: null,
     messages: [],
   });
+  const [uploading, setUploading] = useState(false);
 
-  // Dummy templates for illustration
-  const templates = [
-    { id: 1, img: require('../assets/template1.png') },
-    { id: 2, img: require('../assets/template2.png') },
-    { id: 3, img: require('../assets/template3.png') },
-    { id: 4, img: require('../assets/template4.png') },
-    { id: 5, img: require('../assets/template5.png') }, 
-  ];
+  useEffect(() => {
+    (async () => {
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    })();
+  }, []);
 
-  const templateRows = chunkArray(templates, 2);
+  // Auto-fill form with grave data when component mounts
+  useEffect(() => {
+    if (grave) {
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        } catch (error) {
+          return dateString; // Return original if formatting fails
+        }
+      };
 
+      setForm(prevForm => ({
+        ...prevForm,
+        name: `${grave.firstName || ''}${grave.nickname ? ` '${grave.nickname}'` : ''} ${grave.lastName || ''}`.trim(),
+        birth: formatDate(grave.dateOfBirth),
+        burial: formatDate(grave.burial),
+      }));
+    }
+  }, [grave]);
+
+  // Consolidated image picker function
+  const pickImage = async (index) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const newImages = [...form.images];
+      newImages[index] = result.assets[0];
+      setForm({ ...form, images: newImages });
+    }
+  };
+
+  // Fixed video picker function
+  const pickVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setForm({ ...form, video: result.assets[0] });
+    }
+  };
+
+  // Add missing template data
+  const templateRows = chunkArray([
+    { id: '1', img: require('../assets/template1.png') },
+    { id: '2', img: require('../assets/template2.png') },
+    { id: '3', img: require('../assets/template3.png') },
+    { id: '4', img: require('../assets/template4.png') },
+    { id: '5', img: require('../assets/template5.png') },
+  ], 2);
+
+  // Add missing header function
   const renderHeader = () => (
-    <View style={styles.topBarBg}>
+    <LinearGradient
+      colors={['#ffef5d', '#7ed597']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.topBarBg}
+    >
       <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={() => {
-            if (step > 1) {
-              setStep(step - 1);
-            } else {
-              navigation.goBack();
-            }
-          }}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="black"
-            style={{ marginLeft: width * 0.02, marginTop: height * 0.01 }}
-          />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          Submit Memories
-        </Text>
+        <Text style={styles.headerTitle}>Submit Memories</Text>
       </View>
-    </View>
+    </LinearGradient>
   );
+
+  // Fixed submit handler with proper FormData handling
+  const handleSubmit = async () => {
+    setUploading(true);
+    
+    try {
+      const data = new FormData();
+      data.append('name', form.name);
+      data.append('birth', form.birth);
+      data.append('burial', form.burial);
+      data.append('template', selectedTemplate);
+      
+      // Add messages as JSON string or individual fields
+      form.messages.forEach((msg, idx) => {
+        if (msg) {
+          data.append(`messages[${idx}]`, msg);
+        }
+      });
+
+      // Add images - FIXED: Use correct format for React Native
+      form.images.forEach((img, idx) => {
+        if (img && img.uri) {
+          data.append('images', {
+            uri: img.uri,
+            name: `image_${idx}.jpg`,
+            type: 'image/jpeg',
+          });
+        }
+      });
+
+      // Add video - FIXED: Use correct format for React Native
+      if (form.video && form.video.uri) {
+        data.append('video', {
+          uri: form.video.uri,
+          name: 'video.mp4',
+          type: 'video/mp4',
+        });
+      }
+
+      console.log('Submitting data:', data); // Debug log
+
+      const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/memories', {
+        method: 'POST',
+        // DON'T set Content-Type header - let fetch handle it
+        body: data,
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Memory submitted successfully!');
+        navigation.goBack();
+      } else {
+        console.error('Server error:', result);
+        alert(result.error || 'Submission failed');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert('Error submitting memory. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Step 1: Select Template
   if (step === 1) {
@@ -155,7 +285,7 @@ export default function SubmitMemories() {
     );
   }
 
-  // Step 2: Enter Details
+  // Step 2: Enter Details (modified to show auto-filled data)
   if (step === 2) {
     const selectedConfig = templateConfigs[selectedTemplate];
 
@@ -174,22 +304,27 @@ export default function SubmitMemories() {
         <Text style={styles.sectionTitle}>
           Provide the full name of your loved one to personalize the memorial page.
         </Text>
+        {grave && (
+          <Text style={styles.autoFillNote}>
+            *Information auto-filled from grave data
+          </Text>
+        )}
         <View style={styles.inputGroup}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, grave && styles.autoFilledInput]}
             placeholder="Enter name of the deceased"
             value={form.name}
             onChangeText={name => setForm({ ...form, name })}
           />
           <View style={styles.row}>
             <TextInput
-              style={[styles.input, { flex: 1, marginRight: 8 }]}
+              style={[styles.input, { flex: 1, marginRight: 8 }, grave && styles.autoFilledInput]}
               placeholder="Date of Birth"
               value={form.birth}
               onChangeText={birth => setForm({ ...form, birth })}
             />
             <TextInput
-              style={[styles.input, { flex: 1 }]}
+              style={[styles.input, { flex: 1 }, grave && styles.autoFilledInput]}
               placeholder="Date of Burial"
               value={form.burial}
               onChangeText={burial => setForm({ ...form, burial })}
@@ -242,24 +377,34 @@ export default function SubmitMemories() {
           *You can upload photos up to 5 MB (recommended max size) and videos up to 50 MB or around 1-2 minutes long.
         </Text>
         <View style={styles.uploadRow}>
-          <TouchableOpacity style={styles.uploadBtn}><Text>Image 1</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.uploadBtn}><Text>Image 2</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => pickImage(0)}>
+            <Text>{form.images[0]?.uri ? '✓ Image 1' : 'Image 1'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => pickImage(1)}>
+            <Text>{form.images[1]?.uri ? '✓ Image 2' : 'Image 2'}</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.uploadRow}>
-          <TouchableOpacity style={styles.uploadBtn}><Text>Image 3</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.uploadBtn}><Text>Video 4</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => pickImage(2)}>
+            <Text>{form.images[2]?.uri ? '✓ Image 3' : 'Image 3'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.uploadBtn} onPress={pickVideo}>
+            <Text>{form.video?.uri ? '✓ Video 4' : 'Video 4'}</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.uploadRow}>
-          <TouchableOpacity style={styles.uploadBtn}><Text>Image 5</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.uploadBtn} onPress={() => pickImage(3)}>
+            <Text>{form.images[3]?.uri ? '✓ Image 5' : 'Image 5'}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.gradientSubmitBtn}>
+        <TouchableOpacity style={styles.gradientSubmitBtn} onPress={handleSubmit} disabled={uploading}>
           <LinearGradient
             colors={['#ffef5d', '#7ed597']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.gradientBtnBg}
           >
-            <Text style={styles.submitBtnText}>Submit</Text>
+            <Text style={styles.submitBtnText}>{uploading ? 'Submitting...' : 'Submit'}</Text>
             <Text style={styles.submitArrow}>{'>'}</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -339,7 +484,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 15, color: '#222', marginVertical: 10, alignSelf: 'flex-start' },
   inputGroup: { width: '100%', marginBottom: 8 },
-  autoFillNote: { color: 'red', fontSize: 12, marginLeft: 4, marginTop: -8, marginBottom: 8, alignSelf: 'flex-end' },
+  autoFillNote: {
+    color: '#4CAF50',
+    fontSize: 12,
+    marginLeft: 4,
+    marginTop: -8,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+    fontStyle: 'italic',
+  },
   uploadNote: {
     color: '#e57373',
     fontSize: 11,
@@ -410,5 +563,9 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 12,
     resizeMode: 'contain',
+  },
+  autoFilledInput: {
+    backgroundColor: '#f0f8ff',
+    borderColor: '#4CAF50',
   },
 });

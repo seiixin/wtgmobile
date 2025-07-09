@@ -13,7 +13,12 @@ const otpRoutes = require('./routes/otpRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const ttsRoutes = require('./routes/ttsRoutes');
+const cemeteryInfoRoutes = require('./routes/cemeteryInfoRoutes');
+const burialServiceRoutes = require('./routes/burialServiceRoutes');
+const maintenanceServiceRoutes = require('./routes/maintenanceServiceRoutes');
 const candleRoutes = require('./routes/candleRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
+const memoryRoutes = require('./routes/memoryRoutes');
 
 dotenv.config();
 
@@ -51,4 +56,9 @@ app.use('/api/otp', otpRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/tts', ttsRoutes);
+app.use('/api/cemeteryinfo', cemeteryInfoRoutes);
+app.use('/api/burial-services', burialServiceRoutes);
+app.use('/api/maintenance-services', maintenanceServiceRoutes);
 app.use('/api/candles', candleRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/memories', memoryRoutes);
