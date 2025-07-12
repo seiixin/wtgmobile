@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -172,14 +173,22 @@ export default function SubmitMemories() {
   // Fixed submit handler with proper FormData handling
   const handleSubmit = async () => {
     setUploading(true);
-    
+
     try {
+      // Get user info from AsyncStorage
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+
       const data = new FormData();
       data.append('name', form.name);
       data.append('birth', form.birth);
       data.append('burial', form.burial);
       data.append('template', selectedTemplate);
-      
+
+      // Add user info
+      if (userEmail) data.append('email', userEmail);
+      if (userAvatar) data.append('avatar', userAvatar);
+
       // Add messages as JSON string or individual fields
       form.messages.forEach((msg, idx) => {
         if (msg) {

@@ -47,6 +47,11 @@ const SignIn = () => {
       const data = await response.json();
 
       if (data.user && data.user._id) {
+        // Save user info to AsyncStorage
+        await AsyncStorage.setItem("userId", data.user._id);
+        await AsyncStorage.setItem("userEmail", data.user.email); // <-- Add this
+        await AsyncStorage.setItem("userAvatar", data.user.avatar || ""); // <-- Add this (make sure backend sends avatar URL)
+
         const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
         if (savedTime) {
           const remainingTime = parseInt(savedTime, 10) - Math.floor(Date.now() / 1000);
@@ -57,8 +62,6 @@ const SignIn = () => {
             await AsyncStorage.removeItem(`verificationTimer_${email}`);
           }
         }
-
-        await AsyncStorage.setItem("userId", data.user._id);
 
         const otpResponse = await fetch(`${BASE_URL}/api/otp/send-otp`, {
           method: "POST",
