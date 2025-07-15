@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { createMemory, getMemories } = require('../controllers/memoryController');
+const { createMemory, getMemories, getMemoryById, approveMemory } = require('../controllers/memoryController'); // Add approveMemory
 
 // Multer config for file uploads
 const storage = multer.diskStorage({});
@@ -19,5 +19,8 @@ router.post(
 
 // GET /api/memories - list all memories
 router.get('/', getMemories);
+
+// GET /api/memories/:id - get specific memory
+router.get('/:id', getMemoryById);
 
 module.exports = router;

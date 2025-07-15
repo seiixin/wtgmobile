@@ -5,6 +5,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
+
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const serviceRequestRoutes = require('./routes/serviceRequestRoutes');
@@ -19,6 +20,7 @@ const maintenanceServiceRoutes = require('./routes/maintenanceServiceRoutes');
 const candleRoutes = require('./routes/candleRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
+const templateRoutes = require('./routes/templateRoutes'); // Add this line
 
 dotenv.config();
 
@@ -62,3 +64,4 @@ app.use('/api/maintenance-services', maintenanceServiceRoutes);
 app.use('/api/candles', candleRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/memories', memoryRoutes);
+app.use('/api/templates', templateRoutes); // Add this line
