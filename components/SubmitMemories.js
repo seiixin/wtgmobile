@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Button } from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -7,69 +7,56 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
-
-const templateConfigs = {
-  1: {
-    image: require('../assets/template1.png'),
-    messages: [
-      { placeholder: 'Enter short description / message [1]' },
-      { placeholder: 'Enter short caption [2]' },
-    ],
-  },
-  2: {
-    image: require('../assets/template2.png'),
-    messages: [
-      { placeholder: 'Enter short description / message [1]' },
-      { placeholder: 'Enter short caption [2]' },
-      { placeholder: 'Enter short description / message [3]' },
-      { placeholder: 'Enter short caption [4]' },
-    ],
-  },
-  3: {
-    image: require('../assets/template3.png'),
-    messages: [
-      { placeholder: 'Enter short description / message [1]' },
-      { placeholder: 'Enter short caption [2]' },
-      { placeholder: 'Enter short description / message [3]' },
-      { placeholder: 'Enter short caption [4]' },
-    ],
-  },
-  4: {
-    image: require('../assets/template4.png'),
-    messages: [
-      { placeholder: 'Enter short description / message [1]' },
-      { placeholder: 'Enter short description / message [2]' },
-      { placeholder: 'Enter short description / message [3]' },
-      { placeholder: 'Enter bible verse / short title [4]' },
-    ],
-  },
-  5: {
-    image: require('../assets/template5.png'), // Make sure this path is correct!
-    messages: [
-      { placeholder: 'Enter bible verse / short title [1]' },
-      { placeholder: 'Enter short description / message [2]' },
-    ],
-  },
-};
+const BASE_URL = 'https://walktogravemobile-backendserver.onrender.com';
 
 export default function SubmitMemories() {
   const navigation = useNavigation();
-  const route = useRoute(); // Add this import at the top
-  const { grave } = route.params || {}; // Get the grave data passed from GraveInformation
+  const route = useRoute();
+  const { grave } = route.params || {};
   
   const [step, setStep] = useState(1);
-  const [selectedTemplate, setSelectedTemplate] = useState(Object.keys(templateConfigs)[0]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     name: '',
     birth: '',
     burial: '',
-    message1: '',
-    caption2: '',
     images: [null, null, null, null, null],
     video: null,
-    messages: [],
+    messages: [], // Dynamic messages based on template
   });
   const [uploading, setUploading] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+
+  // ✅ Fetch dynamic templates from backend
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${BASE_URL}/api/templates`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setTemplates(data);
+          // Auto-select first template
+          if (data.length > 0) {
+            setSelectedTemplate(data[0]._id);
+          }
+        } else {
+          console.error('Failed to fetch templates:', data);
+          alert('Failed to load templates. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error fetching templates:', error);
+        alert('Error loading templates. Please check your connection.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -90,7 +77,7 @@ export default function SubmitMemories() {
             day: 'numeric'
           });
         } catch (error) {
-          return dateString; // Return original if formatting fails
+          return dateString;
         }
       };
 
@@ -103,7 +90,38 @@ export default function SubmitMemories() {
     }
   }, [grave]);
 
-  // Consolidated image picker function
+  // ✅ Initialize messages array when template changes
+  useEffect(() => {
+    if (selectedTemplate) {
+      // Start with 2 messages for all templates (can add more later)
+      const initialMessages = ['', ''];
+      setForm(prev => ({ ...prev, messages: initialMessages }));
+    }
+  }, [selectedTemplate]);
+
+  const getTemplateMessages = () => {
+    // Generate placeholders based on current number of messages
+    return form.messages.map((_, index) => ({
+      placeholder: index % 2 === 0 
+        ? `Enter short message [${index + 1}]`
+        : `Enter short message [${index + 1}]`
+    }));
+  };
+
+  const addMessage = () => {
+    if (form.messages.length < 4) { // Maximum 4 messages
+      const newMessages = [...form.messages, ''];
+      setForm({ ...form, messages: newMessages });
+    }
+  };
+
+  const removeMessage = (indexToRemove) => {
+    if (form.messages.length > 2) { // Keep at least 2 messages
+      const newMessages = form.messages.filter((_, index) => index !== indexToRemove);
+      setForm({ ...form, messages: newMessages });
+    }
+  };
+
   const pickImage = async (index) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -125,7 +143,6 @@ export default function SubmitMemories() {
     }
   };
 
-  // Fixed video picker function
   const pickVideo = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -144,16 +161,6 @@ export default function SubmitMemories() {
     }
   };
 
-  // Add missing template data
-  const templateRows = chunkArray([
-    { id: '1', img: require('../assets/template1.png') },
-    { id: '2', img: require('../assets/template2.png') },
-    { id: '3', img: require('../assets/template3.png') },
-    { id: '4', img: require('../assets/template4.png') },
-    { id: '5', img: require('../assets/template5.png') },
-  ], 2);
-
-  // Add missing header function
   const renderHeader = () => (
     <LinearGradient
       colors={['#ffef5d', '#7ed597']}
@@ -170,12 +177,11 @@ export default function SubmitMemories() {
     </LinearGradient>
   );
 
-  // Fixed submit handler with proper FormData handling
+  // ✅ Fixed submit handler with proper FormData handling
   const handleSubmit = async () => {
     setUploading(true);
 
     try {
-      // Get user info from AsyncStorage
       const userEmail = await AsyncStorage.getItem("userEmail");
       const userAvatar = await AsyncStorage.getItem("userAvatar");
 
@@ -183,20 +189,37 @@ export default function SubmitMemories() {
       data.append('name', form.name);
       data.append('birth', form.birth);
       data.append('burial', form.burial);
-      data.append('template', selectedTemplate);
+      data.append('template', selectedTemplate); // This is now the template _id
 
-      // Add user info
       if (userEmail) data.append('email', userEmail);
       if (userAvatar) data.append('avatar', userAvatar);
 
-      // Add messages as JSON string or individual fields
-      form.messages.forEach((msg, idx) => {
-        if (msg) {
-          data.append(`messages[${idx}]`, msg);
+      // ✅ FIXED: Proper message handling
+      console.log('Raw form.messages:', form.messages);
+      console.log('Form.messages type:', typeof form.messages);
+      console.log('Form.messages isArray:', Array.isArray(form.messages));
+      
+      const validMessages = [];
+      
+      // Safety check: ensure form.messages is an array
+      const messagesArray = Array.isArray(form.messages) ? form.messages : [];
+      
+      messagesArray.forEach((msg, index) => {
+        console.log(`Processing message ${index}:`, msg, typeof msg);
+        if (msg && typeof msg === 'string' && msg.trim()) {
+          validMessages.push(msg.trim());
+          console.log(`Added valid message ${index}:`, msg.trim());
         }
       });
+      
+      console.log('Sending messages:', validMessages);
+      console.log('Valid messages count:', validMessages.length);
+      
+      validMessages.forEach((msg, idx) => {
+        console.log(`Appending message[${idx}]:`, msg);
+        data.append(`messages[${idx}]`, msg);
+      });
 
-      // Add images - FIXED: Use correct format for React Native
       form.images.forEach((img, idx) => {
         if (img && img.uri) {
           data.append('images', {
@@ -207,7 +230,6 @@ export default function SubmitMemories() {
         }
       });
 
-      // Add video - FIXED: Use correct format for React Native
       if (form.video && form.video.uri) {
         data.append('video', {
           uri: form.video.uri,
@@ -216,11 +238,13 @@ export default function SubmitMemories() {
         });
       }
 
-      console.log('Submitting data:', data); // Debug log
+      console.log('FormData being sent:');
+      for (let [key, value] of data.entries()) {
+        console.log(key, value);
+      }
 
-      const response = await fetch('https://walktogravemobile-backendserver.onrender.com/api/memories', {
+      const response = await fetch(`${BASE_URL}/api/memories`, {
         method: 'POST',
-        // DON'T set Content-Type header - let fetch handle it
         body: data,
       });
 
@@ -241,8 +265,21 @@ export default function SubmitMemories() {
     }
   };
 
-  // Step 1: Select Template
+  // Show loading while fetching templates
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        {renderHeader()}
+        <ActivityIndicator size="large" color="#7ed597" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading templates...</Text>
+      </View>
+    );
+  }
+
+  // Step 1: Select Template (Dynamic Templates)
   if (step === 1) {
+    const templateRows = chunkArray(templates, 2);
+
     return (
       <View style={styles.container}>
         {renderHeader()}
@@ -262,19 +299,25 @@ export default function SubmitMemories() {
                   marginBottom: 24,
                 }}
               >
-                {row.map((t, colIndex) => (
+                {row.map((template) => (
                   <TouchableOpacity
-                    key={t.id}
+                    key={template._id}
                     style={[
                       styles.templateBox,
-                      selectedTemplate === t.id && styles.selectedTemplate,
+                      selectedTemplate === template._id && styles.selectedTemplate,
                       { marginHorizontal: 12 }
                     ]}
-                    onPress={() => setSelectedTemplate(t.id)}
+                    onPress={() => setSelectedTemplate(template._id)}
                     activeOpacity={0.8}
                   >
-                    <Image source={t.img} style={styles.templateImg} />
-                    {selectedTemplate === t.id && (
+                    <Image 
+                      source={{ uri: template.previewImage }} 
+                      style={styles.templateImg} 
+                    />
+                    <View style={styles.templateNumber}>
+                      <Text style={styles.templateNumberText}>{template.templateNumber}</Text>
+                    </View>
+                    {selectedTemplate === template._id && (
                       <View style={styles.checkCircle}><Text>✓</Text></View>
                     )}
                   </TouchableOpacity>
@@ -294,22 +337,77 @@ export default function SubmitMemories() {
     );
   }
 
-  // Step 2: Enter Details (modified to show auto-filled data)
+  // Add function to render full screen template modal
+  const renderTemplateModal = () => {
+    const selectedTemplateObj = templates.find(t => t._id === selectedTemplate);
+    
+    return (
+      <Modal
+        visible={showTemplateModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTemplateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity 
+              style={styles.modalCloseBtn}
+              onPress={() => setShowTemplateModal(false)}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+            
+            <Text style={styles.modalTitle}>Template {selectedTemplateObj?.templateNumber}</Text>
+            
+            {selectedTemplateObj && (
+              <Image
+                source={{ uri: selectedTemplateObj.previewImage }}
+                style={styles.fullScreenTemplateImg}
+                resizeMode="contain"
+              />
+            )}
+            
+            <TouchableOpacity 
+              style={styles.modalBackBtn}
+              onPress={() => setShowTemplateModal(false)}
+            >
+              <Text style={styles.modalBackText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // Step 2: Enter Details
   if (step === 2) {
-    const selectedConfig = templateConfigs[selectedTemplate];
+    const selectedTemplateObj = templates.find(t => t._id === selectedTemplate);
+    const templateMessages = getTemplateMessages();
 
     return (
       <ScrollView contentContainerStyle={styles.container}>
         {renderHeader()}
-        <Text style={styles.selectedText}>You selected template {selectedTemplate}:</Text>
-        <View style={styles.templatePreviewBox}>
-          {selectedConfig && (
+        {renderTemplateModal()}
+        
+        <Text style={styles.selectedText}>You selected template {selectedTemplateObj?.templateNumber}:</Text>
+        
+        {/* Make template preview clickable */}
+        <TouchableOpacity 
+          style={styles.templatePreviewBox}
+          onPress={() => setShowTemplateModal(true)}
+          activeOpacity={0.8}
+        >
+          {selectedTemplateObj && (
             <Image
-              source={selectedConfig.image}
+              source={{ uri: selectedTemplateObj.previewImage }}
               style={styles.templateImg}
             />
           )}
-        </View>
+          <View style={styles.viewFullscreenHint}>
+            <Text style={styles.viewFullscreenText}>Tap to view full size</Text>
+          </View>
+        </TouchableOpacity>
+        
         <Text style={styles.sectionTitle}>
           Provide the full name of your loved one to personalize the memorial page.
         </Text>
@@ -343,19 +441,45 @@ export default function SubmitMemories() {
         <Text style={styles.sectionTitle}>
           Write heartfelt messages, tributes, or memories to share with visitors.
         </Text>
-        {selectedConfig && selectedConfig.messages && selectedConfig.messages.map((msg, idx) => (
-          <TextInput
-            key={idx}
-            style={styles.input}
-            placeholder={msg.placeholder}
-            value={form.messages[idx] || ''}
-            onChangeText={text => {
-              const newMessages = [...form.messages];
-              newMessages[idx] = text;
-              setForm({ ...form, messages: newMessages });
-            }}
-          />
-        ))}
+        {templateMessages.map((msg, idx) => {
+          console.log(`Rendering message field ${idx}:`, msg.placeholder);
+          return (
+            <View key={idx} style={styles.messageInputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder={msg.placeholder}
+                value={form.messages[idx] || ''}
+                onChangeText={text => {
+                  const newMessages = [...form.messages];
+                  while (newMessages.length <= idx) {
+                    newMessages.push('');
+                  }
+                  newMessages[idx] = text;
+                  setForm({ ...form, messages: newMessages });
+                  
+                  console.log(`Updated message ${idx}:`, text);
+                  console.log('All messages:', newMessages);
+                }}
+              />
+              {form.messages.length > 2 && (
+                <TouchableOpacity 
+                  style={styles.removeMessageBtn} 
+                  onPress={() => removeMessage(idx)}
+                >
+                  <Text style={styles.removeMessageText}>×</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })}
+        
+        {/* Add Message Button - only show if less than 4 messages */}
+        {form.messages.length < 4 && (
+          <TouchableOpacity style={styles.addMessageBtn} onPress={addMessage}>
+            <Text style={styles.addMessageText}>+ Add Another Message ({form.messages.length}/4)</Text>
+          </TouchableOpacity>
+        )}
+        
         <TouchableOpacity style={styles.nextBtn} onPress={() => setStep(3)}>
           <Text style={styles.nextBtnText}>Next</Text>
         </TouchableOpacity>
@@ -363,22 +487,34 @@ export default function SubmitMemories() {
     );
   }
 
-  // Step 3: Upload Images/Videos
+  // Step 3: Upload Images/Videos (also add modal here)
   if (step === 3) {
-    const selectedConfig = templateConfigs[selectedTemplate];
+    const selectedTemplateObj = templates.find(t => t._id === selectedTemplate);
 
     return (
       <ScrollView contentContainerStyle={styles.container}>
         {renderHeader()}
-        <Text style={styles.selectedText}>You selected template {selectedTemplate}:</Text>
-        <View style={[styles.templatePreviewBox, { borderColor: '#6ee7b7' }]}>
-          {selectedConfig && (
+        {renderTemplateModal()}
+        
+        <Text style={styles.selectedText}>You selected template {selectedTemplateObj?.templateNumber}:</Text>
+        
+        {/* Make template preview clickable here too */}
+        <TouchableOpacity 
+          style={[styles.templatePreviewBox, { borderColor: '#6ee7b7' }]}
+          onPress={() => setShowTemplateModal(true)}
+          activeOpacity={0.8}
+        >
+          {selectedTemplateObj && (
             <Image
-              source={selectedConfig.image}
+              source={{ uri: selectedTemplateObj.previewImage }}
               style={styles.templateImg}
             />
           )}
-        </View>
+          <View style={styles.viewFullscreenHint}>
+            <Text style={styles.viewFullscreenText}>Tap to view full size</Text>
+          </View>
+        </TouchableOpacity>
+        
         <Text style={styles.sectionTitle}>
           Add cherished images and videos to honor{'\n'}and remember your loved one.
         </Text>
@@ -435,7 +571,6 @@ function chunkArray(array, size) {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 20, backgroundColor: '#fff', alignItems: 'center' },
   title: { fontSize: 18, fontWeight: 'bold', marginVertical: 16, color: '#12894f', textAlign: 'center' },
-  templatesRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   templateBox: {
     borderWidth: 2,
     borderColor: '#eee',
@@ -446,16 +581,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 170,
     height: 320,
+    position: 'relative',
   },
   selectedTemplate: {
     borderColor: '#12894f',
     backgroundColor: '#eaffea',
   },
   templateImg: {
-    width: 240,
-    height: 300,
+    width: 150,
+    height: 280,
     borderRadius: 8,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
+  },
+  templateNumber: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#7ed597',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  templateNumberText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   checkCircle: {
     position: 'absolute',
@@ -481,7 +633,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  submitBtn: { backgroundColor: '#7ed597', padding: 12, borderRadius: 24, marginTop: 24, width: 120, alignItems: 'center' },
   selectedText: { fontSize: 15, marginBottom: 8, color: '#222', alignSelf: 'flex-start' },
   templatePreviewBox: {
     borderWidth: 2,
@@ -555,26 +706,119 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginLeft: 70
   },
-  largeTemplateBox: {
-    marginRight: 20,
-    borderWidth: 3,
-    borderColor: '#eee',
-    borderRadius: 18,
-    padding: 8,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 180, // Large width
-    height: 300, // Large height
-  },
-  largeTemplateImg: {
-    width: 160,
-    height: 260,
-    borderRadius: 12,
-    resizeMode: 'contain',
-  },
   autoFilledInput: {
     backgroundColor: '#f0f8ff',
     borderColor: '#4CAF50',
+  },
+  messageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 4,
+  },
+  removeMessageBtn: {
+    backgroundColor: '#ff6b6b',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  removeMessageText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  addMessageBtn: {
+    backgroundColor: '#e8f5e8',
+    borderWidth: 1,
+    borderColor: '#7ed597',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginVertical: 12,
+    width: '100%',
+  },
+  addMessageText: {
+    color: '#12894f',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  
+  // Add new modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: width * 0.95,
+    height: height * 0.85,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    backgroundColor: '#ff6b6b',
+    borderRadius: 20,
+    width: 35,
+    height: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#12894f',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  fullScreenTemplateImg: {
+    width: width * 0.8,
+    height: height * 0.6,
+    borderRadius: 12,
+  },
+  modalBackBtn: {
+    backgroundColor: '#7ed597',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 24,
+    marginTop: 20,
+  },
+  modalBackText: {
+    color: '#222',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  viewFullscreenHint: {
+    position: 'absolute',
+    bottom: 8,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  viewFullscreenText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

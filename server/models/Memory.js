@@ -4,10 +4,18 @@ const MemorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   birth: String,
   burial: String,
-  template: { type: Number, required: true },
+  template: { 
+    templateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Template', required: true },
+    templateNumber: { type: Number, required: true },
+    previewImage: { type: String, required: true }
+  },
   messages: [String],
-  images: [String], // Cloudinary URLs
-  video: String,    // Cloudinary URL
+  images: [String],
+  video: String,
+  email: String,
+  avatar: String,
+  memorialHtml: String, // ✅ Add this field to store generated HTML
+  approved: { type: Boolean, default: false }, // ✅ Add this field for approval status
   createdAt: { type: Date, default: Date.now }
 });
 
