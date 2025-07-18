@@ -28,6 +28,7 @@ export default function SubmitMemories() {
   });
   const [uploading, setUploading] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false); // New state for video loading
 
   // ✅ Fetch dynamic templates from backend
   useEffect(() => {
@@ -144,9 +145,11 @@ export default function SubmitMemories() {
   };
 
   const pickVideo = async () => {
+    setVideoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Sorry, we need camera roll permissions to make this work!');
+      setVideoLoading(false);
       return;
     }
 
@@ -159,6 +162,7 @@ export default function SubmitMemories() {
     if (!result.canceled) {
       setForm({ ...form, video: result.assets[0] });
     }
+    setVideoLoading(false);
   };
 
   const renderHeader = () => (
@@ -179,6 +183,15 @@ export default function SubmitMemories() {
 
   // ✅ Fixed submit handler with proper FormData handling
   const handleSubmit = async () => {
+    // Check if all 4 images and the video are uploaded
+    const allImagesUploaded = [0, 1, 2, 3].every(i => form.images[i] && form.images[i].uri);
+    const videoUploaded = form.video && form.video.uri;
+
+    if (!allImagesUploaded || !videoUploaded) {
+      alert('Please upload all 4 images and the video before submitting.');
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -533,8 +546,12 @@ export default function SubmitMemories() {
           <TouchableOpacity style={styles.uploadBtn} onPress={() => pickImage(2)}>
             <Text>{form.images[2]?.uri ? '✓ Image 3' : 'Image 3'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.uploadBtn} onPress={pickVideo}>
-            <Text>{form.video?.uri ? '✓ Video 4' : 'Video 4'}</Text>
+          <TouchableOpacity style={styles.uploadBtn} onPress={pickVideo} disabled={videoLoading}>
+            {videoLoading ? (
+              <ActivityIndicator size="small" color="#7ed597" />
+            ) : (
+              <Text>{form.video?.uri ? '✓ Video 4' : 'Video 4'}</Text>
+            )}
           </TouchableOpacity>
         </View>
         <View style={styles.uploadRow}>
