@@ -259,32 +259,6 @@ const SignInContent = ({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.orContainer}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>OR</Text>
-        <View style={styles.line} />
-      </View>
-
-      <View style={styles.socialContainer}>
-        <TouchableOpacity>
-          <Image
-            source={require("../assets/google.png")}
-            style={styles.socialIcon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Image
-            source={require("../assets/facebook.png")}
-            style={styles.socialIcon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Image
-            source={require("../assets/twitter.png")}
-            style={styles.socialIcon}
-          />
-        </TouchableOpacity>
-      </View>
 
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>
@@ -420,6 +394,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "space-between",
     marginTop: hp('2%'),
+    marginBottom: hp('2%'),
   },
   guestButton: {
     flex: 1,

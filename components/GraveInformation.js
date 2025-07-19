@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground, StatusBar } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, TouchableWithoutFeedback, Alert, ImageBackground, StatusBar, Share } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -259,13 +259,14 @@ const handleBookmark = async () => {
 
     const fetchCandleUsers = async () => {
       try {
-        const key = `candleUsers_${grave._id}`;
-        const usersJson = await AsyncStorage.getItem(key);
-        if (usersJson) {
-          setCandleUsers(JSON.parse(usersJson));
-        } else {
-          setCandleUsers([]);
-        }
+        const response = await fetch(`${BASE_URL}/api/candles/grave/${grave._id}`);
+        const data = await response.json();
+        // Each candle has userName and userAvatar
+        const users = data.candles.map(candle => ({
+          name: candle.userName,
+          avatar: candle.userAvatar
+        }));
+        setCandleUsers(users);
       } catch (e) {
         setCandleUsers([]);
       }
@@ -284,6 +285,22 @@ const handleBookmark = async () => {
     useEffect(() => {
       fetchTotalCandleCount();
     }, [grave._id, grave.graveType, isCandleLit]);
+
+    const handleShareProfile = async () => {
+      let message = `Check out this memorial for ${grave.firstName} ${grave.lastName}.\n`;
+
+      // Put the link on its own line
+      message += `\nLight a candle or view more:\nhttps://walktogravemobile.com/candle-lighting/${grave._id}`;
+
+      try {
+        await Share.share({
+          message,
+          title: 'Share Memorial Profile',
+        });
+      } catch (error) {
+        Alert.alert('Error', 'Unable to share profile.');
+      }
+    };
 
     return (
         <>
@@ -345,7 +362,7 @@ const handleBookmark = async () => {
                     <Ionicons name="arrow-back" size={wp('6.5%')} color="white" />
                 </TouchableOpacity>
                 <View style={styles.topRightButtons}>
-                    <TouchableOpacity style={styles.shareButton}>
+                    <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile}>
                         <Ionicons name="share-social-outline" size={wp('6.5%')} color="white" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
@@ -639,6 +656,13 @@ const handleBookmark = async () => {
           borderRadius: 2,
           backgroundColor: '#e0e0e0',
         }} />
+        {/* Add a close button here */}
+        <TouchableOpacity
+          style={{ position: 'absolute', right: 0, top: -8, padding: 8 }}
+          onPress={() => setIsCandleModalVisible(false)}
+        >
+          <Ionicons name="close" size={28} color="#888" />
+        </TouchableOpacity>
       </View>
       {/* Candle count */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>

@@ -31,21 +31,6 @@ const GuestLogin = () => {
             <Image source={require('../assets/mail.png')} style={styles.icons} />
             <Text style={styles.buttonText}>Sign in with email</Text>
           </TouchableOpacity>
-          {/* Google */}
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/google.png')} style={styles.icon} />
-            <Text style={styles.socialButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
-          {/* Facebook */}
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/facebook.png')} style={styles.icon} />
-            <Text style={styles.socialButtonText}>Sign in with Facebook</Text>
-          </TouchableOpacity>
-          {/* Apple */}
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/apple.png')} style={styles.icon} />
-            <Text style={styles.socialButtonText}>Sign in with Apple</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.terms}>
@@ -82,7 +67,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginBottom: hp('5%'),
-    marginTop: hp('7%'),
+    marginTop: hp('1%'),
   },
   logo: {
     width: wp('43%'),
