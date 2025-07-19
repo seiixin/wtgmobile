@@ -8,6 +8,9 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 // ✅ Import Icons
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
+// ✅ Import Push Notification Service
+import PushNotificationService from './services/PushNotificationService';
+
 // Import Screens
 import Loading1 from './components/Loading1';
 import Loading2 from './components/Loading2';
@@ -69,6 +72,7 @@ import GuestCemeteryServices from './components/GuestCemeteryServices';
 import GuestTechnicalSupport from './components/GuestTechnicaSuppport';
 import Home from './components/Home';
 import Notifications from './components/Notifications';
+import NotificationScreen from './screens/NotificationScreen';
 import HomeGuest from './components/HomeGuest';
 import SubmitMemories from './components/SubmitMemories';
 
@@ -169,6 +173,9 @@ export default function App() {
   useEffect(() => {
     // Lock the orientation to portrait
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    
+    // ✅ Initialize push notifications
+    PushNotificationService.initialize();
   }, []);
 
   return (
@@ -243,6 +250,7 @@ export default function App() {
         <Stack.Screen name="GuestCemeteryServices" component={GuestCemeteryServices}/>
         <Stack.Screen name="GuestTechnicalSupport" component={GuestTechnicalSupport}/>
         <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
         <Stack.Screen name="HomeGuest" component={HomeGuest} />
         <Stack.Screen name="SubmitMemories" component={SubmitMemories} />
         
