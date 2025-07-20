@@ -282,6 +282,18 @@ function NotificationsScreen() {
               return false;
             }
             
+            // For memorial notifications, only show if user is the one who submitted the memorial
+            if (notif.type && notif.type.includes('memorial')) {
+              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                console.log(`✅ Including memorial notification for submitter: ${notif.title} (${notif.contactPersonEmail})`);
+                return true;
+              }
+              
+              // Exclude memorial notifications not meant for this specific user
+              console.log(`❌ Excluding memorial notification not for this user: ${notif.title} (submitterEmail: ${notif.contactPersonEmail})`);
+              return false;
+            }
+            
             // For service and FAQ notifications, show only general ones (targetUsers: 'all')
             if (notif.type && (notif.type.includes('service') || notif.type.includes('faq'))) {
               if (notif.targetUsers === 'all') {

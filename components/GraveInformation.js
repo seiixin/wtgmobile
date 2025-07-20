@@ -32,6 +32,8 @@ const GraveInformation = () => {
     const [isCandleModalVisible, setIsCandleModalVisible] = useState(false); // New state for candle modal
     const [candleUsers, setCandleUsers] = useState([]); // New state for candle users
     const [totalCandleCount, setTotalCandleCount] = useState(0);
+    const [user, setUser] = useState(null); // Add user state for email matching
+    const [canSubmitMemory, setCanSubmitMemory] = useState(false); // State for memory submission access
 
     const saveModalAsImage = async () => {
         try {
@@ -195,6 +197,38 @@ const handleBookmark = async () => {
         loadCandleData();
         checkBookmark();
     }, [grave._id]);
+
+    // Fetch user data and check email matching for memory submission
+    useEffect(() => {
+        const fetchUserDataAndCheckAccess = async () => {
+            try {
+                const userId = await AsyncStorage.getItem("userId");
+                if (userId) {
+                    const response = await fetch(`${BASE_URL}/api/users/${userId}`);
+                    if (response.ok) {
+                        const userData = await response.json();
+                        setUser(userData);
+                        
+                        // Check if user's email matches the grave's contact person email
+                        const userEmail = userData.email?.toLowerCase() || '';
+                        const contactEmail = grave.assignedContactPerson?.email?.toLowerCase() || '';
+                        
+                        console.log('🔍 Email matching check:');
+                        console.log('User email:', userEmail);
+                        console.log('Contact email:', contactEmail);
+                        console.log('Match result:', userEmail === contactEmail);
+                        
+                        setCanSubmitMemory(userEmail === contactEmail);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                setCanSubmitMemory(false); // Default to disabled on error
+            }
+        };
+
+        fetchUserDataAndCheckAccess();
+    }, [grave._id, grave.assignedContactPerson]);
 
     useEffect(() => {
       let intervalId;
@@ -495,11 +529,22 @@ const handleBookmark = async () => {
                         <View style={styles.bottomButtons}>
   {/* Submit Memories Button */}
   <TouchableOpacity
-    style={styles.bottomButton}
-    onPress={() => navigation.navigate("SubmitMemories", { grave })}
+    style={[styles.bottomButton, { opacity: canSubmitMemory ? 1 : 0.5 }]}
+    onPress={() => {
+      if (canSubmitMemory) {
+        navigation.navigate("SubmitMemories", { grave });
+      } else {
+        Alert.alert(
+          'Access Restricted',
+          'You can only submit memories for graves where you are listed as the contact person.',
+          [{ text: 'OK' }]
+        );
+      }
+    }}
+    disabled={!canSubmitMemory}
   >
     <Image source={require("../assets/submit-memories.png")} style={styles.memoryImage} />
-    <Text style={styles.bottomButtonText}>Submit Memories</Text>
+    <Text style={[styles.bottomButtonText, { color: canSubmitMemory ? '#000' : '#888' }]}>Submit Memories</Text>
   </TouchableOpacity>
 
   {/* Divider */}

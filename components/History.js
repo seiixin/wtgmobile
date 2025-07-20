@@ -311,7 +311,7 @@ const HistoryScreen = () => {
         }
     };
 
-    // Function to handle search
+    // Function to handle search with email matching
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
             setSearchResults([]);
@@ -319,8 +319,12 @@ const HistoryScreen = () => {
             return;
         }
         try {
-            const response = await fetch(`${BASE_URL}/api/graves/search?query=${encodeURIComponent(searchQuery)}`);
+            // Use the web backend for search to get contact person information
+            const webBaseUrl = 'https://walktograveweb-backendserver.onrender.com';
+            
+            const response = await fetch(`${webBaseUrl}/api/graves/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
+            
             setSearchResults(data);
             setHasSearched(true); // Search performed
         } catch (error) {
@@ -915,6 +919,32 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: RFValue(16, height),
         fontWeight: 'bold',
+    },
+    // New styles for email matching functionality
+    cardActions: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingLeft: wp('2%'),
+    },
+    memoryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: hp('1%'),
+        paddingHorizontal: wp('3%'),
+        borderRadius: wp('2%'),
+        marginTop: hp('0.5%'),
+    },
+    memoryButtonText: {
+        fontSize: RFValue(12, height),
+        fontWeight: 'bold',
+        marginLeft: wp('1%'),
+    },
+    contactPersonText: {
+        fontSize: RFValue(11, height),
+        color: '#666',
+        marginTop: hp('0.5%'),
+        fontStyle: 'italic',
     },
 });
 
