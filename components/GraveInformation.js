@@ -564,7 +564,7 @@ const handleBookmark = async () => {
                         <TouchableOpacity
                           style={styles.bottomContainer2}
                           activeOpacity={0.8}
-                          onPress={() => navigation.navigate('Map', { grave })} // Pass grave as param
+                          onPress={() => navigation.navigate('WebViewMap', { grave })} // Navigate to WebView Cemetery Map
                         >
                           <View style={styles.navigateButtonContainer}>
                             <Text style={styles.navigateButtonText}>

@@ -52,6 +52,7 @@ import VerificationRegister from './components/VerificationRegister';
 import VerificationForgotPass from './components/VerificationForgotPass';
 import QRScanner from './components/QRScanner';
 import Map from './components/Map';
+import WebViewMap from './components/WebViewMap';
 
 import FAQs from './components/FAQs';
 import GeneralQuestions from './components/GeneralQuestions';
@@ -137,6 +138,7 @@ const MainStack = () => (
     <Stack.Screen name="VerificationForgotPass" component={VerificationForgotPass} />
     <Stack.Screen name="QRScanner" component={QRScanner} options={{ headerShown: false }} />
     <Stack.Screen name="Map" component={Map} />
+    <Stack.Screen name="WebViewMap" component={WebViewMap} options={{ headerShown: false }} />
     
     <Stack.Screen name="FAQs" component={FAQs} />
     <Stack.Screen name="GeneralQuestions" component={GeneralQuestions} />
@@ -232,6 +234,7 @@ export default function App() {
         <Stack.Screen name="VerificationForgotPass" component={VerificationForgotPass} />
         <Stack.Screen name="QRScanner" component={QRScanner} options={{ headerShown: false }} />
         <Stack.Screen name="Map" component={Map} />
+        <Stack.Screen name="WebViewMap" component={WebViewMap} options={{ headerShown: false }} />
         
         <Stack.Screen name="FAQs" component={FAQs} />
         <Stack.Screen name="GeneralQuestions" component={GeneralQuestions} />
