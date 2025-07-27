@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: hp('7%'),
   },
   card: {
     width: wp('80%'),

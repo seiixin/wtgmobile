@@ -473,6 +473,18 @@ const HistoryScreen = () => {
                                 <TouchableOpacity style={styles.actionButton}>
                                     <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
                                 </TouchableOpacity>
+
+                                <View style={styles.IconDivider} />
+
+                                <TouchableOpacity style={styles.actionButton}>
+                                    <Image source={require('../assets/CGIcon.png')} style={styles.buttonImage} />
+                                </TouchableOpacity>
+
+                                <View style={styles.IconDivider} />
+
+                                <TouchableOpacity style={styles.actionButton}>
+                                    <Image source={require('../assets/AGIcon.png')} style={styles.buttonImage} />
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </View>
