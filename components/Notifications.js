@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
-// Use web backend for notifications (original working approach)
+// Use web backend for all notifications (original working approach)
 const NOTIFICATION_BASE_URL = "https://walktograveweb-backendserver.onrender.com/api";
 
 function CustomDrawerContent(props) {
@@ -206,203 +206,186 @@ function NotificationsScreen() {
         console.warn('⚠️ No user ID found in storage');
       }
       
-      console.log('🔔 Fetching notifications from both backends...');
+      console.log('🔔 Fetching notifications from web backend...');
       
-      // Fetch from both web backend (for grave modifications, services, FAQs) and mobile backend (for candle notifications)
-      let allNotifications = [];
-      
+      // Fetch all notifications from web backend (including candle notifications)
       try {
-        // Fetch from web backend
         console.log('📤 Fetching from web backend:', `${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
-        const webResponse = await fetch(`${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
+        const response = await fetch(`${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
         
-        if (webResponse.ok) {
-          const webData = await webResponse.json();
-          const webNotifications = webData.notifications || webData || [];
-          console.log('📥 Web backend notifications:', webNotifications.length);
-          allNotifications = [...allNotifications, ...webNotifications];
-        } else {
-          console.warn('⚠️ Web backend notification fetch failed:', webResponse.status);
-        }
-      } catch (webError) {
-        console.error('❌ Error fetching from web backend:', webError.message);
-      }
-      
-      try {
-        // Fetch from mobile backend for candle notifications
-        console.log('📤 Fetching from mobile backend:', `https://walktogravemobile-backendserver.onrender.com/api/notifications/recent?limit=50`);
-        const mobileResponse = await fetch(`https://walktogravemobile-backendserver.onrender.com/api/notifications/recent?limit=50`);
-        
-        if (mobileResponse.ok) {
-          const mobileData = await mobileResponse.json();
-          const mobileNotifications = mobileData.notifications || mobileData || [];
-          console.log('� Mobile backend notifications:', mobileNotifications.length);
+        if (response.ok) {
+          const data = await response.json();
+          const allNotifications = data.notifications || data || [];
+          console.log('📥 Web backend notifications:', allNotifications.length);
           
-          // Only add candle notifications from mobile backend to avoid duplicates
-          const candleNotifications = mobileNotifications.filter(notif => notif.type === 'candle_lit');
-          console.log('🕯️ Candle notifications from mobile backend:', candleNotifications.length);
-          allNotifications = [...allNotifications, ...candleNotifications];
-        } else {
-          console.warn('⚠️ Mobile backend notification fetch failed:', mobileResponse.status);
-        }
-      } catch (mobileError) {
-        console.error('❌ Error fetching from mobile backend:', mobileError.message);
-      }
-      
-      // Remove duplicates based on _id and sort by createdAt
-      const uniqueNotifications = allNotifications.filter((notif, index, self) => 
-        index === self.findIndex(n => n._id === notif._id)
-      ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-      console.log('📋 Total unique notifications:', uniqueNotifications.length);
-      
-      // Log each notification for debugging
-      uniqueNotifications.forEach((notif, index) => {
-        console.log(`📬 Notification ${index + 1}:`, {
-          id: notif._id,
-          title: notif.title,
-          type: notif.type,
-          targetUsers: notif.targetUsers,
-          contactPersonEmail: notif.contactPersonEmail,
-          lotInfo: notif.lotInfo,
-          createdAt: notif.createdAt
-        });
-      });
-      
-      let notificationsList = uniqueNotifications;
-        
-        // TEMPORARY: Show all notifications for debugging
-        const DEBUG_MODE = false;
-        if (DEBUG_MODE) {
-          console.log('🐛 DEBUG MODE: Showing all notifications without filtering');
-          setNotifications(notificationsList);
-          await AsyncStorage.setItem('notifications', JSON.stringify(notificationsList));
-          return;
-        }
-        
-        // Filter notifications for current user
-        if (userEmail) {
-          console.log('🔍 Filtering notifications for user email:', userEmail);
+          // Log each notification type for debugging
+          const notificationTypes = {};
+          allNotifications.forEach(notif => {
+            notificationTypes[notif.type] = (notificationTypes[notif.type] || 0) + 1;
+          });
+          console.log('📊 Notification types:', notificationTypes);
           
-          const originalCount = notificationsList.length;
-          notificationsList = notificationsList.filter(notif => {
-            // For candle lighting notifications, only show if user is the contact person
-            if (notif.type === 'candle_lit') {
-              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`🕯️ Including candle notification for contact person: ${notif.title} (${notif.contactPersonEmail})`);
-                return true;
-              }
-              console.log(`❌ Excluding candle notification not for this user: ${notif.title} (contactEmail: ${notif.contactPersonEmail})`);
-              return false;
+          // Remove duplicates based on _id and sort by createdAt
+          const uniqueNotifications = allNotifications.filter((notif, index, self) => 
+            index === self.findIndex(n => n._id === notif._id)
+          ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          
+          console.log('📋 Total unique notifications:', uniqueNotifications.length);
+      
+          // Log each notification for debugging
+          uniqueNotifications.forEach((notif, index) => {
+            console.log(`📬 Notification ${index + 1}:`, {
+              id: notif._id,
+              title: notif.title,
+              type: notif.type,
+              targetUsers: notif.targetUsers,
+              contactPersonEmail: notif.contactPersonEmail,
+              lotInfo: notif.lotInfo,
+              createdAt: notif.createdAt
+            });
+          });
+          
+          let notificationsList = uniqueNotifications;
+            
+            // TEMPORARY: Show all notifications for debugging
+            const DEBUG_MODE = false;
+            if (DEBUG_MODE) {
+              console.log('🐛 DEBUG MODE: Showing all notifications without filtering');
+              setNotifications(notificationsList);
+              await AsyncStorage.setItem('notifications', JSON.stringify(notificationsList));
+              return;
             }
             
-            // For grave-related notifications, only show if user is the specific contact person
-            if (notif.type && notif.type.includes('grave')) {
-              // Check if user is the contact person (root level)
-              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`✅ Including grave notification for contact person (root): ${notif.title} (${notif.contactPersonEmail})`);
-                return true;
-              }
+            // Filter notifications for current user
+            if (userEmail) {
+              console.log('🔍 Filtering notifications for user email:', userEmail);
               
-              // Check if user is the contact person (in graveInfo)
-              if (notif.graveInfo && notif.graveInfo.contactPersonEmail && notif.graveInfo.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`✅ Including grave notification for contact person (graveInfo): ${notif.title} (${notif.graveInfo.contactPersonEmail})`);
-                return true;
-              }
-              
-              // Exclude grave notifications not meant for this specific user
-              console.log(`❌ Excluding grave notification not for this user: ${notif.title} (contactEmail: ${notif.contactPersonEmail || notif.graveInfo?.contactPersonEmail})`);
-              return false;
-            }
-            
-            // For private lot notifications, only show if user is the specific owner
-            if (notif.type && notif.type.includes('lot')) {
-              if (notif.lotInfo && notif.lotInfo.email && notif.lotInfo.email.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`✅ Including lot notification for owner: ${notif.title} (${notif.lotInfo.email})`);
-                return true;
-              }
-              
-              // Check root level contactPersonEmail for lot notifications too
-              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`✅ Including lot notification for contact person (root): ${notif.title} (${notif.contactPersonEmail})`);
-                return true;
-              }
-              
-              // Exclude lot notifications not meant for this specific user
-              console.log(`❌ Excluding lot notification not for this user: ${notif.title} (ownerEmail: ${notif.lotInfo?.email || notif.contactPersonEmail})`);
-              return false;
-            }
-            
-            // For memorial notifications, only show if user is the one who submitted the memorial
-            if (notif.type && notif.type.includes('memorial')) {
-              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
-                console.log(`✅ Including memorial notification for submitter: ${notif.title} (${notif.contactPersonEmail})`);
-                return true;
-              }
-              
-              // Exclude memorial notifications not meant for this specific user
-              console.log(`❌ Excluding memorial notification not for this user: ${notif.title} (submitterEmail: ${notif.contactPersonEmail})`);
-              return false;
-            }
-            
-            // For service and FAQ notifications, show only general ones (targetUsers: 'all')
-            if (notif.type && (notif.type.includes('service') || notif.type.includes('faq'))) {
-              if (notif.targetUsers === 'all') {
-                console.log(`✅ Including general service/FAQ notification: ${notif.title}`);
-                return true;
-              } else {
-                console.log(`❌ Excluding specific service/FAQ notification: ${notif.title}`);
+              const originalCount = notificationsList.length;
+              notificationsList = notificationsList.filter(notif => {
+                // For candle lighting notifications, only show if user is the contact person
+                if (notif.type === 'candle_lit') {
+                  if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`🕯️ Including candle notification for contact person: ${notif.title} (${notif.contactPersonEmail})`);
+                    return true;
+                  }
+                  console.log(`❌ Excluding candle notification not for this user: ${notif.title} (contactEmail: ${notif.contactPersonEmail})`);
+                  return false;
+                }
+                
+                // For grave-related notifications, only show if user is the specific contact person
+                if (notif.type && notif.type.includes('grave')) {
+                  // Check if user is the contact person (root level)
+                  if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`✅ Including grave notification for contact person (root): ${notif.title} (${notif.contactPersonEmail})`);
+                    return true;
+                  }
+                  
+                  // Check if user is the contact person (in graveInfo)
+                  if (notif.graveInfo && notif.graveInfo.contactPersonEmail && notif.graveInfo.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`✅ Including grave notification for contact person (graveInfo): ${notif.title} (${notif.graveInfo.contactPersonEmail})`);
+                    return true;
+                  }
+                  
+                  // Exclude grave notifications not meant for this specific user
+                  console.log(`❌ Excluding grave notification not for this user: ${notif.title} (contactEmail: ${notif.contactPersonEmail || notif.graveInfo?.contactPersonEmail})`);
+                  return false;
+                }
+                
+                // For private lot notifications, only show if user is the specific owner
+                if (notif.type && notif.type.includes('lot')) {
+                  if (notif.lotInfo && notif.lotInfo.email && notif.lotInfo.email.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`✅ Including lot notification for owner: ${notif.title} (${notif.lotInfo.email})`);
+                    return true;
+                  }
+                  
+                  // Check root level contactPersonEmail for lot notifications too
+                  if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`✅ Including lot notification for contact person (root): ${notif.title} (${notif.contactPersonEmail})`);
+                    return true;
+                  }
+                  
+                  // Exclude lot notifications not meant for this specific user
+                  console.log(`❌ Excluding lot notification not for this user: ${notif.title} (ownerEmail: ${notif.lotInfo?.email || notif.contactPersonEmail})`);
+                  return false;
+                }
+                
+                // For memorial notifications, only show if user is the one who submitted the memorial
+                if (notif.type && notif.type.includes('memorial')) {
+                  if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                    console.log(`✅ Including memorial notification for submitter: ${notif.title} (${notif.contactPersonEmail})`);
+                    return true;
+                  }
+                  
+                  // Exclude memorial notifications not meant for this specific user
+                  console.log(`❌ Excluding memorial notification not for this user: ${notif.title} (submitterEmail: ${notif.contactPersonEmail})`);
+                  return false;
+                }
+                
+                // For service and FAQ notifications, show only general ones (targetUsers: 'all')
+                if (notif.type && (notif.type.includes('service') || notif.type.includes('faq'))) {
+                  if (notif.targetUsers === 'all') {
+                    console.log(`✅ Including general service/FAQ notification: ${notif.title}`);
+                    return true;
+                  } else {
+                    console.log(`❌ Excluding specific service/FAQ notification: ${notif.title}`);
+                    return false;
+                  }
+                }
+                
+                // For other general notifications, show only those marked for all users
+                if (notif.targetUsers === 'all') {
+                  console.log(`✅ Including general notification: ${notif.title}`);
+                  return true;
+                }
+                
+                // Default: don't show specific notifications not meant for this user
+                console.log(`❌ Excluding specific notification: ${notif.title} (targetUsers: ${notif.targetUsers})`);
                 return false;
-              }
+              });
+              
+              console.log(`🎯 Filtered notifications: ${originalCount} → ${notificationsList.length}`);
+            } else {
+              console.log('⚠️ No user email available, showing only general notifications');
+              // If no user email, still show general notifications and log what we're missing
+              notificationsList = notificationsList.filter(notif => {
+                if (notif.targetUsers === 'all') {
+                  return true;
+                }
+                console.log(`❌ Cannot show specific notification without user email: ${notif.title}`);
+                return false;
+              });
             }
             
-            // For other general notifications, show only those marked for all users
-            if (notif.targetUsers === 'all') {
-              console.log(`✅ Including general notification: ${notif.title}`);
-              return true;
-            }
+            setNotifications(notificationsList);
+            console.log('💾 Notifications set in state:', notificationsList.length);
             
-            // Default: don't show specific notifications not meant for this user
-            console.log(`❌ Excluding specific notification: ${notif.title} (targetUsers: ${notif.targetUsers})`);
-            return false;
-          });
-          
-          console.log(`🎯 Filtered notifications: ${originalCount} → ${notificationsList.length}`);
+            // Store notifications locally
+            await AsyncStorage.setItem('notifications', JSON.stringify(notificationsList));
+            
         } else {
-          console.log('⚠️ No user email available, showing all notifications');
-          // If no user email, still show general notifications and log what we're missing
-          notificationsList = notificationsList.filter(notif => {
-            if (notif.targetUsers === 'all') {
-              return true;
-            }
-            console.log(`❌ Cannot show specific notification without user email: ${notif.title}`);
-            return false;
-          });
+          console.error('❌ Failed to fetch notifications, status:', response.status);
+          // Fallback to local storage
+          const localNotifications = await AsyncStorage.getItem('notifications');
+          if (localNotifications) {
+            const parsed = JSON.parse(localNotifications);
+            setNotifications(parsed);
+            console.log('📂 Loaded from local storage:', parsed.length);
+          }
         }
-        
-        setNotifications(notificationsList);
-        console.log('💾 Notifications set in state:', notificationsList.length);
-        
-        // Store notifications locally
-        await AsyncStorage.setItem('notifications', JSON.stringify(notificationsList));
-        
-    } catch (error) {
-      console.error('❌ Error fetching notifications:', error);
-      // Fallback to local storage
-      try {
+      } catch (fetchError) {
+        console.error('❌ Error fetching from web backend:', fetchError);
+        // Fallback to local storage
         const localNotifications = await AsyncStorage.getItem('notifications');
         if (localNotifications) {
           const parsed = JSON.parse(localNotifications);
           setNotifications(parsed);
-          console.log('📂 Fallback to local storage:', parsed.length);
+          console.log('📂 Loaded from local storage:', parsed.length);
         }
-      } catch (storageError) {
-        console.error('❌ Error loading local notifications:', storageError);
       }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
   };
 
   // Function to handle refresh
