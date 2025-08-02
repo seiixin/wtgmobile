@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
-// Backend URL for notifications - now using web backend for service/FAQ notifications
+// Use web backend for notifications (original working approach)
 const NOTIFICATION_BASE_URL = "https://walktograveweb-backendserver.onrender.com/api";
 
 function CustomDrawerContent(props) {
@@ -245,6 +245,16 @@ function NotificationsScreen() {
           
           const originalCount = notificationsList.length;
           notificationsList = notificationsList.filter(notif => {
+            // For candle lighting notifications, only show if user is the contact person
+            if (notif.type === 'candle_lit') {
+              if (notif.contactPersonEmail && notif.contactPersonEmail.toLowerCase() === userEmail.toLowerCase()) {
+                console.log(`🕯️ Including candle notification for contact person: ${notif.title} (${notif.contactPersonEmail})`);
+                return true;
+              }
+              console.log(`❌ Excluding candle notification not for this user: ${notif.title} (contactEmail: ${notif.contactPersonEmail})`);
+              return false;
+            }
+            
             // For grave-related notifications, only show if user is the specific contact person
             if (notif.type && notif.type.includes('grave')) {
               // Check if user is the contact person (root level)
@@ -371,6 +381,9 @@ function NotificationsScreen() {
 
   // Function to get notification icon based on type
   const getNotificationIcon = (type, category) => {
+    if (type === 'candle_lit') {
+      return require('../assets/CandleLight.png'); // Use candle icon for candle notifications
+    }
     // Handle both web backend types (service_added, service_updated) and mobile types (service)
     if (type?.includes('service') || category?.includes('Services')) {
       return require('../assets/servicesIcon.png');
@@ -392,6 +405,9 @@ function NotificationsScreen() {
 
   // Function to get notification color based on type
   const getNotificationColor = (type) => {
+    if (type === 'candle_lit') {
+      return '#FFA500'; // Orange for candle notifications
+    }
     // Handle both web backend types (service_added, service_updated) and mobile types (service)
     if (type?.includes('service')) {
       return '#cb9717'; // Yellow
@@ -520,7 +536,7 @@ function NotificationsScreen() {
                       <Text style={styles.cardTitle}>{notif.title}</Text>
                       <Text style={styles.cardText}>{notif.message}</Text>
                       
-                      {/* Show grave information for grave notifications */}
+                      {/* Show grave information for grave-related notifications (including candle) */}
                       {notif.graveInfo && (
                         <View style={styles.graveInfoContainer}>
                           <Text style={styles.graveInfoText}>
@@ -559,13 +575,18 @@ function NotificationsScreen() {
                       )}
                       
                       {/* Show contact person email for grave notifications */}
-                      {(notif.contactPersonEmail || notif.graveInfo?.contactPersonEmail) && notif.type?.includes('grave') && (
+                      {(notif.contactPersonEmail || notif.graveInfo?.contactPersonEmail) && (notif.type?.includes('grave') || notif.type === 'candle_lit') && (
                         <Text style={styles.contactPersonText}>
                           <Text style={styles.boldName}>Contact Person:</Text> {notif.contactPersonEmail || notif.graveInfo?.contactPersonEmail}
                         </Text>
                       )}
                       
-                      {(notif.adminId?.fullName || notif.adminName) && (
+                      {/* Show lighter user for candle notifications, admin for others */}
+                      {notif.type === 'candle_lit' ? (
+                        <Text style={styles.adminText}>
+                          Candle lit by: <Text style={styles.boldName}>{notif.adminName}</Text>
+                        </Text>
+                      ) : (notif.adminId?.fullName || notif.adminName) && (
                         <Text style={styles.adminText}>
                           Updated by: <Text style={styles.boldName}>{notif.adminId?.fullName || notif.adminName}</Text>
                         </Text>
