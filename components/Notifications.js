@@ -385,16 +385,7 @@ function NotificationsScreen() {
         
         // Store notifications locally
         await AsyncStorage.setItem('notifications', JSON.stringify(notificationsList));
-      } else {
-        console.error('❌ Failed to fetch notifications, status:', response.status);
-        // Fallback to local storage
-        const localNotifications = await AsyncStorage.getItem('notifications');
-        if (localNotifications) {
-          const parsed = JSON.parse(localNotifications);
-          setNotifications(parsed);
-          console.log('📂 Loaded from local storage:', parsed.length);
-        }
-      }
+        
     } catch (error) {
       console.error('❌ Error fetching notifications:', error);
       // Fallback to local storage
