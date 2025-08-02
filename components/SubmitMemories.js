@@ -195,8 +195,22 @@ export default function SubmitMemories() {
     setUploading(true);
 
     try {
+      const userId = await AsyncStorage.getItem("userId");
       const userEmail = await AsyncStorage.getItem("userEmail");
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      
+      // Fetch fresh user data from database to get avatar
+      let userAvatar = "";
+      if (userId) {
+        try {
+          const userResponse = await fetch(`${BASE_URL}/api/users/${userId}`);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userAvatar = userData.profileImage || "";
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
 
       const data = new FormData();
       data.append('name', form.name);

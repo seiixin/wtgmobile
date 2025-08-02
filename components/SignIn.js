@@ -49,8 +49,7 @@ const SignIn = () => {
       if (data.user && data.user._id) {
         // Save user info to AsyncStorage
         await AsyncStorage.setItem("userId", data.user._id);
-        await AsyncStorage.setItem("userEmail", data.user.email); // <-- Add this
-        await AsyncStorage.setItem("userAvatar", data.user.avatar || ""); // <-- Add this (make sure backend sends avatar URL)
+        await AsyncStorage.setItem("userEmail", data.user.email);
 
         const savedTime = await AsyncStorage.getItem(`verificationTimer_${email}`);
         if (savedTime) {
