@@ -68,12 +68,21 @@ const GraveInformation = () => {
     const handleLightCandle = async () => {
   try {
     const userId = await AsyncStorage.getItem("userId");
-    const userName = await AsyncStorage.getItem("userName"); // Or get from your user state
-    const userAvatar = await AsyncStorage.getItem("userAvatar"); // Or get from your user state
 
     if (!userId) {
       Alert.alert("Error", "User not logged in.");
       return;
+    }
+
+    // Always fetch fresh user data from database to get current name and avatar
+    let currentUser = null;
+    try {
+      const userResponse = await fetch(`${BASE_URL}/api/users/${userId}`);
+      if (userResponse.ok) {
+        currentUser = await userResponse.json();
+      }
+    } catch (error) {
+      console.error('Error fetching fresh user data:', error);
     }
 
     // Check local timer (per user)
@@ -96,8 +105,8 @@ const GraveInformation = () => {
         graveId: grave._id,
         graveType: grave.graveType, // Make sure this is set in your grave object!
         userId,
-        userName: userName || "Anonymous",
-        userAvatar: userAvatar || ""
+        userName: currentUser?.name || "Anonymous", // Use fresh user data from database
+        userAvatar: currentUser?.profileImage || "" // Use profileImage field from database
       }),
     });
 
