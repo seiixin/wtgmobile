@@ -206,29 +206,70 @@ function NotificationsScreen() {
         console.warn('⚠️ No user ID found in storage');
       }
       
-      console.log('🔔 Fetching notifications from:', `${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
-      const response = await fetch(`${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
+      console.log('🔔 Fetching notifications from both backends...');
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📥 Raw notification response:', data);
+      // Fetch from both web backend (for grave modifications, services, FAQs) and mobile backend (for candle notifications)
+      let allNotifications = [];
+      
+      try {
+        // Fetch from web backend
+        console.log('📤 Fetching from web backend:', `${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
+        const webResponse = await fetch(`${NOTIFICATION_BASE_URL}/notifications/recent?limit=50`);
         
-        // Extract notifications from the response structure
-        let notificationsList = data.notifications || data || [];
-        console.log('📋 Total notifications received:', notificationsList.length);
+        if (webResponse.ok) {
+          const webData = await webResponse.json();
+          const webNotifications = webData.notifications || webData || [];
+          console.log('📥 Web backend notifications:', webNotifications.length);
+          allNotifications = [...allNotifications, ...webNotifications];
+        } else {
+          console.warn('⚠️ Web backend notification fetch failed:', webResponse.status);
+        }
+      } catch (webError) {
+        console.error('❌ Error fetching from web backend:', webError.message);
+      }
+      
+      try {
+        // Fetch from mobile backend for candle notifications
+        console.log('📤 Fetching from mobile backend:', `https://walktogravemobile-backendserver.onrender.com/api/notifications/recent?limit=50`);
+        const mobileResponse = await fetch(`https://walktogravemobile-backendserver.onrender.com/api/notifications/recent?limit=50`);
         
-        // Log each notification for debugging
-        notificationsList.forEach((notif, index) => {
-          console.log(`📬 Notification ${index + 1}:`, {
-            id: notif._id,
-            title: notif.title,
-            type: notif.type,
-            targetUsers: notif.targetUsers,
-            contactPersonEmail: notif.contactPersonEmail,
-            lotInfo: notif.lotInfo,
-            createdAt: notif.createdAt
-          });
+        if (mobileResponse.ok) {
+          const mobileData = await mobileResponse.json();
+          const mobileNotifications = mobileData.notifications || mobileData || [];
+          console.log('� Mobile backend notifications:', mobileNotifications.length);
+          
+          // Only add candle notifications from mobile backend to avoid duplicates
+          const candleNotifications = mobileNotifications.filter(notif => notif.type === 'candle_lit');
+          console.log('🕯️ Candle notifications from mobile backend:', candleNotifications.length);
+          allNotifications = [...allNotifications, ...candleNotifications];
+        } else {
+          console.warn('⚠️ Mobile backend notification fetch failed:', mobileResponse.status);
+        }
+      } catch (mobileError) {
+        console.error('❌ Error fetching from mobile backend:', mobileError.message);
+      }
+      
+      // Remove duplicates based on _id and sort by createdAt
+      const uniqueNotifications = allNotifications.filter((notif, index, self) => 
+        index === self.findIndex(n => n._id === notif._id)
+      ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      console.log('📋 Total unique notifications:', uniqueNotifications.length);
+      
+      // Log each notification for debugging
+      uniqueNotifications.forEach((notif, index) => {
+        console.log(`📬 Notification ${index + 1}:`, {
+          id: notif._id,
+          title: notif.title,
+          type: notif.type,
+          targetUsers: notif.targetUsers,
+          contactPersonEmail: notif.contactPersonEmail,
+          lotInfo: notif.lotInfo,
+          createdAt: notif.createdAt
         });
+      });
+      
+      let notificationsList = uniqueNotifications;
         
         // TEMPORARY: Show all notifications for debugging
         const DEBUG_MODE = false;
