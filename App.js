@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, StyleSheet, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -167,6 +167,16 @@ const MainStack = () => (
 export default function App() {
   const navigationRef = useRef();
 
+  // Deep linking configuration
+  const linking = {
+    prefixes: ['walktograve://', 'https://walktogravemobile.com'],
+    config: {
+      screens: {
+        GraveInformation: 'grave/:graveId',
+      },
+    },
+  };
+
   // Handler for when loading transition finishes
   const handleLoadingFinish = () => {
     navigationRef.current?.navigate('GetStarted');
@@ -178,10 +188,59 @@ export default function App() {
     
     // ✅ Initialize push notifications
     PushNotificationService.initialize();
+
+    // Handle deep linking when app is already open
+    const handleDeepLink = (url) => {
+      const route = url.replace(/.*?:\/\//g, '');
+      const routeArray = route.split('/');
+      
+      if (routeArray[0] === 'grave' && routeArray[1]) {
+        const graveId = routeArray[1];
+        // Fetch grave data and navigate
+        fetchGraveAndNavigate(graveId);
+      }
+    };
+
+    // Listen for deep links when app is already open
+    const linkingListener = Linking.addEventListener('url', (event) => {
+      handleDeepLink(event.url);
+    });
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
+    return () => {
+      linkingListener?.remove();
+    };
   }, []);
 
+  // Function to fetch grave data and navigate to GraveInformation
+  const fetchGraveAndNavigate = async (graveId) => {
+    try {
+      const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
+      const response = await fetch(`${BASE_URL}/api/graves/${graveId}`);
+      
+      if (response.ok) {
+        const graveData = await response.json();
+        navigationRef.current?.navigate('GraveInformation', { 
+          grave: graveData,
+          origin: 'DeepLink'
+        });
+      } else {
+        console.error('Grave not found');
+        // You could show an alert or navigate to a default screen
+      }
+    } catch (error) {
+      console.error('Error fetching grave data:', error);
+    }
+  };
+
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

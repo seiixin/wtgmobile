@@ -17,7 +17,9 @@ const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
 const GraveInformation = () => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { grave, origin } = route.params || {}; // Get origin
+    const { grave: initialGrave, graveId, origin } = route.params || {}; // Get graveId from params
+    const [grave, setGrave] = useState(initialGrave || null); // State for grave data
+    const [loading, setLoading] = useState(!initialGrave && graveId ? true : false); // Loading state
     const [isCandleLit, setIsCandleLit] = useState(false);
     const [hasCandleBeenLit, setHasCandleBeenLit] = useState(false);
     const [candleCount, setCandleCount] = useState(0);
@@ -35,6 +37,58 @@ const GraveInformation = () => {
     const [user, setUser] = useState(null); // Add user state for email matching
     const [canSubmitMemory, setCanSubmitMemory] = useState(false); // State for memory submission access
 
+    // Fetch grave data if only graveId is provided (from deep link)
+    useEffect(() => {
+        const fetchGraveData = async () => {
+            if (graveId && !initialGrave) {
+                try {
+                    setLoading(true);
+                    const response = await fetch(`${BASE_URL}/api/graves/${graveId}`);
+                    
+                    if (response.ok) {
+                        const graveData = await response.json();
+                        setGrave(graveData);
+                    } else {
+                        Alert.alert('Error', 'Grave not found');
+                        navigation.goBack();
+                    }
+                } catch (error) {
+                    console.error('Error fetching grave data:', error);
+                    Alert.alert('Error', 'Failed to load grave information');
+                    navigation.goBack();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchGraveData();
+    }, [graveId, initialGrave]);
+
+    // Show loading state while fetching grave data
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text>Loading...</Text>
+            </View>
+        );
+    }
+
+    // Show error state if no grave data
+    if (!grave) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text>Grave information not available</Text>
+                <TouchableOpacity 
+                    style={{ marginTop: 20, padding: 10, backgroundColor: '#ccc' }}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text>Go Back</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     const saveModalAsImage = async () => {
         try {
             const uri = await modalContentRef.current.capture(); // Capture the modal content
@@ -49,6 +103,21 @@ const GraveInformation = () => {
         } catch (error) {
             console.error('Error saving image:', error);
             Alert.alert('Error', 'An error occurred while saving the image.');
+        }
+    };
+
+    const shareModalAsImage = async () => {
+        try {
+            const uri = await modalContentRef.current.capture(); // Capture the modal content
+            
+            await Share.share({
+                url: uri,
+                message: `Memorial candle for ${grave.firstName} ${grave.lastName}.\n\nLight a candle and view their memorial:\n🕯️ App Link: walktograve://grave/${grave._id}\n🌐 Web Link: https://walktogravemobile.com/grave/${grave._id}`,
+                title: 'Memorial Candle'
+            });
+        } catch (error) {
+            console.error('Error sharing image:', error);
+            Alert.alert('Error', 'An error occurred while sharing the image.');
         }
     };
 
@@ -332,8 +401,8 @@ const handleBookmark = async () => {
     const handleShareProfile = async () => {
       let message = `Check out this memorial for ${grave.firstName} ${grave.lastName}.\n`;
 
-      // Put the link on its own line
-      message += `\nLight a candle or view more:\nhttps://walktogravemobile.com/candle-lighting/${grave._id}`;
+      // Include both app and web links
+      message += `\nLight a candle or view more:\n🕯️ App Link: walktograve://grave/${grave._id}\n🌐 Web Link: https://walktogravemobile.com/grave/${grave._id}`;
 
       try {
         await Share.share({
@@ -661,17 +730,11 @@ const handleBookmark = async () => {
             </View>
             {/* Social Media and Save Buttons */}
             <View style={styles.socialIcons}>
-                <TouchableOpacity onPress={saveModalAsImage}>
+              <TouchableOpacity onPress={saveModalAsImage}>
                     <Ionicons name="download-outline" size={55} color="white" style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity>
-                    <Image source={require('../assets/fb2.png')} style={styles.icon} />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Image source={require('../assets/whatsapp.png')} style={styles.icon} />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Image source={require('../assets/twitter.png')} style={styles.icon} />
+                <TouchableOpacity onPress={shareModalAsImage}>
+                    <Ionicons name="share-social-outline" size={55} color="white" style={styles.icon} />
                 </TouchableOpacity>
             </View>
         </View>

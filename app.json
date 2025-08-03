@@ -4,6 +4,7 @@
     "slug": "walktograve-mobile",
     "version": "1.0.0",
     "newArchEnabled": true,
+    "scheme": "walktograve",
     "extra": {
       "eas": {
         "projectId": "fb528a6e-f7c3-4863-a595-49936f438a78"
@@ -25,12 +26,29 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.jairamsan.WalkToGrave"
+      "package": "com.jairamsan.WalkToGrave",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "walktogravemobile.com"
+            },
+            {
+              "scheme": "walktograve"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "ios": {
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan QR codes."
-      }
+      },
+      "associatedDomains": ["applinks:walktogravemobile.com"]
     }
   }
 }
