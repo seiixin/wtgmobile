@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect  } from '@react-navigation/native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { Linking } from 'react-native';
+
 
 const screenWidth = Dimensions.get('window').width;
 const BASE_URL = "https://walktogravemobile-backendserver.onrender.com";
@@ -334,38 +336,63 @@ const PrayersScreen = () => {
 
 
     {/* Four Buttons */}
-    <View style={[styles.buttonRow, {
-        backgroundColor: 'transparent',
-        borderRadius: 0,
-        marginBottom: -hp('3%'),
-        paddingHorizontal: wp('2.5%'),
-        marginTop: hp('2.5%')
-    }]}>
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
-        <View style={styles.IconDivider} />
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
-        <View style={styles.IconDivider} />
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
-        <View style={styles.IconDivider} />
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
+<View style={[styles.buttonRow, {
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    marginBottom: -hp('3%'),
+    paddingHorizontal: wp('2.5%'),
+    marginTop: hp('2.5%')
+}]}>
+    <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/office')}
+    >
+        <Image source={require('../assets/OfficeIcon.png')} style={styles.buttonImage} />
+    </TouchableOpacity>
+
+    <View style={styles.IconDivider} />
+
+    <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/ComfortT%20Room')}
+    >
+        <Image source={require('../assets/CrIcon.png')} style={styles.buttonImage} />
+    </TouchableOpacity>
+
+    <View style={styles.IconDivider} />
+
+    <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/Chapel')}
+    >
+        <Image source={require('../assets/ChapelIcon.png')} style={styles.buttonImage} />
+    </TouchableOpacity>
+
+    <View style={styles.IconDivider} />
+
+    <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/Main%20Gate')}
+    >
+        <Image source={require('../assets/GateIcon.png')} style={styles.buttonImage} />
+    </TouchableOpacity>
+
          <View style={styles.IconDivider} />
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/CGIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
-        <View style={styles.IconDivider} />
-        <TouchableOpacity style={styles.actionButton}>
-            <Image source={require('../assets/AGIcon.png')} style={styles.buttonImage} />
-        </TouchableOpacity>
+<TouchableOpacity
+    style={styles.actionButton}
+    onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/Common%20Grave')}
+>
+    <Image source={require('../assets/CGIcon.png')} style={styles.buttonImage} />
+</TouchableOpacity>
 
+<View style={styles.IconDivider} />
 
+<TouchableOpacity
+    style={styles.actionButton}
+    onPress={() => Linking.openURL('https://wtgmaps.vercel.app/graves/Abandoned%20Graves')}
+>
+    <Image source={require('../assets/AGIcon.png')} style={styles.buttonImage} />
+</TouchableOpacity>
     </View>
 </View>
 

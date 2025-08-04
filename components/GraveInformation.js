@@ -638,19 +638,33 @@ const handleBookmark = async () => {
   </TouchableOpacity>
 </View>
 
-                        {/* Bottom Container with Touchable Area */}
-                        <TouchableOpacity
-                          style={styles.bottomContainer2}
-                          activeOpacity={0.8}
-                          onPress={() => navigation.navigate('WebViewMap', { grave })} // Navigate to WebView Cemetery Map
-                        >
-                          <View style={styles.navigateButtonContainer}>
-                            <Text style={styles.navigateButtonText}>
-                              <Ionicons name="location" size={24} color="white" />
-                            </Text>
-                            <Text style={styles.navigateButtonText}>Navigate to Grave</Text>
-                          </View>
-                        </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.bottomContainer2}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          console.log('🚀 Navigation pressed');
+                          console.log('🚀 grave.lotIdentifier:', grave.lotIdentifier);
+                          console.log('🚀 grave.phase:', grave.phase);
+                          
+                          const identifier = grave.lotIdentifier || 'unknown';
+                          console.log('🚀 Using identifier:', identifier);
+                          
+                          const rawBlock = identifier.replace(/\s+/g, '-');
+                          const encodedBlock = encodeURIComponent(rawBlock);
+                          const graveUrl = `https://wtgmaps.vercel.app/graves/${encodedBlock}`;
+                          
+                          console.log('🚀 Final URL:', graveUrl);
+                          
+                          navigation.navigate('WebViewMap', { graveUrl });
+                        }}>
+                        <View style={styles.navigateButtonContainer}>
+                          <Text style={styles.navigateButtonText}>
+                            <Ionicons name="location" size={24} color="white" />
+                          </Text>
+                          <Text style={styles.navigateButtonText}>Navigate to Grave</Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
 
                     {/* Hidden ViewShot for Modal Content */}

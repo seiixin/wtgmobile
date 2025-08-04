@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,36 +11,71 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
 const WebViewMap = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { grave } = route.params || {};
   const webViewRef = useRef(null);
+  const [grave, setGrave] = useState(null); 
 
-  const CEMETERY_MAP_URL = 'https://maps-roan-tau.vercel.app';
+  // 🔹 Get the graveUrl from navigation params
+  const graveUrl = route.params?.graveUrl;
+  const graveFromParams = route.params?.grave;
 
+  // 🔹 Extract block from the graveUrl for API call
+  const extractBlockFromUrl = (url) => {
+    if (!url) return null;
+    const matches = url.match(/\/graves\/(.+)$/);
+    return matches ? decodeURIComponent(matches[1]) : null;
+  };
+
+  const block = extractBlockFromUrl(graveUrl) || graveFromParams?.block;
+
+  
+
+  // Search grave by block on component mount
   useEffect(() => {
-    // Auto-navigate to grave location when WebView loads
+    const fetchGrave = async () => {
+      try {
+        if (!block) return;
+
+        const res = await axios.get(
+          `https://wtgmaps.vercel.app/graves/${encodeURIComponent(block)}`
+        );
+        setGrave(res.data);
+      } catch (error) {
+        console.error('Grave search failed:', error);
+        Alert.alert('Search Failed', 'Could not find the grave.');
+      }
+    };
+
+    fetchGrave();
+  }, [block]);
+  
+  // 🔹 Use the graveUrl passed from navigation params
+  const CEMETERY_MAP_URL = graveUrl || `https://wtgmaps.vercel.app/graves/${encodeURIComponent(block || '')}`;
+
+  // 📡 Step 2: Send AUTO_START_NAVIGATION to WebView once grave is loaded
+  useEffect(() => {
     if (grave && webViewRef.current) {
       const graveData = {
-        name: `${grave.firstName} ${grave.lastName}`,
-        block: grave.block || 'Unknown Block',
-        apartment: grave.aptNo || 'Unknown Apartment',
-        phase: grave.phase || 'Unknown Phase',
-        latitude: grave.latitude || 14.471161,
-        longitude: grave.longitude || 120.975398,
-        autoStart: true // Flag to indicate automatic navigation
+        name: `${grave.firstName || ''} ${grave.lastName || ''}`.trim() || block || 'Unknown Block',
+        block: block || 'Unknown Block',
+        latitude: parseFloat(grave.latitude) || 14.471161,
+        longitude: parseFloat(grave.longitude) || 120.975398,
+        autoStart: true
       };
 
-      // Send message to WebView after a delay to ensure it's loaded
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         const message = JSON.stringify({
           type: 'AUTO_START_NAVIGATION',
           data: graveData
         });
         webViewRef.current?.postMessage(message);
       }, 2000);
+
+      return () => clearTimeout(timeout);
     }
   }, [grave]);
 
@@ -89,6 +124,7 @@ const WebViewMap = () => {
   const sendMessageToWebView = (type, data = {}) => {
     if (webViewRef.current) {
       const message = JSON.stringify({ type, data });
+      console.log('[WebView] Sending message:', message);
       webViewRef.current.postMessage(message);
     }
   };
@@ -109,8 +145,11 @@ const WebViewMap = () => {
           <View style={styles.headerTitle}>
             <Text style={styles.titleText}>Navigate to Grave</Text>
             <Text style={styles.subtitleText}>
-              {grave?.firstName} {grave?.lastName}
+              {grave?.firstName} {grave?.lastName} {grave?.nickname ? `'${grave?.nickname}'` : ''}
             </Text>
+            {block && (
+              <Text style={styles.blockText}>Block: {block}</Text>
+            )}
           </View>
         </View>
 
@@ -134,18 +173,19 @@ const WebViewMap = () => {
           onLoadStart={() => console.log('WebView load started')}
           onLoadEnd={() => {
             console.log('WebView load ended');
+            console.log('Loading URL:', CEMETERY_MAP_URL);
+            
             // Auto-send grave data when map loads
             if (grave) {
               setTimeout(() => {
                 const graveData = {
-                  name: `${grave.firstName} ${grave.lastName}`,
-                  block: grave.block || 'Unknown Block', 
-                  apartment: grave.aptNo || 'Unknown Apartment',
-                  phase: grave.phase || 'Unknown Phase',
-                  latitude: grave.latitude || 14.471161,
-                  longitude: grave.longitude || 120.975398,
+                  name: `${grave.firstName || ''} ${grave.lastName || ''}`.trim() || block || 'Unknown',
+                  block: block || 'Unknown Block', 
+                  latitude: parseFloat(grave.latitude) || 14.471161,
+                  longitude: parseFloat(grave.longitude) || 120.975398,
                   autoStart: true
                 };
+                console.log('Sending grave data:', graveData);
                 sendMessageToWebView('AUTO_START_NAVIGATION', graveData);
               }, 1000);
             }
@@ -177,6 +217,7 @@ const WebViewMap = () => {
           renderLoading={() => (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Loading cemetery map...</Text>
+              <Text style={styles.loadingSubText}>Block: {block}</Text>
             </View>
           )}
         />
@@ -189,17 +230,15 @@ const WebViewMap = () => {
               {grave?.nickname ? ` '${grave?.nickname}'` : ''}
             </Text>
             <Text style={styles.graveLocation}>
-              {grave?.phase ? `Phase ${grave?.phase} | ` : ''}
-              {grave?.block ? `Block ${grave?.block} | ` : ''}
-              {grave?.aptNo ? `Apartment ${grave?.aptNo}` : ''}
+              Block: {block}
             </Text>
           </View>
           
           <TouchableOpacity 
             style={styles.centerButton}
             onPress={() => sendMessageToWebView('FLY_TO_LOCATION', {
-              lat: grave?.latitude || 14.471161,
-              lng: grave?.longitude || 120.975398,
+              lat: parseFloat(grave?.latitude) || 14.471161,
+              lng: parseFloat(grave?.longitude) || 120.975398,
               zoom: 18
             })}
           >
@@ -248,6 +287,12 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
+  blockText: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
   webView: {
     flex: 1,
   },
@@ -265,6 +310,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 10,
+  },
+  loadingSubText: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
   },
   bottomCard: {
     backgroundColor: '#fff',
